@@ -178,6 +178,7 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 #syncBox summary{flex-wrap:wrap}
 .devs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13.5px;margin-top:4px}
 .ci>*,.ci .side>*{min-width:0}.ci-form>*{max-width:100%}
+.r .t .ord{display:block;color:var(--ink);font-size:14px}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -770,7 +771,7 @@ function renderRegList(){const card=$('#regCard');if(!card)return;
   $('#regRows').className='reg'+(open?' open':'');
   $('#regRows').innerHTML=wait.length?`<div class="rr head"><div class="c0">TT</div><div>Tên khách hàng</div><div>Tên TVV</div><div>Nhóm</div><div></div></div>`+show.map((g,i)=>
     `<div class="rr${g.attended?' in':''}${mine(g)&&regMode!=='tvv'?' me':''}${g.id===lastId?' new':''}"${g.attended?'':` data-ci="${g.id}" role="button" tabindex="0"`}>
-      <div class="c0 num">${g.stt}</div><div class="c1"><b>${esc(g.name)}</b><small>${esc(g.tvvName||'—')} · ${esc(g.group||'')}</small>${g.registered?'':'<span class="tag gray">Khách mới</span>'}</div>
+      <div class="c0 num">${i+1}</div><div class="c1"><b>${esc(g.name)}</b><small>${esc(g.tvvName||'—')} · ${esc(g.group||'')}</small>${g.registered?'':'<span class="tag gray">Khách mới</span>'}</div>
       <div class="c2">${esc(g.tvvName||'—')}</div><div class="c3">${esc(g.group||'')}</div>
       <div class="c4">${g.attended?`<span class="tag ok">✓ ${hm(g.at)}</span><button type="button" class="mini" title="Sửa" data-ed="${g.id}">${PEN}</button>`:'<span class="cta">Đến dự</span>'}<button type="button" class="mini del" title="Xoá / huỷ checkin" data-del="${g.id}">${TRASH}</button></div></div>`).join('')+
     ''
@@ -877,7 +878,7 @@ function kpiHTML(){const T=totals();const pct=T.reg?Math.round(T.regIn/T.reg*100
 function guestRow(g,full,i){const st=g.attended?`<button class="status ok" data-tg="${g.id}">✓ ${hm(g.at)||'Có mặt'}</button>`:`<button class="status wait" data-tg="${g.id}">Chưa đến</button>`;
   return `<div class="r${g.id===lastId&&!full?' new':''}" data-id="${g.id}">
    ${full?`<div class="idx t num">${i+1}</div>`:''}
-   <div class="t num">${g.attended?hm(g.at):'—'}</div>
+   <div class="t num">${!full&&i!=null?`<b class="ord">${i+1}</b>`:''}${g.attended?hm(g.at):'—'}</div>
    <div class="m"><b>${esc(g.name)}</b>${full?'':`<small>${g.gift?'🎁 Đã nhận quà · ':''}${esc(g.note||'')}</small>`}</div>
    <div class="tv"><span>${esc(g.tvvName||'—')}</span><small>${esc(g.group||'')}${g.tvvCode?'':' · <span style="color:var(--warn)">thiếu mã</span>'}</small></div>
    <div class="fee num">${fmt(g.fee)}</div>
@@ -890,8 +891,9 @@ function renderHeader(){if(typeof renderOrg==='function')renderOrg();if(typeof r
   document.title='Checkin Khách Dự '+dmy(E.date);$('#noTvv').hidden=S.tvv.length>0}
 function renderCheckin(){$('#kpis').innerHTML=kpiHTML();const q=norm($('#recentFilter').value);
   let list=S.guests.filter(g=>g.attended).sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+  const ord=new Map(list.map((g,i)=>[g.id,list.length-i]));
   if(q)list=list.filter(g=>(norm(g.name)+' '+norm(g.tvvName)+' '+norm(g.group)).includes(q));
-  $('#recentRows').innerHTML=list.length?list.slice(0,200).map(g=>guestRow(g,false)).join(''):`<div class="none">${q?'Không tìm thấy':'Chưa có khách nào checkin.<br>Gõ tên khách ở ô bên trái để bắt đầu.'}</div>`;
+  $('#recentRows').innerHTML=list.length?list.slice(0,200).map(g=>guestRow(g,false,ord.get(g.id)-1)).join(''):`<div class="none">${q?'Không tìm thấy':'Chưa có khách nào checkin.<br>Gõ tên khách ở ô bên trái để bắt đầu.'}</div>`;
   updateTvvUI()}
 let LS='all';
 function groups(){return [...new Set([...S.tvv.map(t=>t.group),...S.guests.map(g=>g.group)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'))}
