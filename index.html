@@ -890,10 +890,12 @@ function renderHeader(){if(typeof renderOrg==='function')renderOrg();if(typeof r
   $('#evSub').textContent=E.org?'Đơn vị tổ chức: '+E.org:'Hội nghị khách hàng';
   document.title='Checkin Khách Dự '+dmy(E.date);$('#noTvv').hidden=S.tvv.length>0}
 function renderCheckin(){$('#kpis').innerHTML=kpiHTML();const q=norm($('#recentFilter').value);
-  let list=S.guests.filter(g=>g.attended).sort((a,b)=>(b.at||'').localeCompare(a.at||''));
-  const ord=new Map(list.map((g,i)=>[g.id,list.length-i]));
+  /* xếp theo thứ tự đến: khách đến trước ở trên, số 1 ở đầu */
+  let list=S.guests.filter(g=>g.attended).sort((a,b)=>(a.at||'').localeCompare(b.at||''));
+  const ord=new Map(list.map((g,i)=>[g.id,i+1]));
   if(q)list=list.filter(g=>(norm(g.name)+' '+norm(g.tvvName)+' '+norm(g.group)).includes(q));
-  $('#recentRows').innerHTML=list.length?list.slice(0,200).map(g=>guestRow(g,false,ord.get(g.id)-1)).join(''):`<div class="none">${q?'Không tìm thấy':'Chưa có khách nào checkin.<br>Gõ tên khách ở ô bên trái để bắt đầu.'}</div>`;
+  $('#recentRows').innerHTML=list.length?list.slice(-300).map(g=>guestRow(g,false,ord.get(g.id)-1)).join(''):`<div class="none">${q?'Không tìm thấy':'Chưa có khách nào checkin.<br>Gõ tên khách ở ô bên trái để bắt đầu.'}</div>`;
+  {const rr=$('#recentRows');if(!q&&rr.scrollHeight>rr.clientHeight)rr.scrollTop=rr.scrollHeight}
   updateTvvUI()}
 let LS='all';
 function groups(){return [...new Set([...S.tvv.map(t=>t.group),...S.guests.map(g=>g.group)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'))}
