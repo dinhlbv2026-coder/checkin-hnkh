@@ -436,9 +436,8 @@ dialog .foot .sp{flex:1}
     <input class="inp" id="lq" placeholder="Tìm khách, TVV, nhóm…">
     <select class="inp" id="lg"></select>
     <div class="seg" id="ls">
-      <button data-s="all" class="on">Tất cả</button><button data-s="in">Đã đến</button><button data-s="out">Chưa đến</button>
+      <button data-s="all" class="on">Tất cả</button><button data-s="in">Đã đến</button><button data-s="out">Chưa đến</button><button data-s="new">Khách hàng mới</button>
     </div>
-    <button class="btn" id="addGuest">+ Thêm khách đăng ký</button>
   </div>
   <div class="card L"><div class="rows" id="listRows"></div></div>
 </section>
@@ -892,7 +891,7 @@ let LS='all';
 function groups(){return [...new Set([...S.tvv.map(t=>t.group),...S.guests.map(g=>g.group)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'))}
 function renderList(){const sel=$('#lg'),cur=sel.value;sel.innerHTML='<option value="">Tất cả nhóm</option>'+groups().map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
   const q=norm($('#lq').value);let list=[...S.guests];
-  if(cur)list=list.filter(g=>g.group===cur);if(LS==='in')list=list.filter(g=>g.attended);if(LS==='out')list=list.filter(g=>!g.attended);
+  if(cur)list=list.filter(g=>g.group===cur);if(LS==='in')list=list.filter(g=>g.attended);if(LS==='out')list=list.filter(g=>!g.attended);if(LS==='new')list=list.filter(g=>!g.registered);
   if(q)list=list.filter(g=>(norm(g.name)+' '+norm(g.tvvName)+' '+norm(g.group)+' '+norm(g.note)).includes(q));
   list.sort((a,b)=>(b.attended-a.attended)||(a.at||'').localeCompare(b.at||'')||a.name.localeCompare(b.name,'vi'));
   const head=`<div class="r head"><div class="idx">TT</div><div>Giờ</div><div>Khách hàng</div><div>TVV · Nhóm</div><div style="text-align:right">Phí</div><div>Quà</div><div>Ghi chú</div><div style="text-align:right">Trạng thái</div></div>`;
@@ -1042,7 +1041,6 @@ $('#dSave').onclick=()=>{const name=D.name.value.trim();if(!name)return flash(D.
   const was=g.attended;Object.assign(g,data,{attended:D.att.checked});if(g.attended&&!was)g.at=new Date().toISOString();if(!g.attended)g.at=null;
   save();$('#dlg').close();renderAll();toast('Đã lưu')};
 $('#dDel').onclick=()=>removeGuest(editId);
-$('#addGuest').onclick=()=>openEdit(null);
 
 /* ============ cài đặt ============ */
 $$('[data-ev]').forEach(el=>{el.addEventListener('input',()=>{S.event[el.dataset.ev]=el.dataset.type==='num'?(num(el.value)||0):el.value;save();renderHeader();if(view==='report')renderReport()})});
