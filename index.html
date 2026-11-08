@@ -181,6 +181,7 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .r .t .ord{display:block;color:var(--ink);font-size:14px}
 .filebar.locked{cursor:default;opacity:.85}
 .chip .kick{border:0;background:transparent;color:var(--danger);font-weight:700;margin-left:4px;padding:0 2px;cursor:pointer}
+.capw{text-transform:capitalize}.capw::placeholder{text-transform:none}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -581,11 +582,10 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 /* Viết hoa chữ đầu mỗi từ (giữ nguyên các chữ còn lại) */
 function tc(s){return String(s??'').replace(/\s+/g,' ').trim().split(' ').map(w=>w?w[0].toLocaleUpperCase('vi-VN')+w.slice(1):'').join(' ')}
 /* tự viết hoa khi đang gõ; bỏ qua lúc bộ gõ tiếng Việt đang ghép chữ */
-function autoCap(el){let comp=false;const fix=()=>{const v=el.value,c=el.selectionStart;
-    const n=v.replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toLocaleUpperCase('vi-VN'));
-    if(n!==v&&n.length===v.length){el.value=n;try{el.setSelectionRange(c,c)}catch(e){}}};
-  el.addEventListener('compositionstart',()=>comp=true);el.addEventListener('compositionend',()=>{comp=false;fix()});
-  el.addEventListener('input',e=>{if(!comp&&!e.isComposing)fix()})}
+/* Viết hoa chữ đầu: khi đang gõ chỉ HIỂN THỊ hoa (CSS), không sửa nội dung — để bộ gõ Telex/VNI bỏ dấu đúng.
+   Gõ xong (rời ô) mới đổi nội dung thật sang chữ hoa đầu. */
+function autoCap(el){el.classList.add('capw');el.addEventListener('blur',()=>{const v=el.value;if(!v.trim())return;
+  const n=v.replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toLocaleUpperCase('vi-VN'));if(n!==v){el.value=n;el.dispatchEvent(new Event('input',{bubbles:true}))}})}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function hm(iso){if(!iso)return'';const d=new Date(iso);return pad2(d.getHours())+':'+pad2(d.getMinutes())}
 function initials(n){const w=String(n||'?').trim().split(/\s+/);return (w[w.length-1]||'?')[0].toUpperCase()}
@@ -1319,7 +1319,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKe
   if(e.key==='/'&&view==='checkin'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();F.tvv.focus()}});
 window.addEventListener('storage',e=>{if(e.key===KEY){S=load();renderAll()}});
 (function(){let ok=true;try{localStorage.setItem('__t','1');localStorage.removeItem('__t')}catch(e){ok=false}$('#noStore').hidden=ok})();
-[F.name,$('#dName'),$('#nT')].forEach(autoCap);
+[F.name,$('#dName'),$('#nT'),F.tvv,F.group,$('#dTvv'),$('#dGroup')].forEach(autoCap);
 updateTvvUI();renderAll();initAuto();renderSync();if(SY.on&&SYNC_OK){snap=buildSnap();startStream()}
 if(embNew)toast(`Đã nạp danh sách TVV mới: ${EMB.tvv.length} người`);
 </script>
