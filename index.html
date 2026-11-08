@@ -180,6 +180,7 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .ci>*,.ci .side>*{min-width:0}.ci-form>*{max-width:100%}
 .r .t .ord{display:block;color:var(--ink);font-size:14px}
 .filebar.locked{cursor:default;opacity:.85}
+.chip .kick{border:0;background:transparent;color:var(--danger);font-weight:700;margin-left:4px;padding:0 2px;cursor:pointer}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -1217,7 +1218,7 @@ function setAt(o,p,v){const ks=p.split('/').filter(Boolean);if(!ks.length)return
   if(v===null)delete x[ks[ks.length-1]];else x[ks[ks.length-1]]=v;return o}
 function onRemote(path,data,isPatch){if(path==='/'&&!isPatch)R=data||{};else{R=R||{};
     if(isPatch&&data)for(const k in data)setAt(R,(path==='/'?'':path)+'/'+k,data[k]);else R=setAt(R,path,data)}
-  clearTimeout(applyT);applyT=setTimeout(applyRemote,80)}
+  clearTimeout(applyT);applyT=setTimeout(()=>{applyRemote();checkKicked()},80)}
 function applyRemote(){if(!R)return;applying=true;
   const pend=SY.pend,list=[];
   for(const[id,g]of Object.entries(R.guests||{})){const pk='guests/'+id;if(pk in pend){if(pend[pk])list.push(pend[pk])}else list.push({...g,id})}
@@ -1225,6 +1226,9 @@ function applyRemote(){if(!R)return;applying=true;
   S.guests=list;const inf=R.info||{};
   ['tenHN','phong','khuVuc'].forEach(f=>{if(!('info/'+f in pend)&&f in inf)S.event[f]=inf[f]});
   snap=buildSnap();save();applying=false;syState.last=new Date();if(syState.st!=='err')syState.st='ok';renderAll();renderSync()}
+/* máy bị máy 1 xoá khỏi hội nghị: tự rời ngay */
+function checkKicked(){if(SY.on&&!isHost()&&R&&R.kicked&&R.kicked[SY.device]){const code=SY.event,by=R.kicked[SY.device].by||'máy 1';syncDisable();
+  ask('Đã bị xoá khỏi hội nghị',`Máy 1 (${esc(by)}) đã xoá máy này khỏi hội nghị <b>${esc(code)}</b>. Máy này không còn checkin chung được nữa.`,[{v:'ok',l:'Đã hiểu',primary:true}])}}
 function startStream(){if(!SY.on||!SYNC_OK)return;stopStream();setSy('run','Đang kết nối…');
   if('EventSource' in window){es=new EventSource(fbUrl(''));
     es.addEventListener('put',e=>{const d=JSON.parse(e.data);onRemote(d.path,d.data,false);if(syState.st!=='ok')setSy('ok','')});
@@ -1248,7 +1252,7 @@ function renderSync(){const box=$('#syncBox');if(!box)return;box.hidden=!SYNC_OK
   const b=$('#syBody');const ae=document.activeElement;if(box.open&&b.contains(ae)&&ae.tagName==='INPUT'&&ae.value)return;
   setTimeout(()=>['sy_name','sy_name2'].forEach(i=>{const el=document.getElementById(i);if(el&&!el.dataset.cap){el.dataset.cap=1;autoCap(el)}}),0);
   if(SY.on){b.innerHTML=`<div class="jcode"><div><small>Mã hội nghị — gửi cho lễ tân khác</small><b>${esc(SY.event)}</b></div><button type="button" class="btn primary" data-sy="copy">📋 Copy mã</button></div>
-     <p class="hint">Lễ tân khác mở link → bấm khung ☁️ → nhập <b>tên lễ tân</b> và <b>đúng mã này</b> → <b>Tham gia</b>.</p><div class="devs"><b>Đang checkin cùng (${liveDevices().length||1}):</b> ${(liveDevices().length?liveDevices():[{name:SY.name,at:Date.now()}]).map(d=>`<span class="chip${d.name===SY.name?' solid':''}">👤 ${esc(d.name||'Chưa đặt tên')}${d.id&&R&&R.info&&R.info.dev===d.id?' · máy 1 (tạo mã)':''}</span>`).join(' ')}</div>
+     <p class="hint">Lễ tân khác mở link → bấm khung ☁️ → nhập <b>tên lễ tân</b> và <b>đúng mã này</b> → <b>Tham gia</b>.</p><div class="devs"><b>Đang checkin cùng (${liveDevices().length||1}):</b> ${(liveDevices().length?liveDevices():[{name:SY.name,at:Date.now()}]).map(d=>`<span class="chip${d.name===SY.name?' solid':''}">👤 ${esc(d.name||'Chưa đặt tên')}${d.id&&R&&R.info&&R.info.dev===d.id?' · máy 1 (tạo mã)':''}${isHost()&&d.id&&d.id!==SY.device?`<button type="button" class="kick" data-kick="${esc(d.id)}" data-kname="${esc(d.name||'')}" title="Xoá người dùng này khỏi hội nghị">✕</button>`:''}</span>`).join(' ')}</div>
      <div class="joinrow" style="margin-top:10px"><input class="inp" id="sy_name2" value="${esc(SY.name||'')}" placeholder="Tên lễ tân máy này" autocapitalize="words" autocomplete="off"><button type="button" class="btn sm" data-sy="rename">Đổi tên</button></div>
      <input class="inp" id="syCopyBox" readonly hidden>
      <div class="actions"><button type="button" class="btn sm danger" data-sy="leave">Rời hội nghị</button></div>`;return}
@@ -1260,6 +1264,7 @@ function renderSync(){const box=$('#syncBox');if(!box)return;box.hidden=!SYNC_OK
 async function joinEvent(code){
   let info;try{info=await (SY.event=code,fbReq('GET','/info'))}catch(e){return toast(e.status===401||e.status===403?'Mã hội nghị không hợp lệ':'Không kết nối được — kiểm tra mạng')}
   if(!info){SY.event='';return flash($('#sy_join'),'Không có hội nghị nào mang mã '+code+' — kiểm tra lại mã')}
+  try{if(await fbReq('GET','/kicked/'+SY.device)){SY.event='';return toast('Máy này đã bị máy 1 xoá khỏi hội nghị '+code+' — không tham gia lại được')}}catch(e){}
   SY.pend={};
   if(S.guests.length){const v=await ask('Tham gia hội nghị',`Máy này đang có <b>${S.guests.length}</b> khách chưa thuộc hội nghị <b>${esc(code)}</b>.`,[{v:'clear',l:'Bỏ khách trên máy này rồi tham gia',primary:true},{v:'merge',l:'Gộp khách của máy này vào hội nghị'},{v:'no',l:'Huỷ'}]);
     if(v==='no'||v==='cancel'){SY.event='';return}
@@ -1273,7 +1278,10 @@ async function createEvent(){const code=newCode();SY.event=code;
   toast(`Đã tạo mã hội nghị ${code} — bấm “Copy mã” để gửi lễ tân khác`);startStream();
   if(!SY.name)setTimeout(()=>{const el=$('#sy_name2');if(el){flash(el,'Nhập tên lễ tân cho máy này để các máy khác thấy')}},400)}
 function syncDisable(){document.activeElement?.blur?.();stopStream();Object.assign(SY,{on:false,event:'',pend:{},host:false});sySave();snap=null;R=null;setSy('off','');toast('Đã rời hội nghị — dữ liệu vẫn còn trên máy');renderAll()}
-document.addEventListener('click',async e=>{const a=e.target.closest('[data-sy]');if(!a)return;e.preventDefault();const k=a.dataset.sy;
+document.addEventListener('click',async e=>{const kb=e.target.closest('[data-kick]');if(kb){e.preventDefault();if(!isHost())return;const id=kb.dataset.kick,nm=kb.dataset.kname||'máy này';
+    if(!await okAsk('Xoá người sử dụng',`Xoá <b>${esc(nm)}</b> khỏi hội nghị <b>${esc(SY.event)}</b>?<br>Máy đó sẽ bị ngắt ngay và không tham gia lại được bằng mã này. Khách đã checkin vẫn giữ nguyên.`,'Xoá người dùng'))return;
+    try{await fbReq('PATCH','',{['kicked/'+id]:{at:Date.now(),by:SY.name||'máy 1'},['devices/'+id]:null});toast('Đã xoá '+nm+' khỏi hội nghị')}catch(err){toast('Không xoá được: '+err.message)}return}
+  const a=e.target.closest('[data-sy]');if(!a)return;e.preventDefault();const k=a.dataset.sy;
   if(k==='copy'){const code=SY.event;try{await navigator.clipboard.writeText(code);toast('Đã copy mã '+code+' — dán vào Zalo gửi lễ tân khác')}
     catch(err){const t=$('#syCopyBox');t.hidden=false;t.value=code;t.focus();t.select();toast('Mã đã được chọn sẵn — bấm giữ để Sao chép')}}
   else if(k==='join'){const nm=tc($('#sy_name').value);if(nm.length<2)return flash($('#sy_name'),'Nhập tên lễ tân');SY.name=nm;sySave();
