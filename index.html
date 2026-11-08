@@ -1243,10 +1243,13 @@ const liveDevices=()=>Object.entries((R&&R.devices)||{}).map(([id,d])=>({...d,id
 document.addEventListener('visibilitychange',()=>{if(SY.on&&document.visibilityState==='visible'){heartbeat();if(!es||es.readyState===2)startStream()}});
 function setSy(st,msg){syState.st=st;syState.msg=msg;renderSync()}
 /* mã hội nghị ngắn: HNKH-ngàytháng-6 ký tự */
-/* mã hội nghị theo tên: chữ cái đầu các từ (không dấu) + ngàytháng + 4 ký tự ngẫu nhiên. VD "Hội nghị QT Thuế" → HNQTT-1511-K7QM */
-function nameSlug(n){const w=norm(n).toUpperCase().replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(Boolean);if(!w.length)return'HNKH';return(w.length===1?w[0]:w.map(x=>x[0]).join('')).slice(0,12)}
-const newCode=(name,old)=>{const d=new Date(),A='ABCDEFGHJKMNPQRSTUVWXYZ23456789',r=crypto.getRandomValues(new Uint8Array(old?6:4)),rnd=[...r].map(x=>A[x%A.length]).join('');
-  return old?`HNKH-${pad2(d.getDate())}${pad2(d.getMonth()+1)}-${rnd}`:`${nameSlug(name)}-${pad2(d.getDate())}${pad2(d.getMonth()+1)}-${rnd}`};
+/* mã hội nghị theo tên, giữ đúng khuôn HNKH-ngàytháng-6 ký tự (luật Firebase hiện tại):
+   6 ký tự = chữ cái đầu tên hội nghị (tối đa 3, bỏ các từ "hội nghị", "khách hàng") + ký tự ngẫu nhiên.
+   VD "Hội nghị Quyết toán thuế" → HNKH-1511-QTTK7M */
+function nameSlug(n){const stop=['HOI','NGHI','KHACH','HANG','HNKH'];const w=norm(n).toUpperCase().replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(x=>x&&!stop.includes(x));
+  return w.map(x=>x[0]).join('').slice(0,3)}
+const newCode=(name)=>{const d=new Date(),A='ABCDEFGHJKMNPQRSTUVWXYZ23456789',r=crypto.getRandomValues(new Uint8Array(6)),rnd=[...r].map(x=>A[x%A.length]).join('');
+  const sl=nameSlug(name||'');return `HNKH-${pad2(d.getDate())}${pad2(d.getMonth()+1)}-${(sl+rnd).slice(0,6)}`};
 function normCode(s){s=String(s||'').toUpperCase().replace(/\s+/g,'');if(/^\d{4}-[A-Z0-9]{6}$/.test(s))s='HNKH-'+s;return/^[A-Z0-9]{2,12}-\d{4}-[A-Z0-9]{4,6}$/.test(s)?s:''}
 function renderSync(){const box=$('#syncBox');if(!box)return;box.hidden=!SYNC_OK;if(!SYNC_OK)return;
   const n=Math.max(1,liveDevices().length),t=syState.last?hm(syState.last.toISOString()):'';
@@ -1262,8 +1265,8 @@ function renderSync(){const box=$('#syncBox');if(!box)return;box.hidden=!SYNC_OK
   b.innerHTML=`<label class="lbl" for="sy_name">Tên lễ tân <span style="color:var(--danger)">*</span></label>
      <input class="inp" id="sy_name" value="${esc(SY.name||'')}" placeholder="VD: Nguyễn Thị Hà" autocapitalize="words" autocomplete="off" style="margin-bottom:12px">
      <label class="lbl" for="sy_join">Nhập mã hội nghị (máy nhập danh sách gửi cho bạn)</label>
-     <div class="joinrow"><input class="inp" id="sy_join" placeholder="VD: HNQTT-1511-K7QM" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn primary" data-sy="join">Tham gia</button></div>
-     <div class="actions" style="margin:0 0 10px"><button type="button" class="btn primary" data-sy="newconf">＋ Hội nghị mới</button></div><p class="hint">Máy <b>nhập file danh sách khách</b> sẽ tự tạo mã hội nghị (đặt theo tên hội nghị) và có nút Copy mã.${S.guests.length?` Máy này đang có ${S.guests.length} khách — <a href="#" data-sy="create">tạo mã hội nghị ngay</a>.`:''}</p>`}
+     <div class="joinrow"><input class="inp" id="sy_join" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn primary" data-sy="join">Tham gia</button></div>
+     <div class="actions" style="margin:0 0 10px"><button type="button" class="btn primary" data-sy="newconf">＋ Hội nghị mới</button></div><p class="hint">Máy <b>nhập file danh sách khách</b> sẽ tự tạo mã hội nghị (có chữ cái đầu tên hội nghị) và có nút Copy mã.${S.guests.length?` Máy này đang có ${S.guests.length} khách — <a href="#" data-sy="create">tạo mã hội nghị ngay</a>.`:''}</p>`}
 async function joinEvent(code){
   let info;try{info=await (SY.event=code,fbReq('GET','/info'))}catch(e){return toast(e.status===401||e.status===403?'Mã hội nghị không hợp lệ':'Không kết nối được — kiểm tra mạng')}
   if(!info){SY.event='';return flash($('#sy_join'),'Không có hội nghị nào mang mã '+code+' — kiểm tra lại mã')}
@@ -1280,8 +1283,7 @@ async function createEvent(){
   const guests={};S.guests.forEach(g=>{guests[g.id]=cleanRec(g)});
   const body=()=>({info:{tenHN:S.event.tenHN||'',phong:S.event.phong||'',khuVuc:S.event.khuVuc||'',by:SY.name,dev:SY.device,at:Date.now(),n:S.guests.length},guests,devices:{[SY.device]:{name:SY.name,at:Date.now()}}});
   try{await fbReq('PUT','',body())}
-  catch(e){if(e.status===401||e.status===403){/* luật Firebase cũ chỉ nhận mã HNKH-… */code=newCode('',true);SY.event=code;try{await fbReq('PUT','',body())}catch(e2){SY.event='';return toast('Không tạo được mã hội nghị: '+e2.message)}}
-    else{SY.event='';return toast('Không tạo được mã hội nghị: '+(navigator.onLine?e.message:'mất mạng'))}}
+  catch(e){SY.event='';return toast('Không tạo được mã hội nghị: '+(navigator.onLine?e.message:'mất mạng'))}
   Object.assign(SY,{on:true,pend:{},host:true});sySave();R=null;snap=buildSnap();$('#syncBox').open=true;renderSync();
   toast(`Đã tạo mã hội nghị ${code} — bấm “Copy mã” để gửi lễ tân khác`);startStream();
   if(!SY.name)setTimeout(()=>{const el=$('#sy_name2');if(el){flash(el,'Nhập tên lễ tân cho máy này để các máy khác thấy')}},400)}
@@ -1301,7 +1303,7 @@ document.addEventListener('click',async e=>{const kb=e.target.closest('[data-kic
   if(k==='copy'){const code=SY.event;try{await navigator.clipboard.writeText(code);toast('Đã copy mã '+code+' — dán vào Zalo gửi lễ tân khác')}
     catch(err){const t=$('#syCopyBox');t.hidden=false;t.value=code;t.focus();t.select();toast('Mã đã được chọn sẵn — bấm giữ để Sao chép')}}
   else if(k==='join'){const nm=tc($('#sy_name').value);if(nm.length<2)return flash($('#sy_name'),'Nhập tên lễ tân');SY.name=nm;sySave();
-    const c=normCode($('#sy_join').value);if(!c)return flash($('#sy_join'),'Mã có dạng HNQTT-1511-K7QM');joinEvent(c)}
+    const c=normCode($('#sy_join').value);if(!c)return flash($('#sy_join'),'Mã có dạng HNKH-1511-QTTK7M');joinEvent(c)}
   else if(k==='rename'){const nm=tc($('#sy_name2').value);if(nm.length<2)return flash($('#sy_name2'),'Nhập tên lễ tân');document.activeElement?.blur?.();SY.name=nm;sySave();heartbeat();toast('Đã đổi tên: '+nm);setTimeout(renderSync,600)}
   else if(k==='create')createEvent();
   else if(k==='newconf')newConference();
