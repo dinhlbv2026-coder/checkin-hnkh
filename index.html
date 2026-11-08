@@ -136,7 +136,7 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .autobar,.syncbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;border-radius:10px;padding:7px 11px;margin:-4px 0 14px;background:var(--surface-2);border:1px solid var(--line)}
 .syncbar.ok,.autobar.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}.syncbar.warn,.autobar.warn{background:var(--accent-soft);color:var(--warn);border-color:transparent}
 .autobar .btn,.syncbar .btn{margin-left:auto}
-.regbox{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:-4px 0 18px}
+.regbox{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0 0}
 .regbox .list-h{padding:10px 12px;flex-wrap:wrap}.regbox .list-h h3{font-size:14px;min-width:0}
 .regbox #regGroup{max-width:200px;padding:6px 10px;font-size:13.5px}
 .reg{overflow:auto}.reg.open{max-height:420px}
@@ -381,14 +381,6 @@ dialog .foot .sp{flex:1}
         <div class="pick" id="pGroup" hidden></div>
       </div>
 
-      <div class="regbox" id="regCard" hidden>
-        <div class="list-h">
-          <h3 id="regTitle">Danh sách khách <span class="gcount" id="regCount"></span></h3>
-          <select class="inp" id="regGroup"></select>
-          <button type="button" class="btn sm" id="regToggle">Hiện đủ</button>
-        </div>
-        <div id="regRows"></div>
-      </div>
       <p class="step"><i>2</i>Tên khách hàng</p>
       <div class="field">
         <input class="inp xl" id="fName" placeholder="Gõ tên khách hàng…" autocapitalize="words" autocomplete="off">
@@ -408,6 +400,14 @@ dialog .foot .sp{flex:1}
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <span id="goText">Checkin Khách Dự</span>
       </button>
+      <div class="regbox" id="regCard" hidden>
+        <div class="list-h">
+          <h3 id="regTitle">Danh sách khách <span class="gcount" id="regCount"></span></h3>
+          <select class="inp" id="regGroup"></select>
+          <button type="button" class="btn sm" id="regToggle">Hiện đủ</button>
+        </div>
+        <div id="regRows"></div>
+      </div>
 
     </form>
 
