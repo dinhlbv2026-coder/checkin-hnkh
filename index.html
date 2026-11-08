@@ -718,7 +718,7 @@ picker(F.name,$('#pName'),{autoHi:false,source:q=>(nameSug=nameSuggest(q)),
   render:g=>{const tv=curTvv();const other=tv&&!sameTvv(g,tv);
     return `<span class="av">${esc(initials(g.name))}</span><span><b>${esc(g.name)}</b><small>TVV ${esc(g.tvvName||'—')} · ${esc(g.group||'')}${other?' <span style="color:var(--warn)">(TVV khác)</span>':''}</small></span>
     ${g.attended?`<span class="tag ok">Đã đến ${hm(g.at)}</span>`:'<span class="tag wait">Chọn = đến dự</span>'}`},
-  onPick:g=>{if(!curTvv())return flash(F.tvv,'Chọn TVV mời khách trước khi checkin');pickRegistered(g)}});
+  onPick:g=>pickRegistered(g)});
 F.name.addEventListener('input',()=>{F.name.classList.remove('bad');nameHint()});
 [F.name,F.fee,F.note].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.defaultPrevented){e.preventDefault();submit()}}));
 $('#goBtn').onclick=submit;
@@ -728,9 +728,12 @@ function dupInfo(name,tv){const n=norm(name);const same=n?S.guests.filter(g=>nor
   return{att:same.filter(g=>g.attended),reg:same.filter(g=>!g.attended&&g.registered),mine}}
 function exactReg(name,tv){const d=dupInfo(name,tv);return d.reg.find(d.mine)||(d.reg.length===1&&!tv?d.reg[0]:null)}
 function nameHint(){const h=$('#nameHint'),tv=curTvv();
-  if(!norm(F.name.value)){h.innerHTML=S.guests.some(g=>g.registered)?'Chọn TVV ở bước 1 trước, rồi gõ vài chữ để hiện gợi ý. Chọn gợi ý = xác nhận đến dự.':'Chọn TVV ở bước 1 trước, rồi gõ tên khách và bấm Checkin — khách được tính là đến dự.';
+  if(!norm(F.name.value)){h.innerHTML=S.guests.some(g=>g.registered)?'Khách có trong danh sách: gõ tên rồi chọn gợi ý là xong, không cần chọn TVV. Khách mới: chọn TVV ở bước 1.':'Chọn TVV ở bước 1, rồi gõ tên khách và bấm Checkin — khách được tính là đến dự.';
     $('#goText').textContent='Checkin Khách Dự';return}
-  if(!tv){h.innerHTML='<span class="hw">⚠ Chưa chọn TVV — chọn TVV mời khách ở bước 1 thì mới checkin được</span>';$('#goText').textContent='Chọn TVV trước';return}
+  if(!tv){const regs=dupInfo(F.name.value,null).reg;
+    if(regs.length){h.innerHTML=`<span class="hok">✓ Có trong danh sách (TVV ${regs.map(g=>esc(g.tvvName)).join(', ')}) — bấm Checkin, không cần chọn TVV</span>`;$('#goText').textContent='Xác nhận đến dự';return}
+    const att=dupInfo(F.name.value,null).att;if(att.length){h.innerHTML=`<span class="hw">⚠ “${esc(att[0].name)}” đã checkin lúc ${hm(att[0].at)}</span>`;$('#goText').textContent='Checkin Khách Dự';return}
+    h.innerHTML='<span class="hw">Khách không có trong danh sách — chọn TVV mời khách ở bước 1 để thêm khách mới</span>';$('#goText').textContent='Chọn TVV trước';return}
   const d=dupInfo(F.name.value,tv),L=[];let btn='Thêm khách mới · đến dự';
   d.att.forEach(g=>L.push(`<span class="hw">⚠ Trùng: “${esc(g.name)}” đã checkin lúc ${hm(g.at)} · TVV ${esc(g.tvvName)} ${tv?(d.mine(g)?'<b>(cùng TVV)</b>':'<b>(khác TVV)</b>'):''}</span>`));
   d.reg.forEach(g=>{if(d.mine(g)){L.push(`<span class="hok">✓ Có trong danh sách, đúng TVV ${esc(g.tvvName)} — bấm để xác nhận đến dự</span>`);btn='Xác nhận đến dự'}
@@ -801,7 +804,14 @@ async function pickRegistered(g){const tv=curTvv();
       [{v:'keep',l:`Giữ TVV theo danh sách (${g.tvvName})`,primary:true},{v:'move',l:`Đổi sang ${tv.tvvName}`},{v:'cancel',l:'Huỷ'}]);
     if(v==='cancel')return;if(v==='move'){const prev={...g};moveTvv(g,tv);return checkinGuest(g.id,true,prev)}}
   checkinGuest(g.id,true)}
-async function submit(){if(!curTvv())return flash(F.tvv,'Chọn TVV mời khách trước khi checkin');const name=tc(F.name.value);if(!name)return flash(F.name,'Nhập tên khách hàng');
+async function submit(){const name=tc(F.name.value);if(!name)return flash(F.name,'Nhập tên khách hàng');
+  /* khách có trong danh sách nhập trước: không cần chọn TVV */
+  if(!curTvv()){const d0=dupInfo(name,null);
+    if(d0.reg.length===1)return checkinGuest(d0.reg[0].id,true);
+    if(d0.reg.length>1){const v=await ask('Trùng tên trong danh sách',`Có ${d0.reg.length} khách tên “<b>${esc(name)}</b>”. Chọn đúng khách:`,[...d0.reg.map((g,i)=>({v:g.id,l:`${g.name} — TVV ${g.tvvName}${g.group?' ('+g.group+')':''}`,primary:i===0})),{v:'cancel',l:'Huỷ'}]);
+      if(v&&v!=='cancel')checkinGuest(v,true);return}
+    if(d0.att.length)return toast(`“${d0.att[0].name}” đã checkin lúc ${hm(d0.att[0].at)}`);
+    return flash(F.tvv,'Khách không có trong danh sách — chọn TVV mời khách')}
   const tv=curTvv(),d=dupInfo(name,tv);
   /* 1. trùng khách đã checkin */
   if(d.att.length){const g=d.att.find(d.mine)||d.att[0];
