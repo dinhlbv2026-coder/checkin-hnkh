@@ -788,7 +788,7 @@ function checkinGuest(id,fromForm,prev0){const g=S.guests.find(x=>x.id===id);if(
   const x=fromForm?extras():{};g.attended=true;g.at=new Date().toISOString();g.kv=kvFor(g);g.leTan=SY.name;
   if(x.fee!=null)g.fee=x.fee;if(x.gift)g.gift=true;if(x.note)g.note=x.note;
   pushRecent({tvvCode:g.tvvCode,tvvName:g.tvvName,group:g.group});lastId=g.id;
-  if(fromForm){clearNew();if(!curTvv()||!sameTvv(g,curTvv()))setTvvFromGuest(g)}
+  if(fromForm)resetForm();  /* checkin xong: ô TVV và tên khách trở về trống */
   save();renderAll();toast(`✓ ${g.name} — đến dự`,()=>Object.assign(g,prev));if(fromForm)F.name.focus()}
 /* hộp hỏi có/không (thay confirm, vì trong link không dùng được confirm) */
 async function okAsk(t,html,yes){return(await ask(t,html,[{v:'yes',l:yes||'Đồng ý',danger:true},{v:'no',l:'Huỷ',primary:true}]))==='yes'}
@@ -841,7 +841,7 @@ async function submit(){const name=tc(F.name.value);if(!name)return flash(F.name
   if(!tv.group)return flash(F.group,'Nhập nhóm của TVV');
   rememberGroup(tv.group);if(!tv.tvvCode&&!matchTvvName(tv.tvvName,tv.group)){S.tvv.push({name:tc(tv.tvvName),group:tv.group,code:'',tay:true});toast(`Đã ghi nhớ TVV ${tc(tv.tvvName)} · nhóm ${tv.group}`)}
   const g={id:uid(),name,...tv,tvvName:tc(tv.tvvName),...extras(),registered:false,attended:true,at:new Date().toISOString(),leTan:SY.name};g.kv=kvFor(g);S.guests.push(g);
-  const id=g.id;pushRecent(tv);lastId=id;save();clearNew();renderAll();
+  const id=g.id;pushRecent(tv);lastId=id;save();resetForm();renderAll();
   toast(`✓ Khách mới ${name} — đến dự`,()=>{S.guests=S.guests.filter(x=>x.id!==id)});F.name.focus()}
 function clearNew(){[F.name,F.fee,F.note].forEach(el=>{el.value='';el.classList.remove('bad')});F.gift.checked=false;$('#pName').hidden=true;nameSug=[]}
 function resetForm(){clearNew();selTvv=null;F.tvv.value='';F.group.value='';updateTvvUI()}
