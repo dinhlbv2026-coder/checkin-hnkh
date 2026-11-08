@@ -1074,7 +1074,13 @@ async function importTvvFile(file){try{const sheets=await readRowsFromFile(file)
     if(!pref)return toast('Không thấy bảng có cột TVV và Mã số trong file');const list=parseTvvRows(pref.rows);
     if(!list.length)return toast('Không đọc được dòng TVV nào');mergeTvv(list)}catch(e){toast(e.message)}}
 const G_COLS={name:/khach hang/,tvv:/tvv|tu van vien/,code:/^ma (so )?tvv$|^msdl$/,group:/^(ban|nhom)/,fee:/^phi/,gift:/qua/,note:/ghi chu/,att:/tham du|trang thai/,time:/gio den/,src:/^nguon/,kv:/^khu vuc/,__req:['name','tvv']};
-async function importGuestFile(file){try{const sheets=(await readRowsFromFile(file)).sort((a,b)=>(norm(b.name)==='du lieu kh')-(norm(a.name)==='du lieu kh'));let found=null;
+async function importGuestFile(file){
+  /* Máy nào nhập danh sách mới thì máy đó thành máy 1: tạo hội nghị mới, mã mới */
+  if(typeof SYNC_OK!=='undefined'&&SYNC_OK&&SY.on){const v=await ask('Nhập danh sách mới',`Máy này đang ở hội nghị <b>${esc(SY.event)}</b>.<br>Nhập danh sách mới sẽ <b>tạo hội nghị mới với mã mới</b> (hội nghị cũ vẫn giữ trên các máy khác).`,
+      [{v:'new',l:'Tạo hội nghị mới, mã mới',primary:true},{v:'add',l:'Chỉ thêm khách vào hội nghị đang chạy'},{v:'no',l:'Huỷ'}]);
+    if(v==='no'||v==='cancel')return;
+    if(v==='new'){stopStream();Object.assign(SY,{on:false,event:'',pend:{}});sySave();snap=null;R=null;S.guests=[];S.recent=[];S.event.tenHN='';save()}}
+  try{const sheets=(await readRowsFromFile(file)).sort((a,b)=>(norm(b.name)==='du lieu kh')-(norm(a.name)==='du lieu kh'));let found=null;
     for(const s of sheets){const h=findHeader(s.rows,G_COLS);if(h){found={s,h};break}}
     if(!found)return toast('Không thấy bảng có cột “Họ tên khách hàng” và “Tên TVV”');
     const{map,i}=found.h;let add=0,skip=0,upd=0;
@@ -1214,7 +1220,7 @@ function startStream(){if(!SY.on||!SYNC_OK)return;stopStream();setSy('run','Đan
   heartbeat();clearInterval(hbT);hbT=setInterval(heartbeat,60000);flush()}
 function stopStream(){if(es){es.close();es=null}clearInterval(pollT);clearInterval(hbT)}
 function heartbeat(){if(SY.on)fbReq('PATCH','/devices/'+SY.device,{name:SY.name||('Máy '+SY.device.slice(-3).toUpperCase()),at:Date.now()}).catch(()=>{})}
-const liveDevices=()=>Object.values((R&&R.devices)||{}).filter(d=>Date.now()-(d.at||0)<180000);
+const liveDevices=()=>Object.entries((R&&R.devices)||{}).map(([id,d])=>({...d,id})).filter(d=>Date.now()-(d.at||0)<180000);
 document.addEventListener('visibilitychange',()=>{if(SY.on&&document.visibilityState==='visible'){heartbeat();if(!es||es.readyState===2)startStream()}});
 function setSy(st,msg){syState.st=st;syState.msg=msg;renderSync()}
 /* mã hội nghị ngắn: HNKH-ngàytháng-6 ký tự */
@@ -1227,7 +1233,7 @@ function renderSync(){const box=$('#syncBox');if(!box)return;box.hidden=!SYNC_OK
   const b=$('#syBody');const ae=document.activeElement;if(box.open&&b.contains(ae)&&ae.tagName==='INPUT'&&ae.value)return;
   setTimeout(()=>['sy_name','sy_name2'].forEach(i=>{const el=document.getElementById(i);if(el&&!el.dataset.cap){el.dataset.cap=1;autoCap(el)}}),0);
   if(SY.on){b.innerHTML=`<div class="jcode"><div><small>Mã hội nghị — gửi cho lễ tân khác</small><b>${esc(SY.event)}</b></div><button type="button" class="btn primary" data-sy="copy">📋 Copy mã</button></div>
-     <p class="hint">Lễ tân khác mở link → bấm khung ☁️ → nhập <b>tên lễ tân</b> và <b>đúng mã này</b> → <b>Tham gia</b>.</p><div class="devs"><b>Đang checkin cùng (${liveDevices().length||1}):</b> ${(liveDevices().length?liveDevices():[{name:SY.name,at:Date.now()}]).map(d=>`<span class="chip${d.name===SY.name?' solid':''}">👤 ${esc(d.name||'Chưa đặt tên')}</span>`).join(' ')}</div>
+     <p class="hint">Lễ tân khác mở link → bấm khung ☁️ → nhập <b>tên lễ tân</b> và <b>đúng mã này</b> → <b>Tham gia</b>.</p><div class="devs"><b>Đang checkin cùng (${liveDevices().length||1}):</b> ${(liveDevices().length?liveDevices():[{name:SY.name,at:Date.now()}]).map(d=>`<span class="chip${d.name===SY.name?' solid':''}">👤 ${esc(d.name||'Chưa đặt tên')}${d.id&&R&&R.info&&R.info.dev===d.id?' · máy 1 (tạo mã)':''}</span>`).join(' ')}</div>
      <div class="joinrow" style="margin-top:10px"><input class="inp" id="sy_name2" value="${esc(SY.name||'')}" placeholder="Tên lễ tân máy này" autocapitalize="words" autocomplete="off"><button type="button" class="btn sm" data-sy="rename">Đổi tên</button></div>
      <input class="inp" id="syCopyBox" readonly hidden>
      <div class="actions"><button type="button" class="btn sm danger" data-sy="leave">Rời hội nghị</button></div>`;return}
@@ -1246,7 +1252,7 @@ async function joinEvent(code){
   Object.assign(SY,{event:code,on:true});sySave();R=null;snap=null;save();$('#syncBox').open=true;renderSync();toast('Đã tham gia hội nghị '+code);startStream()}
 async function createEvent(){const code=newCode();SY.event=code;
   const guests={};S.guests.forEach(g=>{guests[g.id]=cleanRec(g)});
-  try{await fbReq('PUT','',{info:{tenHN:S.event.tenHN||'',phong:S.event.phong||'',khuVuc:S.event.khuVuc||'',by:SY.name,at:Date.now(),n:S.guests.length},guests,devices:{[SY.device]:{name:SY.name,at:Date.now()}}})}
+  try{await fbReq('PUT','',{info:{tenHN:S.event.tenHN||'',phong:S.event.phong||'',khuVuc:S.event.khuVuc||'',by:SY.name,dev:SY.device,at:Date.now(),n:S.guests.length},guests,devices:{[SY.device]:{name:SY.name,at:Date.now()}}})}
   catch(e){SY.event='';return toast('Không tạo được mã hội nghị: '+(navigator.onLine?e.message:'mất mạng'))}
   Object.assign(SY,{on:true,pend:{}});sySave();R=null;snap=buildSnap();$('#syncBox').open=true;renderSync();
   toast(`Đã tạo mã hội nghị ${code} — bấm “Copy mã” để gửi lễ tân khác`);startStream();
