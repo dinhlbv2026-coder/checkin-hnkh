@@ -394,18 +394,13 @@ dialog .foot .sp{flex:1}
         <div class="pick" id="pName" hidden></div>
         <div class="hint" id="nameHint"></div>
       </div>
+      <div class="field">
+        <label class="lbl" for="fFee">Phí đăng ký tại HNKH <span class="count">(không bắt buộc)</span></label>
+        <input class="inp num" id="fFee" inputmode="decimal" placeholder="VD: 21">
+      </div>
       <details class="more" id="more">
-        <summary>Phí đăng ký · Quà tặng · Ghi chú <span class="count">(không bắt buộc)</span></summary>
-        <div class="row2" style="margin:10px 0 12px">
-          <div>
-            <label class="lbl" for="fFee">Phí đăng ký tại HNKH</label>
-            <input class="inp num" id="fFee" inputmode="decimal" placeholder="VD: 21">
-          </div>
-          <div>
-            <span class="lbl">Quà tặng</span>
-            <label class="toggle"><input type="checkbox" id="fGift"> Đã nhận quà</label>
-          </div>
-        </div>
+        <summary>Quà tặng · Ghi chú <span class="count">(không bắt buộc)</span></summary>
+        <label class="toggle" style="margin:10px 0 12px"><input type="checkbox" id="fGift"> Đã nhận quà</label>
         <input class="inp" id="fNote" placeholder="Ghi chú">
       </details>
       <button type="button" class="btn primary go" id="goBtn">
