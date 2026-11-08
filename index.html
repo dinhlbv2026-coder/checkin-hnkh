@@ -1330,19 +1330,26 @@ async function requestRejoin(code){
         ask('Bị từ chối',`Máy 1 đã từ chối cho máy này tham gia lại hội nghị <b>${esc(code)}</b>.`,[{v:'ok',l:'Đã hiểu',primary:true}]);return false}}catch(e){}}
   SY.waiting='';return false}
 /* rời hội nghị; nếu là máy 1 thì uỷ thác cho máy còn lại (hoặc chọn máy khi có từ 2 máy) */
+var savedAsked=false;
 async function leaveConf(q){const code=SY.event;
   const others=isHost()?liveDevices().filter(d=>d.id!==SY.device):[];
   let to=null;
   if(others.length===1){if(!await okAsk('Rời hội nghị',`${q||'Rời hội nghị <b>'+esc(code)+'</b>?'}<br>Quyền máy 1 sẽ <b>uỷ thác cho ${esc(others[0].name||'máy còn lại')}</b>.`,'Rời và uỷ thác'))return false;to=others[0]}
   else if(others.length>1){const v=await ask('Uỷ thác máy 1',`${q||'Rời hội nghị <b>'+esc(code)+'</b>.'}<br>Chọn máy nhận quyền máy 1 (nhập danh sách, đồng ý / xoá người dùng):`,[...others.map((d,i)=>({v:d.id,l:'Uỷ thác cho '+(d.name||'Máy '+d.id.slice(-3).toUpperCase()),primary:i===0})),{v:'cancel',l:'Huỷ'}]);
     if(!v||v==='cancel')return false;to=others.find(d=>d.id===v)}
+  else if(!liveDevices().some(d=>d.id!==SY.device)){
+    /* máy cuối cùng còn trong hội nghị: hỏi đã lưu file chưa */
+    const v=await ask('Đã lưu file chưa?',`${q||'Rời hội nghị <b>'+esc(code)+'</b>.'}<br>Máy này là <b>máy cuối cùng</b> còn trong hội nghị (${S.guests.length} khách, ${S.guests.filter(g=>g.attended).length} đã checkin). Nên xuất file Excel trước khi rời.`,
+      [{v:'export',l:'Xuất file Excel rồi rời',primary:true},{v:'leave',l:'Đã lưu rồi — rời hội nghị'},{v:'no',l:'Huỷ'}]);
+    if(v==='no'||v==='cancel'||!v)return false;
+    if(v==='export'){try{await exportXlsx()}catch(e){toast('Chưa xuất được file — chưa rời hội nghị');return false}}savedAsked=true}
   else if(!await okAsk('Rời hội nghị',`${q||'Rời hội nghị <b>'+esc(code)+'</b>?'} Máy này thôi nhận cập nhật; khách đã checkin vẫn còn trên các máy khác.`,'Rời hội nghị'))return false;
   if(to){try{await fbReq('PATCH','',{'info/dev':to.id,'info/by':to.name||'',['devices/'+SY.device]:null});toast('Đã uỷ thác máy 1 cho '+(to.name||'máy còn lại'))}catch(e){toast('Không uỷ thác được: '+e.message);return false}}
   syncDisable();return true}
 /* Hội nghị mới: hỏi đã lưu chưa rồi xoá danh sách hiện tại trên máy */
 async function newConference(){
-  if(SY.on){if(!await leaveConf('Rời hội nghị này để bắt đầu hội nghị mới?'))return}
-  if(S.guests.length){const v=await ask('Đã lưu danh sách chưa?',`Danh sách hiện tại có <b>${S.guests.length}</b> khách (${S.guests.filter(g=>g.attended).length} đã checkin).<br>Bắt đầu hội nghị mới sẽ <b>xoá danh sách này</b> khỏi máy.`,
+  savedAsked=false;if(SY.on){if(!await leaveConf('Rời hội nghị này để bắt đầu hội nghị mới?'))return}
+  if(S.guests.length&&!savedAsked){const v=await ask('Đã lưu danh sách chưa?',`Danh sách hiện tại có <b>${S.guests.length}</b> khách (${S.guests.filter(g=>g.attended).length} đã checkin).<br>Bắt đầu hội nghị mới sẽ <b>xoá danh sách này</b> khỏi máy.`,
       [{v:'export',l:'Xuất file Excel rồi xoá',primary:true},{v:'clear',l:'Đã lưu rồi — xoá luôn',danger:true},{v:'no',l:'Huỷ'}]);
     if(v==='no'||v==='cancel')return;if(v==='export'){try{await exportXlsx()}catch(e){return toast('Chưa xuất được file — danh sách chưa bị xoá')}}}
   S.guests=[];S.recent=[];S.guestFile=null;S.tomb={};Object.assign(S.event,{tenHN:'',phong:'',khuVuc:''});save();renderAll();renderSync();
