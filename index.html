@@ -1266,9 +1266,9 @@ async function joinEvent(code){
   if(!info){SY.event='';return flash($('#sy_join'),'Không có hội nghị nào mang mã '+code+' — kiểm tra lại mã')}
   try{if(await fbReq('GET','/kicked/'+SY.device)){SY.event='';return toast('Máy này đã bị máy 1 xoá khỏi hội nghị '+code+' — không tham gia lại được')}}catch(e){}
   SY.pend={};
-  if(S.guests.length){const v=await ask('Tham gia hội nghị',`Máy này đang có <b>${S.guests.length}</b> khách chưa thuộc hội nghị <b>${esc(code)}</b>.`,[{v:'clear',l:'Bỏ khách trên máy này rồi tham gia',primary:true},{v:'merge',l:'Gộp khách của máy này vào hội nghị'},{v:'no',l:'Huỷ'}]);
-    if(v==='no'||v==='cancel'){SY.event='';return}
-    if(v==='clear'){S.guests=[];S.recent=[]}else S.guests.forEach(g=>{SY.pend['guests/'+g.id]=cleanRec(g)})}
+  /* máy tham gia chỉ dùng danh sách của hội nghị — không gộp danh sách cũ trên máy (cất bản cũ làm dự phòng) */
+  if(S.guests.length){try{localStorage.setItem('hnkh-ds-cu',JSON.stringify({at:new Date().toISOString(),guests:S.guests}))}catch(e){}}
+  S.guests=[];S.recent=[];S.guestFile=null;
   Object.assign(SY,{event:code,on:true,host:false});sySave();R=null;snap=null;save();$('#syncBox').open=true;renderSync();toast('Đã tham gia hội nghị '+code);startStream()}
 async function createEvent(){const code=newCode();SY.event=code;
   const guests={};S.guests.forEach(g=>{guests[g.id]=cleanRec(g)});
