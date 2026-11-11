@@ -1927,10 +1927,10 @@ $('#dkReport').onclick=openDayReport;
 var ROLE='';try{ROLE=sessionStorage.getItem('hnkh-role')||''}catch(e){}
 const PW_KEY='hnkh-tkpw',CONF_KEY='hnkh-tk-confs';
 /* tài khoản thư ký đăng nhập ở mọi máy; quyền admin = toàn quyền (như máy 1 ở mọi hội nghị). Trang chỉ giữ PBKDF2 của mật khẩu. */
-const ACCS={"huynhtram": {"ten": "Huỳnh Trâm", "quyen": "admin", "salt": "67dc55f6a1cfc507c7d741f46e6e40bf", "it": 210000, "h": "c8a4b373a1eb2d912c0f49b0a6ee7fa798e7a77dfc0d314d9d4d6b8cb518ebcb"}};
+const ACCS={"huynhtram": {"ten": "Huỳnh Trâm", "quyen": "admin", "v": 2}};
 var USER='';try{USER=sessionStorage.getItem('hnkh-user')||''}catch(e){}
 function isAdmin(){try{return ROLE==='tk'&&!!USER&&!!ACCS[USER]&&ACCS[USER].quyen==='admin'}catch(e){return false}}
-async function accCheck(u,p){const a=ACCS[u];if(!a)return false;try{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);
+async function accCheck(u,p){const a=ACCS[u];if(!a)return false;if(a.quyen==='admin'){try{await regUnlockAcc(u,p);return true}catch(e){return false}}try{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);
   const b=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new Uint8Array(a.salt.match(/../g).map(x=>parseInt(x,16))),iterations:a.it},k,256);
   return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')===a.h}catch(e){return false}}
 function setUser(u){USER=u||'';if(!u){REG_KEY=null;REG_LIST=null}try{u?sessionStorage.setItem('hnkh-user',u):sessionStorage.removeItem('hnkh-user')}catch(e){}}
@@ -1960,7 +1960,7 @@ function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-b
       <label class="lbl" for="lgPw">Mật khẩu mới</label><input class="inp" type="password" id="lgPw" autocomplete="new-password" style="margin-bottom:10px">
       <label class="lbl" for="lgPw2">Nhập lại mật khẩu</label><input class="inp" type="password" id="lgPw2" autocomplete="new-password">
       <div class="actions"><button type="button" class="btn primary" data-lg="pwset">Đặt mật khẩu và vào</button></div>`}`;setTimeout(()=>$('#lgPw')?.focus(),50);return}
-  if(st==='tkconf'){const l=tkConfs();b.innerHTML=`<div class="lg-top"><h2>${isAdmin()?'🛡️ '+esc(ACCS[USER].ten||USER)+' · toàn quyền':'🗂️ Hội nghị của thư ký'}</h2><button type="button" class="glink" data-lg="logout">Đăng xuất</button></div>
+  if(st==='tkconf'){const l=tkConfs();b.innerHTML=`<div class="lg-top"><h2>${isAdmin()?'🛡️ '+esc(ACCS[USER].ten||USER)+' · toàn quyền':'🗂️ Hội nghị của thư ký'}</h2><button type="button" class="glink" data-lg="logout">Đăng xuất</button></div>${isAdmin()?'<div style="margin:-4px 0 8px"><button type="button" class="glink" data-lg="chpw">🔑 Đổi mật khẩu</button></div>':''}
     <p class="sub">Chọn hội nghị để nhập tiếp — không cần gõ mã.</p>
     <div class="lg-list">${l.length?l.map(c=>`<div class="lg-conf${SY.on&&SY.event===c.code?' cur':''}"><button type="button" class="lg-pick" data-lg="pick" data-code="${esc(c.code)}">
        <b>${esc(c.ten||'Chưa đặt tên')}</b><small>${esc([c.loai,c.ngay?'Ngày '+dmy(c.ngay):'',c.code].filter(Boolean).join(' · '))}</small>${SY.on&&SY.event===c.code?'<span class="chip solid">Đang mở</span>':''}</button>
@@ -1984,8 +1984,8 @@ document.addEventListener('click',async e=>{const a=e.target.closest('[data-lg]'
     lsSet(PW_KEY,await pwHash(p));setRole('tk');toast('Đã đặt mật khẩu thư ký trên máy này');return lgStep('tkconf')}
   if(k==='accok'){const u=$('#lgUser').value.trim().toLowerCase(),p=$('#lgUPw').value;if(!u)return flash($('#lgUser'),'Nhập tên đăng nhập');
     if(!await accCheck(u,p)){$('#lgUPw').value='';return flash($('#lgUPw'),'Sai tên đăng nhập hoặc mật khẩu')}
-    if(ACCS[u].quyen==='admin')try{await regUnlock(p)}catch(e){}
     setRole('tk');setUser(u);applyRole();toast('Đã đăng nhập: '+(ACCS[u].ten||u)+(ACCS[u].quyen==='admin'?' · toàn quyền':''));return lgStep('tkconf')}
+  if(k==='chpw')return accChangeUI();
   if(k==='regopen'){try{await regUnlock($('#lgRegPw').value)}catch(e){$('#lgRegPw').value='';return flash($('#lgRegPw'),'Sai mật khẩu')}return regRender()}
   if(k==='pwok'){if(await pwHash($('#lgPw').value)!==lsGet(PW_KEY)){$('#lgPw').value='';return flash($('#lgPw'),'Sai mật khẩu')}setRole('tk');return lgStep('tkconf')}
   if(k==='forgot'){if(!await okAsk('Quên mật khẩu',`Đặt lại mật khẩu thư ký trên máy này?<br>Danh sách hội nghị ghi nhớ trên máy sẽ được xoá. Dữ liệu các hội nghị <b>vẫn còn trên mạng</b> — nhập lại mã là vào được.`,'Đặt lại mật khẩu'))return;
@@ -2033,10 +2033,36 @@ async function regBackfill(){if(regAllDone||ROLE!=='tk'||!SYNC_OK||!(window.cryp
     try{const r=await fetch(`${FB_URL}/events/${encodeURIComponent(c.code)}/info.json`,{cache:'no-store'});if(!r.ok||!(await r.json()))continue;
       if(await regPut({code:c.code,ten:c.ten||'',loai:c.loai||'',ngay:c.ngay||''}))n++}catch(e){}}
   if(n&&isAdmin()&&REG_KEY&&document.getElementById('lgAll'))regRender();return n}
-async function regUnlock(p){const a=REG.priv,k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
-  const ak=await crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:b64d(a.salt),iterations:a.it},k,{name:'AES-GCM',length:256},false,['decrypt']);
-  const pk=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(a.iv)},ak,b64d(a.ct));
-  REG_KEY=await crypto.subtle.importKey('pkcs8',pk,{name:'RSA-OAEP',hash:'SHA-256'},false,['decrypt'])}
+/* bản ghi tài khoản admin trên Firebase: chỉ chứa khoá riêng đã mã hoá bằng mật khẩu → đổi mật khẩu được ở mọi máy.
+   Đăng nhập = giải được khoá riêng và khoá đó khớp khoá công khai gắn trong trang (sửa bản ghi cũng không tạo được mật khẩu giả). */
+const accRecUrl=u=>`${FB_URL}/events/${REG.code}/acc/${encodeURIComponent(u)}.json`;
+async function accRec(u){try{const r=await fetch(accRecUrl(u),{cache:'no-store'});if(r.ok){const j=await r.json();lsSet('hnkh-acc-'+u,j&&j.priv?JSON.stringify(j):null);return j&&j.priv?j:null}}catch(e){}
+  try{const c=JSON.parse(lsGet('hnkh-acc-'+u)||'null');if(c&&c.priv)return c}catch(e){}return null}
+async function pwKey(p,salt,it,use){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt,iterations:it},k,{name:'AES-GCM',length:256},false,[use])}
+async function privRaw(u,p){const rec=await accRec(u),a=rec?rec.priv:REG.priv;
+  const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(a.iv)},await pwKey(p,b64d(a.salt),a.it,'decrypt'),b64d(a.ct));
+  const key=await crypto.subtle.importKey('pkcs8',raw,{name:'RSA-OAEP',hash:'SHA-256'},false,['decrypt']);
+  const pub=await crypto.subtle.importKey('spki',b64d(REG.pub),{name:'RSA-OAEP',hash:'SHA-256'},false,['encrypt']),t=crypto.getRandomValues(new Uint8Array(32));
+  const back=new Uint8Array(await crypto.subtle.decrypt({name:'RSA-OAEP'},key,await crypto.subtle.encrypt({name:'RSA-OAEP'},pub,t)));
+  if(back.length!==32||back.some((x,i)=>x!==t[i]))throw new Error('khoá không khớp');return{raw,key}}
+async function regUnlockAcc(u,p){REG_KEY=(await privRaw(u,p)).key}
+async function regUnlock(p){return regUnlockAcc(USER||'huynhtram',p)}
+async function accChangePw(u,oldP,newP){const{raw}=await privRaw(u,oldP);const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),it=210000;
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await pwKey(newP,salt,it,'encrypt'),raw);
+  const rec={priv:{salt:b64e(salt),it,iv:b64e(iv),ct:b64e(ct)},at:Date.now()};
+  const r=await fetch(accRecUrl(u),{method:'PUT',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)});if(!r.ok)throw new Error('mạng '+r.status);
+  lsSet('hnkh-acc-'+u,JSON.stringify(rec));await regUnlockAcc(u,newP)}
+async function accChangeUI(){if(!isAdmin())return;
+  const v=await ask('Đổi mật khẩu',`Tài khoản <b>${esc(USER)}</b>. Mật khẩu mới dùng ngay trên mọi máy; mật khẩu cũ hết hiệu lực.
+    <label class="lbl" style="margin-top:10px">Mật khẩu hiện tại</label><input class="inp" type="password" id="cpOld" autocomplete="current-password">
+    <label class="lbl" style="margin-top:8px">Mật khẩu mới (từ 8 ký tự)</label><input class="inp" type="password" id="cpNew" autocomplete="new-password">
+    <label class="lbl" style="margin-top:8px">Nhập lại mật khẩu mới</label><input class="inp" type="password" id="cpNew2" autocomplete="new-password">`,
+    [{v:'ok',l:'Đổi mật khẩu',primary:true},{v:'no',l:'Huỷ'}],()=>setTimeout(()=>$('#cpOld').focus(),40));
+  if(v!=='ok')return;const o=$('#cpOld').value,n=$('#cpNew').value,n2=$('#cpNew2').value;
+  if(n.length<8)return toast('Mật khẩu mới cần từ 8 ký tự — chưa đổi');if(n!==n2)return toast('Hai lần nhập mật khẩu mới chưa khớp — chưa đổi');if(n===o)return toast('Mật khẩu mới trùng mật khẩu cũ');
+  try{await accChangePw(USER,o,n)}catch(e){return toast(/mạng|fetch|network/i.test(e.message)?'Không lưu được — kiểm tra mạng, chưa đổi':'Mật khẩu hiện tại không đúng — chưa đổi')}
+  toast('✅ Đã đổi mật khẩu — dùng mật khẩu mới trên mọi máy')}
 async function regList(){const r=await fetch(regUrl(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);const j=(await r.json())||{},out=[];
   for(const[h,v]of Object.entries(j)){try{const raw=await crypto.subtle.decrypt({name:'RSA-OAEP'},REG_KEY,b64d(v.k)),key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
     out.push({...JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(v.iv)},key,b64d(v.d)))),h})}catch(e){}}
