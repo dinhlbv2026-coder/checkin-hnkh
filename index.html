@@ -1655,10 +1655,12 @@ picker($('#dkGroup'),$('#dkPG'),{autoHi:false,source:groupSource,render:groupRen
 $('#dkTvvClr').onclick=()=>{$('#dkTvv').value='';$('#dkGroup').value='';dkT=null;$('#dkPick').hidden=true;dkHint();$('#dkTvv').focus()};
 function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkT||matchTvvName(typed);$('#dkTvvClr').hidden=!$('#dkTvv').value;
   $('#dkTvvHint').innerHTML=m?`Nhóm: <b>${esc(m.group||'—')}</b> · Mã ${esc(m.code||'—')}`:'';$('#dkGroupWrap').hidden=!typed||!!m}
-function dkAdd(){const name=tc($('#dkName').value);if(!name)return flash($('#dkName'),'Nhập tên khách hàng');
+async function dkAdd(){const name=tc($('#dkName').value);if(!name)return flash($('#dkName'),'Nhập tên khách hàng');
   const typed=$('#dkTvv').value.trim(),t=dkT||matchTvvName(typed);if(!t&&!typed)return flash($('#dkTvv'),'Chọn TVV mời');
   const group=t?t.group:tc($('#dkGroup').value);if(!group)return flash($('#dkGroup'),'Nhập nhóm của TVV');
   if(Object.values(S.reg.kh).some(c=>norm(c.name)===norm(name)&&norm(c.tvvName)===norm(t?t.name:typed)))return toast('Khách này đã có trong danh sách đăng ký');
+  if(!t&&typed&&!matchTvvName(typed,group)){const v=await ask('Thêm TVV mới?',`<b>${esc(tc(typed))}</b> chưa có trong danh sách TVV.<br>Thêm TVV mới này vào <b>nhóm ${esc(group)}</b>?`,[{v:'yes',l:'Có — thêm TVV mới',primary:true},{v:'no',l:'Không — sửa lại tên TVV'}]);
+    if(v!=='yes'){$('#dkTvv').focus();$('#dkTvv').select();return}}
   const ve=Math.max(1,Math.round(num($('#dkVe').value)||1));
   const thu=num($('#dkThu').value)||0;const dk=readComp('#dkComp').slice(0,ve-1);const id=uid();S.reg.kh[id]={id,name,ve,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
   rememberGroup(group);if(!t&&typed&&!matchTvvName(typed,group)){const nt={name:tc(typed),group,code:'',tay:true};S.tvv.push(nt);dkT=nt;toast(`Đã ghi nhớ TVV mới ${nt.name} · nhóm ${group}`)}
