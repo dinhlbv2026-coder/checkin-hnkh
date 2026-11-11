@@ -243,7 +243,7 @@ td.up{color:var(--ok);font-weight:700}
 .modebar button[data-mode=dangky].on{background:var(--hero);color:var(--hero-ink)}.modebar button[data-mode=dangky].on small{color:var(--hero-ink)}
 @media (max-width:900px){.modebar{margin-top:10px;gap:8px}.modebar button{padding:9px 12px}.modebar button b{font-size:14.5px}.modebar button small{display:none}}
 .grid2>*{min-width:0}
-.compbox{border:1.5px dashed var(--peach);border-radius:14px;padding:10px 12px;margin:0 0 12px;background:var(--surface-2)}
+.compbox{border:1.5px dashed var(--peach);border-radius:14px;padding:10px 12px;margin:0;background:var(--surface-2)}
 .comprow{display:grid;grid-template-columns:22px minmax(0,1.4fr) minmax(0,1fr);gap:8px;align-items:center;margin-top:8px}
 .comprow .inp{padding:8px 10px}
 .complist{font-size:12.5px;color:var(--muted);margin-top:2px}
@@ -607,14 +607,14 @@ dialog .foot .sp{flex:1}
         <div class="field dktvv"><label class="lbl" for="dkTvv">TVV mời <span class="count">(giữ lại cho khách sau)</span></label><div class="tvv-in"><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><button type="button" class="clr" id="dkTvvClr" hidden title="Xoá TVV" aria-label="Xoá TVV">×</button></div><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
         <div class="field"><label class="lbl" for="dkName">Tên khách hàng <span class="count">(để trống nếu TN/TVV chỉ báo số vé)</span></label><input class="inp" id="dkName" placeholder="Họ tên khách" autocomplete="off"></div>
         <div class="field"><label class="lbl" for="dkVe">Số lượng vé <span class="count">(khách + người đi kèm)</span></label><input class="inp num" id="dkVe" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
+        <div class="compbox dkwide" id="dkCompWrap" hidden>
+          <div class="lbl">Người đi kèm <span class="count" id="dkCompN"></span></div>
+          <div id="dkComp"></div>
+        </div>
         <div class="field"><label class="lbl" for="dkPaid">Vé đã nộp tiền</label><input class="inp num" id="dkPaid" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
         <div class="field"><label class="lbl" for="dkThu">FYP dự kiến <span class="count">(triệu đồng)</span></label><input class="inp num" id="dkThu" inputmode="decimal" placeholder="VD: 25"></div>
         <div class="field"><span class="lbl">KH có thông tin</span><label class="toggle"><input type="checkbox" id="dkInfo"> Đã có thông tin</label></div>
         <div class="field dkwide"><label class="lbl" for="dkNote">Ghi chú</label><input class="inp" id="dkNote" placeholder="Ghi chú"></div>
-      </div>
-      <div class="compbox" id="dkCompWrap" hidden>
-        <div class="lbl">Người đi kèm <span class="count" id="dkCompN"></span></div>
-        <div id="dkComp"></div>
       </div>
       <button type="button" class="btn primary" id="dkAdd">＋ Thêm khách</button>
     </div>
@@ -1719,7 +1719,7 @@ async function dkAdd(){const name=tc($('#dkName').value);
   const paid=Math.min(ve,Math.max(0,Math.round(num($('#dkPaid').value)||0)));const tn=tc($('#dkTn').value);
   if(isTTN(tn,group))return flash($('#dkTn'),tn+' là Tiền trưởng nhóm — chưa đủ điều kiện, để trống hoặc chọn trưởng nhóm');
   if(tn!==tnOf(group)){const k=gkey(group),gg=S.reg.groups[k]||{name:group,ve:0,dt:0,tick:false};gg.name=gg.name||group;gg.tn=tn;S.reg.groups[k]=gg}
-  const thu=num($('#dkThu').value)||0;const dk=name?readComp('#dkComp').slice(0,ve-1):[];const id=uid();S.reg.kh[id]={id,name,ve,paid,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,tn,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
+  const thu=num($('#dkThu').value)||0;const dk0=readComp('#dkComp').slice(0,ve-1);if(!name&&dk0.some(x=>x.name))return flash($('#dkName'),'Đã nhập người đi kèm — nhập tên khách hàng');const dk=name?dk0:[];const id=uid();S.reg.kh[id]={id,name,ve,paid,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,tn,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
   rememberGroup(group);if(!t&&typed&&!matchTvvName(typed,group)){const nt={name:tc(typed),group,code:'',tay:true};S.tvv.push(nt);dkT=nt;toast(`Đã ghi nhớ TVV mới ${nt.name} · nhóm ${group}`)}
   regSnapshot();save();['#dkName','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkPaid').value=0;$('#dkThu').value='';$('#dkInfo').checked=false;if(t)dkT=t;if(dkT)$('#dkTvv').value=dkT.name;dkHint();renderReg();toast('✓ Đã thêm '+(name||ve+' vé (chưa có tên KH)')+' — TVV '+(dkT?dkT.name:tc(typed))+' giữ nguyên để thêm tiếp');$('#dkName').focus()}
 $('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
@@ -1755,8 +1755,7 @@ function compRows(box,n,cur){const el=typeof box==='string'?$(box):box;const old
     <select class="inp cqh"><option value="">Mối quan hệ…</option>${QUAN_HE.map(q=>`<option${q===v.qh?' selected':''}>${q}</option>`).join('')}</select></div>`}).join('');
   el.querySelectorAll('.cname').forEach(autoCap)}
 function readComp(box){const el=typeof box==='string'?$(box):box;if(!el)return[];return[...el.querySelectorAll('.comprow')].map(r=>({name:tc(r.querySelector('.cname').value),qh:r.querySelector('.cqh').value}))}
-$('#dkName').addEventListener('input',()=>$('#dkVe').dispatchEvent(new Event('input')));
-$('#dkVe').addEventListener('input',()=>{const n=$('#dkName').value.trim()?Math.max(1,Math.round(num($('#dkVe').value)||1))-1:0;$('#dkCompWrap').hidden=n<1;$('#dkCompN').textContent=n?`(${n} người · họ tên và mối quan hệ)`:'';if(n>=1)compRows('#dkComp',n)});
+$('#dkVe').addEventListener('input',()=>{const n=Math.max(1,Math.round(num($('#dkVe').value)||1))-1;$('#dkCompWrap').hidden=n<1;$('#dkCompN').textContent=n?`(${n} người · họ tên và mối quan hệ)`:'';if(n>=1)compRows('#dkComp',n)});
 async function editComp(id){const c=S.reg.kh[id];if(!c)return;const n=Math.max(1,+c.ve||1)-1;if(n<1)return;
   const v=await ask('Người đi kèm',`<b>${esc(c.name)}</b> · ${c.ve} vé — nhập họ tên và mối quan hệ của ${n} người đi kèm:<div id="askComp" style="margin-top:10px"></div>`,[{v:'ok',l:'Lưu',primary:true},{v:'no',l:'Huỷ'}],()=>compRows('#askComp',n,c.dk||[]));
   if(v!=='ok')return;c.dk=readComp('#askComp');save();renderReg();toast('Đã lưu người đi kèm của '+c.name)}
