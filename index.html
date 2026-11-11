@@ -600,7 +600,7 @@ dialog .foot .sp{flex:1}
     <div class="card pad dkform">
       <h3>Thêm khách đăng ký</h3>
       <div class="dkgrid">
-        <div class="field dktvv"><label class="lbl" for="dkTvv">TVV mời <span class="count">(giữ lại cho khách sau)</span></label><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
+        <div class="field dktvv"><label class="lbl" for="dkTvv">TVV mời <span class="count">(giữ lại cho khách sau)</span></label><div class="tvv-in"><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><button type="button" class="clr" id="dkTvvClr" hidden title="Xoá TVV" aria-label="Xoá TVV">×</button></div><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
         <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Nhóm của TVV"></div>
         <div class="field"><label class="lbl" for="dkName">Tên khách hàng</label><input class="inp" id="dkName" placeholder="Họ tên khách" autocomplete="off"></div>
         <div class="field"><label class="lbl" for="dkVe">Số lượng vé <span class="count">(khách + người đi kèm)</span></label><input class="inp num" id="dkVe" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
@@ -1651,7 +1651,8 @@ document.addEventListener('change',e=>{const t=e.target;
 let dkT=null;
 picker($('#dkTvv'),$('#dkPick'),{source:q=>searchTvv(q),render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
 $('#dkTvv').addEventListener('input',()=>{dkT=null;dkHint()});
-function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkT||matchTvvName(typed);
+$('#dkTvvClr').onclick=()=>{$('#dkTvv').value='';$('#dkGroup').value='';dkT=null;$('#dkPick').hidden=true;dkHint();$('#dkTvv').focus()};
+function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkT||matchTvvName(typed);$('#dkTvvClr').hidden=!$('#dkTvv').value;
   $('#dkTvvHint').innerHTML=m?`Nhóm: <b>${esc(m.group||'—')}</b> · Mã ${esc(m.code||'—')}`:'';$('#dkGroupWrap').hidden=!typed||!!m}
 function dkAdd(){const name=tc($('#dkName').value);if(!name)return flash($('#dkName'),'Nhập tên khách hàng');
   const typed=$('#dkTvv').value.trim(),t=dkT||matchTvvName(typed);if(!t&&!typed)return flash($('#dkTvv'),'Chọn TVV mời');
