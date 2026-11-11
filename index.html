@@ -561,7 +561,7 @@ dialog .foot .sp{flex:1}
       <div class="dkgrid">
         <div class="field"><label class="lbl" for="dkName">Tên khách hàng</label><input class="inp" id="dkName" placeholder="Họ tên khách" autocomplete="off"></div>
         <div class="field"><label class="lbl" for="dkVe">Số lượng vé <span class="count">(khách + người đi kèm)</span></label><input class="inp num" id="dkVe" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
-        <div class="field"><label class="lbl" for="dkThu">Số thu <span class="count">(triệu đồng)</span></label><input class="inp num" id="dkThu" inputmode="decimal" placeholder="VD: 25"></div>
+        <div class="field"><label class="lbl" for="dkThu">FYP dự kiến <span class="count">(triệu đồng)</span></label><input class="inp num" id="dkThu" inputmode="decimal" placeholder="VD: 25"></div>
         <div class="field"><label class="lbl" for="dkTvv">TVV mời</label><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
         <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Nhóm của TVV"></div>
         <div class="field"><span class="lbl">KH có thông tin</span><label class="toggle"><input type="checkbox" id="dkInfo"> Đã có thông tin</label></div>
@@ -1326,7 +1326,7 @@ if(!SY.device){SY.device='m'+Math.random().toString(36).slice(2,8);sySave()}
 if(/^Máy [A-Z0-9]{3}$/.test(SY.name||'')){SY.name='';sySave()}
 const SYNC_OK=!!FB_URL&&window.self===window.top&&location.protocol!=='data:';
 const recKey=g=>JSON.stringify(g);
-const evKey=()=>JSON.stringify([S.event.tenHN||'',S.event.phong||'',S.event.khuVuc||'',S.event.ngayHN||'']);
+const evKey=()=>JSON.stringify([S.event.tenHN||'',S.event.phong||'',S.event.khuVuc||'',S.event.ngayHN||'',S.event.loaiHN||'']);
 const regKey=()=>JSON.stringify(S.reg||{});
 const buildSnap=()=>({g:new Map(S.guests.map(g=>[g.id,recKey(g)])),e:evKey(),r:regKey()});
 const fbUrl=p=>`${FB_URL}/events/${encodeURIComponent(SY.event)}${p}.json`;
@@ -1338,7 +1338,7 @@ function trackChanges(){if(!SY||!SY.on||applying)return false;if(!snap){snap=bui
   let ch=false;const cur=new Map();
   S.guests.forEach(g=>{const k=recKey(g);if(snap.g.get(g.id)!==k){SY.pend['guests/'+g.id]=cleanRec(g);ch=true}cur.set(g.id,k)});
   snap.g.forEach((k,id)=>{if(!cur.has(id)){SY.pend['guests/'+id]=null;ch=true}});
-  const ek=evKey();if(ek!==snap.e){Object.assign(SY.pend,{'info/tenHN':S.event.tenHN||'','info/phong':S.event.phong||'','info/khuVuc':S.event.khuVuc||'','info/ngayHN':S.event.ngayHN||''});ch=true}
+  const ek=evKey();if(ek!==snap.e){Object.assign(SY.pend,{'info/tenHN':S.event.tenHN||'','info/phong':S.event.phong||'','info/khuVuc':S.event.khuVuc||'','info/ngayHN':S.event.ngayHN||'','info/loaiHN':S.event.loaiHN||''});ch=true}
   const rk=regKey();if(rk!==snap.r){SY.pend['reg']=JSON.parse(rk);ch=true}
   snap={g:cur,e:ek,r:rk};if(ch){sySave();clearTimeout(flushT);flushT=setTimeout(flush,300)}return ch}
 async function flush(){if(!SY.on||!Object.keys(SY.pend).length)return;const body={...SY.pend};
@@ -1356,7 +1356,7 @@ function applyRemote(){if(!R)return;applying=true;
   for(const[id,g]of Object.entries(R.guests||{})){const pk='guests/'+id;if(pk in pend){if(pend[pk])list.push(pend[pk])}else list.push({...g,id})}
   for(const k in pend)if(k.startsWith('guests/')&&pend[k]&&!(R.guests||{})[k.slice(7)])list.push(pend[k]);
   S.guests=list;const inf=R.info||{};
-  ['tenHN','phong','khuVuc','ngayHN'].forEach(f=>{if(!('info/'+f in pend)&&f in inf)S.event[f]=inf[f]});
+  ['tenHN','phong','khuVuc','ngayHN','loaiHN'].forEach(f=>{if(!('info/'+f in pend)&&f in inf)S.event[f]=inf[f]});
   if(!('reg' in pend)){const rg=R.reg||{};S.reg={groups:rg.groups||{},kh:rg.kh||{},days:rg.days||{}}}
   snap=buildSnap();save();applying=false;syState.last=new Date();if(syState.st!=='err')syState.st='ok';renderAll();renderSync()}
 /* máy bị máy 1 xoá khỏi hội nghị: tự rời ngay */
@@ -1419,7 +1419,7 @@ async function createEvent(){
     const nm=tc((document.getElementById('askInput')||{}).value||'');if(v==='ok'&&nm){S.event.tenHN=nm;save()}}
   let code=newCode(S.event.tenHN);SY.event=code;
   const guests={};S.guests.forEach(g=>{guests[g.id]=cleanRec(g)});
-  const body=()=>({info:{tenHN:S.event.tenHN||'',phong:S.event.phong||'',khuVuc:S.event.khuVuc||'',ngayHN:S.event.ngayHN||'',by:SY.name,dev:SY.device,at:Date.now(),n:S.guests.length},guests,reg:S.reg||{groups:{},kh:{},days:{}},devices:{[SY.device]:{name:SY.name,at:Date.now()}}});
+  const body=()=>({info:{tenHN:S.event.tenHN||'',phong:S.event.phong||'',khuVuc:S.event.khuVuc||'',ngayHN:S.event.ngayHN||'',loaiHN:S.event.loaiHN||'',by:SY.name,dev:SY.device,at:Date.now(),n:S.guests.length},guests,reg:S.reg||{groups:{},kh:{},days:{}},devices:{[SY.device]:{name:SY.name,at:Date.now()}}});
   try{await fbReq('PUT','',body())}
   catch(e){SY.event='';return toast('Không tạo được mã hội nghị: '+(navigator.onLine?e.message:'mất mạng'))}
   Object.assign(SY,{on:true,pend:{},host:true});sySave();R=null;snap=buildSnap();$('#syncBox').open=true;renderSync();
@@ -1525,20 +1525,20 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
   const pct=T.ve?Math.round(T.info/T.ve*100):0;
   if(dkTabN==='1'){
     $('#dkKpi').innerHTML=`<div class="card kpi hero"><small>Tổng vé đăng ký</small><b class="num">${fmt(T.ve)||0}</b><div class="bar"><i style="width:${Math.min(100,pct)}%"></i></div></div>
-      <div class="card kpi"><small>Số thu / mục tiêu doanh thu</small><b class="num">${fmt(T.thu)||0}<em> / ${fmt(T.dt)||0} tr.đ${T.dt?' · '+Math.round(T.thu/T.dt*100)+'%':''}</em></b></div>
+      <div class="card kpi"><small>FYP dự kiến / mục tiêu doanh thu</small><b class="num">${fmt(T.thu)||0}<em> / ${fmt(T.dt)||0} tr.đ${T.dt?' · '+Math.round(T.thu/T.dt*100)+'%':''}</em></b></div>
       <div class="card kpi"><small>Vé đã có thông tin KH</small><b class="num">${T.info}<em> / ${T.ve} vé · ${pct}%</em></b></div>
       <div class="card kpi"><small>Nhóm đã đủ thông tin</small><b class="num">${T.tick}<em> / ${act.length} nhóm</em></b></div>`;
     const chartRows=act.filter(r=>r.ve||r.info).slice(0,18),mx=Math.max(1,...chartRows.map(r=>Math.max(r.ve,r.info)));
     const top=chartRows[0];$('#dkT1').textContent=top?`Vé đăng ký theo nhóm — ${top.name} dẫn đầu với ${top.ve} vé`:'Vé đăng ký theo nhóm';
     $('#dkChart').innerHTML=chartRows.length?chartRows.map(r=>`<div class="hb" title="${esc(r.name)}: ${r.ve} vé, ${r.info} KH có thông tin"><span class="t" data-g="${esc(r.key)}">${esc(r.name)}</span><div class="track"><i class="fill ve" data-w="${Math.max(r.ve,r.info)/mx*100}"></i><i class="fill inf" data-w="${Math.min(r.info,Math.max(r.ve,r.info))/mx*100}"></i></div><span class="val num">${r.info}/${r.ve}</span></div>`).join(''):'<div class="none">Chưa có nhóm nào nhập số vé. Nhập ở bảng bên dưới.</div>';
     const dtRows=act.filter(r=>r.dt||r.thu).sort((a,b)=>(b.dt||b.thu)-(a.dt||a.thu)).slice(0,18),mx2=Math.max(1,...dtRows.map(r=>Math.max(r.dt,r.thu)));
-    $('#dkT2').textContent=dtRows.length?`Số thu so với mục tiêu — đạt ${fmt(T.thu)||0}/${fmt(T.dt)||0} triệu đồng${T.dt?' ('+Math.round(T.thu/T.dt*100)+'%)':''}`:'Số thu so với mục tiêu doanh thu';
-    $('#dkChart2').innerHTML=dtRows.length?dtRows.map(r=>`<div class="hb" title="${esc(r.name)}: thu ${fmt(r.thu)||0} / mục tiêu ${fmt(r.dt)||0} triệu đồng"><span class="t">${esc(r.name)}</span><div class="track"><i class="fill dtg" data-w="${r.dt/mx2*100}"></i><i class="fill dt" data-w="${r.thu/mx2*100}"></i></div><span class="val num">${fmt(r.thu)||0}/${fmt(r.dt)||0}</span></div>`).join('')+'<div class="legend"><span><i style="background:var(--sky)"></i>Số thu</span><span><i style="background:color-mix(in srgb,var(--sky) 25%,var(--surface-2))"></i>Mục tiêu</span></div>':'<div class="none">Chưa có mục tiêu doanh thu hay số thu.</div>';
+    $('#dkT2').textContent=dtRows.length?`FYP dự kiến so với mục tiêu — đạt ${fmt(T.thu)||0}/${fmt(T.dt)||0} triệu đồng${T.dt?' ('+Math.round(T.thu/T.dt*100)+'%)':''}`:'FYP dự kiến so với mục tiêu doanh thu';
+    $('#dkChart2').innerHTML=dtRows.length?dtRows.map(r=>`<div class="hb" title="${esc(r.name)}: FYP dự kiến ${fmt(r.thu)||0} / mục tiêu ${fmt(r.dt)||0} triệu đồng"><span class="t">${esc(r.name)}</span><div class="track"><i class="fill dtg" data-w="${r.dt/mx2*100}"></i><i class="fill dt" data-w="${r.thu/mx2*100}"></i></div><span class="val num">${fmt(r.thu)||0}/${fmt(r.dt)||0}</span></div>`).join('')+'<div class="legend"><span><i style="background:var(--sky)"></i>FYP dự kiến</span><span><i style="background:color-mix(in srgb,var(--sky) 25%,var(--surface-2))"></i>Mục tiêu</span></div>':'<div class="none">Chưa có mục tiêu doanh thu hay FYP dự kiến.</div>';
     requestAnimationFrame(()=>requestAnimationFrame(()=>$$('#dk1 .fill').forEach(f=>f.style.width=f.dataset.w+'%')));
     const ae=document.activeElement,keep=ae&&ae.dataset&&ae.dataset.f?[ae.dataset.k,ae.dataset.f]:null;
     const q=norm($('#dkQ').value),only=$('#dkOnly').checked;
     const show=rows.filter(r=>(!only||r.ve||r.dt||r.kh)&&(!q||norm(r.name).includes(q)));
-    $('#dkTable').innerHTML=`<thead><tr><th>Tên nhóm</th><th class="n">Số vé đăng ký</th><th class="n">Mục tiêu doanh thu<br><small>(triệu đ)</small></th><th class="n">Số thu<br><small>(triệu đ)</small></th><th class="n">Đạt</th><th class="n">Vé có thông tin KH</th><th>Đã có thông tin KH</th></tr></thead>
+    $('#dkTable').innerHTML=`<thead><tr><th>Tên nhóm</th><th class="n">Số vé đăng ký</th><th class="n">Mục tiêu doanh thu<br><small>(triệu đ)</small></th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th class="n">Đạt</th><th class="n">Vé có thông tin KH</th><th>Đã có thông tin KH</th></tr></thead>
       <tbody>${show.map(r=>`<tr class="${dkSel===r.key?'sel':''}${r.ve&&!r.tick?' warnrow':''}"><td><button type="button" class="glink" data-g="${esc(r.key)}" title="Xem khách của nhóm ở tab ②">${esc(r.name)} ›</button></td>
         <td class="n"><input class="inp num cell" inputmode="numeric" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="ve" value="${r.veM||''}" placeholder="${r.kh||0}" title="${r.veM?'Số vé nhóm báo':'Để trống = tự lấy tổng vé khách ở tab ② ('+(r.kh||0)+')'}"></td>
         <td class="n"><input class="inp num cell" inputmode="decimal" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="dt" value="${r.dt||''}" placeholder="0"></td>
@@ -1551,8 +1551,8 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     const sel=$('#dk2Group'),cur=dkFilter;sel.innerHTML='<option value="">Tất cả nhóm</option>'+rows.filter(r=>r.kh||r.ve).map(r=>`<option value="${esc(r.key)}"${r.key===cur?' selected':''}>${esc(r.name)} (${r.kh})</option>`).join('');
     const q=norm($('#dk2Q').value);let list=dkKhList();if(cur)list=list.filter(c=>gkey(c.group||'(Chưa rõ nhóm)')===cur);
     if(q)list=list.filter(c=>(norm(c.name)+' '+norm(c.tvvName)+' '+norm(c.note)).includes(q));
-    const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);const th=list.reduce((x,c)=>x+(+c.thu||0),0);$('#dk2Count').textContent=`${list.length} khách · ${tv} vé · ${inf} vé có thông tin · thu ${fmt(th)||0} tr.đ`;
-    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th>Tên KH</th><th class="n">Số vé</th><th class="n">Số thu<br><small>(triệu đ)</small></th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
+    const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);const th=list.reduce((x,c)=>x+(+c.thu||0),0);$('#dk2Count').textContent=`${list.length} khách · ${tv} vé · ${inf} vé có thông tin · FYP dự kiến ${fmt(th)||0} tr.đ`;
+    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th>Tên KH</th><th class="n">Số vé</th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
       <td class="n num">${i+1}</td><td><b>${esc(c.name)}</b>${(+c.ve||1)>1?`<small class="count"> · +${(+c.ve)-1} người đi kèm</small>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td class="n"><input class="inp num cell thu" inputmode="decimal" data-khthu="${esc(c.id)}" value="${c.thu||''}" placeholder="0"></td><td>${esc(c.tvvName||'—')}</td>
       <td><button type="button" class="glink" data-g1="${esc(gkey(c.group||'(Chưa rõ nhóm)'))}" title="Xem nhóm ở tab ①">${esc(c.group||'—')}</button></td>
       <td><label class="tick"><input type="checkbox" data-kh="${esc(c.id)}" ${c.info?'checked':''}> <span>${c.info?'Có':'Chưa'}</span></label></td>
@@ -1601,10 +1601,10 @@ $('#dkExport').onclick=async()=>{if(!window.ExcelJS)return toast('Chưa tải đ
     w.addRow([]);w.addRow(head).eachCell(x=>{x.font={...FN,bold:true};x.border=BD;x.alignment={horizontal:'center',vertical:'middle',wrapText:true};x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDE3C8'}}});
     rows.forEach(r=>w.addRow(r).eachCell({includeEmpty:true},x=>{x.font=FN;x.border=BD}));return w};
   const E=EV(),act=dkRows().filter(r=>r.ve||r.dt||r.kh);
-  sheet('Tong hop nhom',[6,24,14,18,14,10,16,16],['TT','Tên nhóm','Số vé đăng ký','Mục tiêu doanh thu (triệu đ)','Số thu (triệu đ)','Đạt','Vé có thông tin KH','Đã có thông tin KH'],
+  sheet('Tong hop nhom',[6,24,14,18,14,10,16,16],['TT','Tên nhóm','Số vé đăng ký','Mục tiêu doanh thu (triệu đ)','FYP dự kiến (triệu đ)','Đạt','Vé có thông tin KH','Đã có thông tin KH'],
     [...act.map((r,i)=>[i+1,r.name,r.ve,r.dt,r.thu,r.dt?Math.round(r.thu/r.dt*100)+'%':'',r.info,r.tick?'x':'']),['','Tổng cộng',act.reduce((s,r)=>s+r.ve,0),act.reduce((s,r)=>s+r.dt,0),act.reduce((s,r)=>s+r.thu,0),'',act.reduce((s,r)=>s+r.info,0),act.filter(r=>r.tick).length]],
     `THEO DÕI ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(today())}`);
-  sheet('Khach dang ky',[6,26,10,14,24,16,14,26],['TT','Tên KH','Số vé','Số thu (triệu đ)','TVV mời','Nhóm','KH có thông tin','Ghi chú'],
+  sheet('Khach dang ky',[6,26,10,14,24,16,14,26],['TT','Tên KH','Số vé','FYP dự kiến (triệu đ)','TVV mời','Nhóm','KH có thông tin','Ghi chú'],
     [...dkKhList().map((c,i)=>[i+1,tc(c.name),Math.max(1,+c.ve||1),+c.thu||0,tc(c.tvvName),c.group,c.info?'x':'',c.note||'']),['','Tổng cộng',dkKhList().reduce((x,c)=>x+Math.max(1,+c.ve||1),0),dkKhList().reduce((x,c)=>x+(+c.thu||0),0),'','','','']],`DANH SÁCH KHÁCH ĐĂNG KÝ ${E.hnUp}`);
   const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Theo doi dang ky ${dmy(today()).replace(/\//g,'.')}.xlsx`);toast('Đã xuất file theo dõi đăng ký')};
 
@@ -1628,22 +1628,37 @@ function renderDays(){const box=$('#dkDays');if(!box)return;const days=Object.ke
 function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNgay'))$('#dkNgay').value=S.event.ngayHN||'';
   $('#dkLeft').innerHTML=dl==null?'<span class="count">Chưa đặt ngày hội nghị</span>':dl>0?`<span class="chip solid">⏳ Còn <b>${dl}</b> ngày</span>`:dl===0?'<span class="chip solid">📅 Hôm nay là ngày hội nghị</span>':`<span class="chip">Đã qua ${-dl} ngày</span>`;
   const btn=$('#dkCreate');if(btn)btn.hidden=!(typeof SYNC_OK!=='undefined'&&SYNC_OK&&!SY.on);
-  $('#dkSyncNote').innerHTML=typeof SYNC_OK!=='undefined'&&SYNC_OK?(SY.on?`☁️ Theo dõi chung — mã <b>${esc(SY.event)}</b>`:'Chưa có mã hội nghị — số liệu chỉ lưu trên máy này'):''}
+  $('#dkSyncNote').innerHTML=(S.event.loaiHN?`<span class="chip">🏷️ ${esc(S.event.loaiHN)}</span> `:'')+(typeof SYNC_OK!=='undefined'&&SYNC_OK?(SY.on?`☁️ Theo dõi chung — mã <b>${esc(SY.event)}</b>`:'Chưa có mã hội nghị — số liệu chỉ lưu trên máy này'):'')}
 $('#dkNgay').addEventListener('change',e=>{S.event.ngayHN=e.target.value;save();renderReg()});
-$('#dkCreate').onclick=()=>createEvent();
+const LOAI_HN=['HNKH cấp Công ty','HNKH cấp Phòng PTKD','HNKH cấp Ban / VPKV','HNKH cấp nhóm','Hội thảo giới thiệu sản phẩm','Tri ân khách hàng'];
+/* tạo hội nghị từ phần Đăng ký: chọn loại hội nghị + tên */
+async function createFromReg(){
+  const cur=S.event.loaiHN||'';
+  const v=await ask('Tạo hội nghị',`<label class="lbl">Loại hội nghị</label>
+    <select class="inp" id="askInput" style="margin-bottom:10px">${LOAI_HN.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('')}<option value="__khac"${cur&&!LOAI_HN.includes(cur)?' selected':''}>Khác (tự nhập)…</option></select>
+    <input class="inp" id="askOther" placeholder="Nhập loại hội nghị khác" value="${cur&&!LOAI_HN.includes(cur)?esc(cur):''}" style="margin-bottom:10px;${cur&&!LOAI_HN.includes(cur)?'':'display:none'}">
+    <label class="lbl">Tên hội nghị</label><input class="inp" id="askName" value="${esc(S.event.tenHN||'')}" placeholder="VD: Hội nghị khách hàng Quyết toán thuế">
+    <p class="hint">Mã hội nghị sẽ có chữ cái đầu của tên hội nghị.</p>`,[{v:'ok',l:'Tạo mã hội nghị',primary:true},{v:'no',l:'Huỷ'}]);
+  if(v!=='ok')return;
+  const sel=(document.getElementById('askInput')||{}).value,other=tc((document.getElementById('askOther')||{}).value||''),nm=tc((document.getElementById('askName')||{}).value||'');
+  const loai=sel==='__khac'?other:sel;if(!loai)return toast('Chưa chọn loại hội nghị');
+  S.event.loaiHN=loai;if(nm)S.event.tenHN=nm;save();await createEvent();renderReg()}
+document.addEventListener('change',e=>{if(e.target.id==='askInput'&&document.getElementById('askOther')){const o=document.getElementById('askOther');o.style.display=e.target.value==='__khac'?'':'none';if(e.target.value==='__khac')o.focus()}});
+$('#dkCreate').onclick=createFromReg;
 /* báo cáo ngày: soạn nội dung gửi lãnh đạo */
 function dayReport(d){const x=S.reg.days[d];if(!x)return null;const pd=prevDay(d),p=pd?S.reg.days[pd]:null,E=EV();
   const dv=v=>p?` (${v>=0?'+':''}${v} so với ${dmy(pd).slice(0,5)})`:'';const dl=S.event.ngayHN?Math.round((new Date(S.event.ngayHN+'T00:00')-new Date(d+'T00:00'))/864e5):null;
   const gs=Object.entries(x.g||{}).map(([k,v])=>({k,ve:v[0],info:v[1],dt:v[2],name:v[3],thu:v[4]||0,pve:p&&p.g&&p.g[k]?p.g[k][0]:0})).sort((a,b)=>b.ve-a.ve);
   const none=allGroups().map(g=>g.name).filter(n=>!gs.some(g=>norm(g.name)===norm(n)&&g.ve>0));
   return[`BÁO CÁO ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(d)}`,
+    S.event.loaiHN?`• Loại hội nghị: ${S.event.loaiHN}`:null,
     S.event.ngayHN?`• Ngày hội nghị: ${dmy(S.event.ngayHN)}${dl!=null?(dl>0?` (còn ${dl} ngày)`:dl===0?' (hôm nay)':''):''}`:null,
     `• Tổng vé đăng ký: ${x.ve} vé${dv(x.ve-(p?p.ve:0))}`,
     `• KH đã có thông tin: ${x.info}/${x.ve} vé (${x.ve?Math.round(x.info/x.ve*100):0}%)${dv(x.info-(p?p.info:0))}`,
-    `• Số thu: ${fmt(x.thu||0)||0} / mục tiêu ${fmt(x.dt)||0} triệu đồng${x.dt?` (đạt ${Math.round((x.thu||0)/x.dt*100)}%)`:''}${p?' ('+((x.thu||0)-(p.thu||0)>=0?'+':'-')+(fmt(Math.abs((x.thu||0)-(p.thu||0)))||0)+' tr so với '+dmy(pd).slice(0,5)+')':''}`,
+    `• FYP dự kiến: ${fmt(x.thu||0)||0} / mục tiêu ${fmt(x.dt)||0} triệu đồng${x.dt?` (đạt ${Math.round((x.thu||0)/x.dt*100)}%)`:''}${p?' ('+((x.thu||0)-(p.thu||0)>=0?'+':'-')+(fmt(Math.abs((x.thu||0)-(p.thu||0)))||0)+' tr so với '+dmy(pd).slice(0,5)+')':''}`,
     `• Nhóm đã đăng ký: ${gs.filter(g=>g.ve>0).length} nhóm · đủ thông tin KH: ${x.tick||0} nhóm`,
-    gs.length?'Theo nhóm (vé · có thông tin · số thu/mục tiêu):':null,
-    ...gs.map((g,i)=>`${i+1}. ${g.name}: ${g.ve} vé${p&&g.ve!==g.pve?` (${g.ve-g.pve>=0?'+':''}${g.ve-g.pve})`:''} · ${g.info} có TT · thu ${fmt(g.thu)||0}/${fmt(g.dt)||0} tr`),
+    gs.length?'Theo nhóm (vé · có thông tin · FYP dự kiến/mục tiêu):':null,
+    ...gs.map((g,i)=>`${i+1}. ${g.name}: ${g.ve} vé${p&&g.ve!==g.pve?` (${g.ve-g.pve>=0?'+':''}${g.ve-g.pve})`:''} · ${g.info} có TT · FYP ${fmt(g.thu)||0}/${fmt(g.dt)||0} tr`),
     none.length?`Nhóm chưa đăng ký (${none.length}): ${none.join(', ')}`:null].filter(Boolean).join('\n')}
 async function openDayReport(){const days=Object.keys(S.reg.days||{}).sort();regSnapshot();save();
   const d0=today(),all=Object.keys(S.reg.days).sort().reverse();
@@ -1659,7 +1674,7 @@ async function exportDayReport(d){if(!window.ExcelJS)return toast('Chưa tải �
   const w=wb.addWorksheet('Bao cao ngay');w.columns=[6,24,12,12,14,12,16,14,10].map(width=>({width}));
   w.mergeCells(1,1,1,7);Object.assign(w.getCell(1,1),{value:`BÁO CÁO ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(d)}`});w.getCell(1,1).font={...FN,bold:true,size:14};w.getCell(1,1).alignment={horizontal:'center'};
   w.mergeCells(2,1,2,7);w.getCell(2,1).value=`Ngày hội nghị: ${S.event.ngayHN?dmy(S.event.ngayHN):'—'} · So sánh với: ${pd?dmy(pd):'—'}`;w.getCell(2,1).font={...FN,italic:true};w.getCell(2,1).alignment={horizontal:'center'};
-  w.addRow([]);w.addRow(['TT','Tên nhóm','Số vé','Tăng so với hôm trước','KH có thông tin','Tỷ lệ','Mục tiêu DT (triệu đ)','Số thu (triệu đ)','Đạt']).eachCell(c=>{c.font={...FN,bold:true};c.border=BD;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDE3C8'}}});
+  w.addRow([]);w.addRow(['TT','Tên nhóm','Số vé','Tăng so với hôm trước','KH có thông tin','Tỷ lệ','Mục tiêu DT (triệu đ)','FYP dự kiến (triệu đ)','Đạt']).eachCell(c=>{c.font={...FN,bold:true};c.border=BD;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDE3C8'}}});
   const gs=Object.entries(x.g||{}).map(([k,v])=>({ve:v[0],info:v[1],dt:v[2],name:v[3],thu:v[4]||0,pve:p&&p.g&&p.g[k]?p.g[k][0]:0})).sort((a,b)=>b.ve-a.ve);
   gs.forEach((g,i)=>w.addRow([i+1,g.name,g.ve,p?g.ve-g.pve:'',g.info,g.ve?g.info/g.ve:'',g.dt,g.thu,g.dt?g.thu/g.dt:'']).eachCell({includeEmpty:true},c=>{c.font=FN;c.border=BD}));
   const tr=w.addRow(['','Tổng cộng',x.ve,p?x.ve-p.ve:'',x.info,x.ve?x.info/x.ve:'',x.dt,x.thu||0,x.dt?(x.thu||0)/x.dt:'']);tr.eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
