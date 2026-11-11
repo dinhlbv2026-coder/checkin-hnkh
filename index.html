@@ -1728,7 +1728,7 @@ async function listImages(list){try{await document.fonts.ready;await document.fo
   const W=1080,P=56,F='"Be Vietnam Pro",-apple-system,"Segoe UI",Roboto,Arial,sans-serif',C={bg:'#FAF2E8',card:'#FFFFFF',ink:'#3A2A21',mu:'#8C7363',line:'#F1E0CE',br:'#D9663D',ok:'#1E8A62',cp:'#FDE3C8',alt:'#FFF8F1'},E=EV();
   const vv=c=>Math.max(1,+c.ve||1),pd=c=>Math.min(vv(c),+c.paid||0);
   const T={kh:list.filter(c=>c.name).length,ve:list.reduce((a,c)=>a+vv(c),0),pd:list.reduce((a,c)=>a+pd(c),0),inf:list.filter(c=>c.info).reduce((a,c)=>a+vv(c),0),thu:list.reduce((a,c)=>a+(+c.thu||0),0)};
-  const filt=dkFilterText(),PER=60,pages=Math.max(1,Math.ceil(list.length/PER)),[lb,l30]=await Promise.all([rptImg(RPT_LOGO.bvl),rptImg(RPT_LOGO.y30)]),out=[];
+  const filt=dkFilterText(),PER=20,pages=Math.max(1,Math.ceil(list.length/PER)),[lb,l30]=await Promise.all([rptImg(RPT_LOGO.bvl),rptImg(RPT_LOGO.y30)]),out=[];
   for(let pg=0;pg<pages;pg++){const part=list.slice(pg*PER,(pg+1)*PER);
     const cv=document.createElement('canvas');cv.width=W;cv.height=Math.min(30000,900+part.length*130);const g=cv.getContext('2d');
     const font=(w,sz)=>g.font=`${w} ${sz}px ${F}`,txt=(t,x,y,w,sz,col,al)=>{font(w,sz);g.fillStyle=col;g.textAlign=al||'left';g.fillText(t,x,y)};
@@ -1739,7 +1739,7 @@ async function listImages(list){try{await document.fonts.ready;await document.fo
     const LB=180;g.fillStyle='#FFFFFF';g.fillRect(0,0,W,LB);if(lb)g.drawImage(lb,P,(LB-100)/2,376,100);if(l30)g.drawImage(l30,W-P-169,(LB-130)/2,169,130);
     let y=LB;const hd=wrap(E.hn||'Hội nghị khách hàng',W-2*P,700,44),HH=118+hd.length*54+(filt.length?44:0);
     const grd=g.createLinearGradient(0,y,W,y+HH);grd.addColorStop(0,'#FFB896');grd.addColorStop(1,'#F28A5E');g.fillStyle=grd;g.fillRect(0,y,W,HH);
-    y+=54;txt('DANH SÁCH KHÁCH HÀNG ĐĂNG KÝ'+(pages>1?`  ·  Trang ${pg+1}/${pages}`:''),P,y,700,26,'rgba(59,34,22,.75)');y+=8;hd.forEach(l=>{y+=54;txt(l,P,y,700,44,'#3B2216')});
+    y+=54;txt('DANH SÁCH KHÁCH HÀNG ĐĂNG KÝ'+(pages>1?`  ·  Ảnh ${pg+1}/${pages}`:''),P,y,700,26,'rgba(59,34,22,.75)');if(pages>1)txt(`Khách số ${pg*PER+1}–${pg*PER+part.length} / ${list.length}`,W-P,y,700,26,'#3B2216','right');y+=8;hd.forEach(l=>{y+=54;txt(l,P,y,700,44,'#3B2216')});
     y+=44;txt(fit([S.event.loaiHN,S.event.ngayHN?'Ngày '+dmy(S.event.ngayHN):''].filter(Boolean).join(' · ')||' ',W-2*P,500,26),P,y,500,26,'#3B2216');
     if(filt.length){y+=44;txt(fit('Lọc: '+filt.join(' · '),W-2*P,600,25),P,y,600,25,'#3B2216')}
     y=LB+HH+30;
@@ -1764,13 +1764,13 @@ async function listImages(list){try{await document.fonts.ready;await document.fo
     const o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(cv,0,0);out.push(await new Promise(res=>o.toBlob(b=>res(b),'image/png')))}
   return out}
 async function shareListImages(){renderReg();const list=dkLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');toast('Đang tạo ảnh danh sách…');
-  const blobs=await listImages(list),d=today(),files=blobs.map((b,i)=>new File([b],`Danh-sach-khach-${d}${blobs.length>1?'-trang'+(i+1):''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
+  const blobs=await listImages(list),d=today(),pw=String(blobs.length).length,files=blobs.map((b,i)=>new File([b],`Danh-sach-khach-${d}${blobs.length>1?'-anh'+String(i+1).padStart(Math.max(2,pw),'0')+'-cua-'+blobs.length:''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
   const canShare=!!(navigator.canShare&&navigator.canShare({files}));
-  const v=await ask(`Ảnh danh sách khách (${list.length} lượt${blobs.length>1?' · '+blobs.length+' ảnh':''})`,`<div style="max-height:60vh;overflow:auto;display:grid;gap:8px">${urls.map(u=>`<img src="${u}" alt="Ảnh danh sách khách" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:#FAF2E8">`).join('')}</div>
-    <small class="count" style="display:block;margin-top:8px">Ảnh theo đúng bộ lọc đang chọn; tên khách chỉ ghi họ (bảo mật)${blobs.length>1?'; danh sách dài được chia mỗi ảnh 60 lượt':''}. ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad có thể bấm giữ vào ảnh để lưu.</small>`,
+  const v=await ask(`Ảnh danh sách khách (${list.length} lượt${blobs.length>1?' · '+blobs.length+' ảnh':''})`,`<div style="max-height:60vh;overflow:auto;display:grid;gap:8px">${urls.map((u,i)=>`${urls.length>1?`<small class="count">Ảnh ${i+1}/${urls.length}</small>`:''}<img src="${u}" alt="Ảnh danh sách khách" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:#FAF2E8">`).join('')}</div>
+    <small class="count" style="display:block;margin-top:8px">Ảnh theo đúng bộ lọc đang chọn; tên khách chỉ ghi họ (bảo mật)${blobs.length>1?'; danh sách được chia mỗi ảnh 20 khách, số thứ tự nối tiếp; ảnh lưu theo thứ tự 01, 02, 03':''}. ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad có thể bấm giữ vào ảnh để lưu.</small>`,
     [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
   if(v==='share'){try{await navigator.share({files,title:'Danh sách khách đăng ký'})}catch(e){if(e&&e.name!=='AbortError')files.forEach(f=>download(f,f.name))}}
-  else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*400));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)}
+  else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*700));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)}
 $('#dk2Img').onclick=shareListImages;
 /* lọc danh sách khách đăng ký */
 var dkF={day:'',tn:'',tvv:'',info:'',paid:'',name:''};
