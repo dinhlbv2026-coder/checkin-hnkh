@@ -269,7 +269,7 @@ body.lg-on{overflow:hidden}
 .lg-pick:hover{background:var(--surface-2)}.lg-pick b{font-size:16px}.lg-pick small{color:var(--muted);overflow-wrap:anywhere}.lg-pick .chip{justify-self:start;margin-top:4px}
 .lg-x{border:0;background:none;color:var(--muted);font-size:22px;padding:0 14px;cursor:pointer}.lg-x:hover{color:var(--danger)}
 .lg-more{margin-top:14px}.lg-more summary{cursor:pointer;font-weight:600;font-size:14px;margin-bottom:8px}
-body.role-ht #modebar,body.role-ht [data-mode="dangky"],body.role-ht #fileBar,body.role-ht #guestCard,body.role-ht #orgBox,body.role-ht [data-sy="newconf"],body.role-ht [data-sy="create"]{display:none!important}
+body.role-ht [data-dk="2"],body.role-ht #dkTab,body.role-ht #dk2,body.role-ht #dkStart,body.role-ht #dkReport,body.role-ht #dkCreate,body.role-ht #fileBar,body.role-ht #guestCard,body.role-ht #orgBox,body.role-ht [data-sy="newconf"],body.role-ht [data-sy="create"]{display:none!important}
 @media (max-width:560px){.lg-roles{grid-template-columns:1fr}.rolebtn{padding:6px 8px;font-size:12px}}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
@@ -821,7 +821,7 @@ function updNav(){$$('#tabs button,#bnav button').forEach(b=>{const m=b.dataset.
     b.classList.toggle('on',b.dataset.v===view&&(!b.dataset.dk||b.dataset.dk===dkTabN))});
   $$('#modebar button').forEach(b=>b.classList.toggle('on',b.dataset.mode===MODE));
   const n=$$('#bnav button').filter(b=>!b.hidden).length;$('#bnav').style.gridTemplateColumns=`repeat(${n},1fr)`}
-function setMode(m){if(typeof ROLE!=='undefined'&&ROLE==='ht')m='checkin';MODE=m;try{localStorage.setItem('hnkh-mode',m)}catch(e){}
+function setMode(m){if(typeof ROLE!=='undefined'&&ROLE==='ht'&&m==='dangky')dkTabN='1';MODE=m;try{localStorage.setItem('hnkh-mode',m)}catch(e){}
   if(m==='dangky'){if(view!=='dangky'&&view!=='settings')go('dangky');else updNav()}else{if(view==='dangky'||view==='settings')go('checkin');else updNav()}}
 $$('#modebar button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 document.addEventListener('click',e=>{const a=e.target.closest('[data-goto]');if(a){e.preventDefault();go(a.dataset.goto)}});
@@ -1834,7 +1834,7 @@ function tkRemember(){if(ROLE!=='tk'||!SY.on||!SY.event)return;const l=tkConfs()
   if(i===0&&o.ten===c.ten&&o.loai===c.loai&&o.ngay===c.ngay)return;if(i>=0)l.splice(i,1);if(i!==0)c.at=Date.now();l.unshift(c);lsSet(CONF_KEY,JSON.stringify(l.slice(0,40)))}
 function setRole(r){ROLE=r;try{r?sessionStorage.setItem('hnkh-role',r):sessionStorage.removeItem('hnkh-role')}catch(e){}applyRole()}
 function applyRole(){document.body.classList.toggle('role-ht',ROLE==='ht');document.body.classList.toggle('role-tk',ROLE==='tk');
-  const b=$('#roleBtn');b.hidden=!ROLE;b.innerHTML=ROLE==='tk'?'🗂️ Thư ký':'🤝 Người hỗ trợ';if(ROLE==='ht'&&MODE!=='checkin')setMode('checkin');else updNav()}
+  const b=$('#roleBtn');b.hidden=!ROLE;b.innerHTML=ROLE==='tk'?'🗂️ Thư ký':'🤝 Người hỗ trợ';if(ROLE==='ht')dkTabN='1';const ms=document.querySelector('#modebar [data-mode="dangky"] small');if(ms)ms.textContent=ROLE==='ht'?'Xem tổng hợp đăng ký':'Thư ký theo dõi trước hội nghị';updNav();if(view==='dangky')renderReg()}
 function lgShow(step){$('#login').hidden=false;document.body.classList.add('lg-on');lgStep(step||'role')}
 function lgHide(){$('#login').hidden=true;document.body.classList.remove('lg-on');renderAll();renderSync()}
 function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-back" data-lg="role">← Chọn lại vai trò</button>';
@@ -1893,6 +1893,9 @@ $('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',`Đ
 /* sau mỗi lần cập nhật đồng bộ: thư ký ghi nhớ hội nghị; người hỗ trợ mất mã (rời / bị xoá) thì phải nhập lại mã */
 const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk')tkRemember();
   if(ROLE==='ht'&&SYNC_OK&&!SY.on&&$('#login').hidden)lgShow('htcode')};
+/* người hỗ trợ: phần Đăng ký chỉ xem tổng hợp, không sửa */
+const _renderReg0=renderReg;renderReg=function(){if(ROLE==='ht')dkTabN='1';_renderReg0();
+  $$('#v-dangky input,#v-dangky select,#v-dangky textarea').forEach(el=>{if(el.id!=='dkQ'&&el.id!=='dkOnly')el.disabled=ROLE==='ht'})};
 function roleInit(){applyRole();if(!ROLE)return lgShow('role');if(ROLE==='ht'&&SYNC_OK&&!SY.on)lgShow('htcode')}
 /* ----- xoá hội nghị (chỉ thư ký) ----- */
 var delBusy=false;
