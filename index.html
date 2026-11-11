@@ -592,7 +592,7 @@ dialog .foot .sp{flex:1}
       <div class="list-h dk-tools"><h3>Bảng theo nhóm</h3>
         <input class="inp" id="dkQ" placeholder="Tìm nhóm…">
         <label class="toggle"><input type="checkbox" id="dkOnly"> Chỉ nhóm có đăng ký</label>
-        <button type="button" class="btn sm" id="dkExport">Xuất Excel</button></div>
+        <button type="button" class="btn sm" id="dkExport" hidden>Xuất Excel</button></div>
       <div class="scroll"><table class="t dkt" id="dkTable"></table></div>
     </div>
   </div>
@@ -1789,7 +1789,7 @@ async function exportDayReport(d){if(!window.ExcelJS)return toast('Chưa tải �
   gs.forEach((g,i)=>w.addRow([i+1,g.name,g.ve,p?g.ve-g.pve:'',g.info,g.ve?g.info/g.ve:'',g.dt,g.thu,g.dt?g.thu/g.dt:'']).eachCell({includeEmpty:true},c=>{c.font=FN;c.border=BD}));
   const tr=w.addRow(['','Tổng cộng',x.ve,p?x.ve-p.ve:'',x.info,x.ve?x.info/x.ve:'',x.dt,x.thu||0,x.dt?(x.thu||0)/x.dt:'']);tr.eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
   w.getColumn(6).numFmt='0%';w.getColumn(7).numFmt='#,##0.##';w.getColumn(8).numFmt='#,##0.##';w.getColumn(9).numFmt='0%';
-  const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bao cao dang ky ${dmy(d).replace(/\//g,'.')}.xlsx`);toast('Đã xuất báo cáo ngày '+dmy(d))}
+  addRegSheet(wb);const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bao cao dang ky ${dmy(d).replace(/\//g,'.')}.xlsx`);toast('Đã xuất báo cáo ngày '+dmy(d))}
 $('#dkReport').onclick=openDayReport;
 
 /* ============ đăng nhập: Thư ký (mật khẩu, danh sách hội nghị đã tạo trên máy) · Người hỗ trợ (nhập mã) ============ */
