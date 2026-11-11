@@ -1888,10 +1888,90 @@ async function openDayReport(){const days=Object.keys(S.reg.days||{}).sort();reg
   const d0=today(),all=Object.keys(S.reg.days).sort().reverse();
   const v=await ask('Báo cáo ngày',`<label class="lbl">Chọn ngày</label><select class="inp" id="askInput" style="margin-bottom:10px">${all.map(d=>`<option value="${d}">${dmy(d)}${d===d0?' (hôm nay)':''}</option>`).join('')}</select>
     <textarea class="inp" id="drText" readonly style="min-height:260px;font-family:var(--font);font-size:13.5px;white-space:pre-wrap">${esc(dayReport(d0))}</textarea>`,
-    [{v:'copy',l:'📋 Copy nội dung (gửi Zalo)',primary:true},{v:'xlsx',l:'Xuất Excel báo cáo ngày'},{v:'no',l:'Đóng'}]);
+    [{v:'img',l:'🖼️ Ảnh báo cáo (điện thoại)',primary:IS_TOUCH},{v:'copy',l:'📋 Copy nội dung (gửi Zalo)',primary:!IS_TOUCH},{v:'xlsx',l:'Xuất Excel báo cáo ngày'},{v:'no',l:'Đóng'}]);
   const sel=(document.getElementById('askInput')||{}).value||d0;
   if(v==='copy'){const t=dayReport(sel);try{await navigator.clipboard.writeText(t);toast('Đã copy báo cáo ngày '+dmy(sel))}catch(e){toast('Không copy được — bấm giữ nội dung để sao chép')}}
-  if(v==='xlsx')exportDayReport(sel)}
+  if(v==='xlsx')exportDayReport(sel);if(v==='img')shareReportImage(sel)}
+const IS_TOUCH=matchMedia('(pointer:coarse)').matches||/iPad|iPhone|Android/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+/* ============ ảnh báo cáo dọc (điện thoại / iPad): dashboard 1080px, chia sẻ qua Zalo hoặc lưu ảnh ============ */
+function repData(d){const x=S.reg.days[d];if(!x)return null;const pd=prevDay(d),p=pd?S.reg.days[pd]:null;
+  const gs=Object.entries(x.g||{}).map(([k,v])=>({k,ve:v[0],info:v[1],name:v[3],thu:v[4]||0,paid:v[5]||0,pve:p&&p.g&&p.g[k]?p.g[k][0]:0})).filter(g=>g.ve>0).sort((a,b)=>b.ve-a.ve||a.name.localeCompare(b.name,'vi'));
+  const sh=grpShown(),none=allGroups().filter(g=>sh(g.name)).map(g=>g.name).filter(n=>!gs.some(g=>norm(g.name)===norm(n)));
+  const ld=ts=>{const t=new Date(ts);return t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate())};
+  const nw=Object.values(S.reg.kh||{}).filter(c=>c.at&&ld(c.at)===d),ng={};nw.forEach(c=>{const k=c.group||'(Chưa rõ nhóm)';ng[k]=(ng[k]||0)+Math.max(1,+c.ve||1)});
+  const kc=x.kc?{kh:x.kc[0],dk:x.kc[1],vt:x.kc[2],tong:x.kc[3]}:d===today()?khCount():null;
+  const den=d===today()?khCount().den:0;
+  const dl=S.event.ngayHN?Math.round((new Date(S.event.ngayHN+'T00:00')-new Date(d+'T00:00'))/864e5):null;
+  return{d,x,p,pd,gs,none,kc,den,dl,nve:nw.reduce((a,c)=>a+Math.max(1,+c.ve||1),0),nl:nw.length,ng:Object.entries(ng).sort((a,b)=>b[1]-a[1])}}
+async function reportImage(d){const R=repData(d);if(!R)return null;const{x,p,pd,gs,none,kc,den,dl}=R,E=EV();
+  try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
+  const W=1080,P=56,F='"Be Vietnam Pro",-apple-system,"Segoe UI",Roboto,Arial,sans-serif',C={bg:'#FAF2E8',card:'#FFFFFF',ink:'#3A2A21',mu:'#8C7363',line:'#F1E0CE',br:'#D9663D',pe:'#FFA883',cp:'#FDE3C8',ok:'#1E8A62',oks:'#E1F4EC',sky:'#4FB5D3',up:'#1E8A62',dn:'#C2412B'};
+  const cv=document.createElement('canvas');cv.width=W;cv.height=8000;const g=cv.getContext('2d');g.textBaseline='alphabetic';
+  const font=(w,sz)=>g.font=`${w} ${sz}px ${F}`;
+  const txt=(t,x0,y0,w,sz,col,al)=>{font(w,sz);g.fillStyle=col;g.textAlign=al||'left';g.fillText(t,x0,y0)};
+  const wrap=(t,maxW,w,sz)=>{font(w,sz);const out=[];let line='';for(const wd of String(t).split(' ')){const tt=line?line+' '+wd:wd;if(g.measureText(tt).width>maxW&&line){out.push(line);line=wd}else line=tt}if(line)out.push(line);return out};
+  const fit=(t,maxW,w,sz)=>{font(w,sz);if(g.measureText(t).width<=maxW)return t;while(t.length>1&&g.measureText(t+'…').width>maxW)t=t.slice(0,-1);return t+'…'};
+  const rr=(x0,y0,w,h,r,col)=>{g.beginPath();g.roundRect?g.roundRect(x0,y0,w,h,r):g.rect(x0,y0,w,h);g.fillStyle=col;g.fill()};
+  const pct=(a,b)=>b?Math.round(a/b*100):0,sg=v=>(v>=0?'+':'')+v,nf2=v=>fmt(v)||'0';
+  g.fillStyle=C.bg;g.fillRect(0,0,W,cv.height);
+  /* đầu trang */
+  let y=0;const hd=wrap(E.hn||'Hội nghị khách hàng',W-2*P,700,50);const HH=150+hd.length*62+(S.event.loaiHN||S.event.ngayHN?50:0);
+  const grd=g.createLinearGradient(0,0,W,HH);grd.addColorStop(0,'#FFB896');grd.addColorStop(1,'#F28A5E');g.fillStyle=grd;g.fillRect(0,0,W,HH);
+  y=P+22;txt('BÁO CÁO ĐĂNG KÝ HỘI NGHỊ',P,y,700,26,'rgba(59,34,22,.75)');y+=18;
+  hd.forEach(l=>{y+=60;txt(l,P,y,700,50,'#3B2216')});
+  if(S.event.loaiHN||S.event.ngayHN){y+=50;txt([S.event.loaiHN,S.event.ngayHN?'Ngày '+dmy(S.event.ngayHN):''].filter(Boolean).join(' · '),P,y,500,28,'#3B2216')}
+  if(dl!=null&&dl>=0){font(700,28);const t=dl>0?`Còn ${dl} ngày`:'Hôm nay',tw=g.measureText(t).width+40;rr(W-P-tw,P,tw,52,26,'rgba(255,255,255,.85)');txt(t,W-P-tw/2,P+36,700,28,C.br,'center')}
+  y=HH+48;txt(`Số liệu đến ngày ${dmy(d)}`,P,y,700,30,C.ink);txt(pd?`so sánh với ${dmy(pd)}`:'',W-P,y,400,24,C.mu,'right');
+  /* thẻ chỉ số */
+  y+=26;const cw=(W-2*P-24)/2,ch=170;
+  const kp=[
+    ['Tổng vé đăng ký',`${x.ve}`,'vé',p?`${sg(x.ve-p.ve)} so với hôm trước`:'',C.br],
+    ['Số khách hàng',kc&&kc.tong?`${kc.tong}`:`${x.ve}`,'người',kc&&kc.tong?`${kc.kh} KH + ${kc.dk} đi kèm${kc.vt?' + '+kc.vt+' vé chưa tên':''}`:'',C.br],
+    ['Vé đã nộp tiền',`${x.paid||0}`,`/ ${x.ve} vé`,`${pct(x.paid||0,x.ve)}%${p?' · '+sg((x.paid||0)-(p.paid||0)):''}`,C.ok],
+    ['KH có thông tin',`${x.info}`,`/ ${x.ve} vé`,`${pct(x.info,x.ve)}%${p?' · '+sg(x.info-(p.info||0)):''}`,C.ok],
+    ['FYP dự kiến',nf2(x.thu||0),'triệu đ',p?`${sg(Math.round(((x.thu||0)-(p.thu||0))*10)/10)} tr so với hôm trước`:'',C.sky],
+    den?['Đã đến hội nghị',`${den}`,'khách',`${pct(den,kc?kc.tong:x.ve)}% số khách`,C.sky]:['Nhóm đã đăng ký',`${gs.length}`,'nhóm',`${x.tick||0} nhóm đủ thông tin KH`,C.sky]];
+  kp.forEach((k,i)=>{const cx=P+(i%2)*(cw+24),cy=y+Math.floor(i/2)*(ch+24);rr(cx,cy,cw,ch,28,C.card);rr(cx,cy+28,8,ch-56,4,k[4]);
+    txt(k[0],cx+34,cy+46,600,26,C.mu);font(700,60);const vw=g.measureText(k[1]).width;txt(k[1],cx+34,cy+112,700,60,C.ink);txt(k[2],cx+34+vw+12,cy+112,500,26,C.mu);
+    if(k[3])txt(fit(k[3],cw-60,500,23),cx+34,cy+148,500,23,k[3].startsWith('-')?C.dn:C.mu)});
+  y+=3*(ch+24)+30;
+  /* thanh tiến độ */
+  const bar=(lb,a,b,col)=>{const pc=pct(a,b);txt(lb,P,y,600,26,C.ink);txt(`${a}/${b} · ${pc}%`,W-P,y,700,26,col,'right');y+=16;rr(P,y,W-2*P,22,11,C.line);if(pc)rr(P,y,Math.max(22,(W-2*P)*Math.min(1,a/b)),22,11,col);y+=60};
+  bar('Tiến độ nộp tiền',x.paid||0,x.ve,C.ok);bar('Tiến độ thông tin khách hàng',x.info,x.ve,C.br);
+  /* trong ngày */
+  const ngs=R.ng.slice(0,6),bh=100+(R.nl?44*Math.ceil(ngs.length/2):0);rr(P,y,W-2*P,bh,28,C.cp);
+  txt(`📌 Trong ngày ${dmy(d)}`,P+30,y+48,700,28,C.ink);txt(R.nl?`+${R.nve} vé · ${R.nl} lượt`:'Chưa có đăng ký mới',W-P-30,y+48,700,28,R.nl?C.br:C.mu,'right');
+  ngs.forEach(([k,v],i)=>txt(fit(`${k}: +${v} vé`,(W-2*P-90)/2,500,25),P+30+(i%2)*((W-2*P-60)/2),y+98+Math.floor(i/2)*44,500,25,C.ink));
+  y+=bh+44;
+  /* bảng theo nhóm */
+  txt('Theo nhóm',P,y,700,32,C.ink);txt(`${gs.length} nhóm có đăng ký`,W-P,y,500,24,C.mu,'right');y+=22;
+  const col={n:P+24,ve:P+560,pd:P+700,inf:P+830,thu:W-P-24},rh=78,mx=Math.max(1,...gs.map(r=>r.ve));
+  rr(P,y,W-2*P,56+gs.length*rh+10,28,C.card);y+=40;
+  [['Nhóm · trưởng nhóm',col.n,'left'],['Vé',col.ve,'right'],['Đã nộp',col.pd,'right'],['Có TT',col.inf,'right'],['FYP tr',col.thu,'right']].forEach(([t,x0,al])=>txt(t,x0,y,600,22,C.mu,al));
+  y+=16;g.fillStyle=C.line;g.fillRect(P+20,y,W-2*P-40,2);
+  gs.forEach((r,i)=>{const ty=y+i*rh;if(i%2)rr(P+12,ty+6,W-2*P-24,rh-8,14,'#FFF8F1');
+    rr(col.n,ty+rh-9,Math.max(6,300*r.ve/mx),5,3,C.pe);
+    txt(fit(`${i+1}. ${r.name}`,440,700,27),col.n,ty+36,700,27,C.ink);const tn=tnOf(r.name);if(tn)txt(fit('TN '+tn,440,400,21),col.n,ty+59,400,21,C.mu);
+    txt(`${r.ve}`,col.ve,ty+40,700,30,C.ink,'right');if(p&&r.ve!==r.pve)txt(sg(r.ve-r.pve),col.ve,ty+64,600,20,r.ve-r.pve>=0?C.up:C.dn,'right');
+    txt(`${r.paid}`,col.pd,ty+40,600,27,r.paid>=r.ve?C.ok:C.ink,'right');txt(`${r.info}`,col.inf,ty+40,600,27,r.info>=r.ve?C.ok:C.ink,'right');txt(nf2(r.thu),col.thu,ty+40,500,27,C.ink,'right')});
+  y+=gs.length*rh+10;if(!gs.length){txt('Chưa có nhóm nào đăng ký',W/2,y+10,500,26,C.mu,'center');y+=40}
+  y+=40;
+  /* nhóm chưa đăng ký */
+  if(none.length){const ls=wrap(none.join(' · '),W-2*P-60,500,24);rr(P,y,W-2*P,74+ls.length*36,28,C.card);txt(`Nhóm chưa đăng ký (${none.length})`,P+30,y+46,700,26,C.dn);
+    ls.forEach((l,i)=>txt(l,P+30,y+86+i*36,500,24,C.ink));y+=74+ls.length*36+36}
+  /* chân trang */
+  const now=new Date();txt(`BVL DTH Checkin · xuất lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} ${dmy(today())}`,W/2,y+16,500,22,C.mu,'center');y+=50;
+  const out=document.createElement('canvas');out.width=W;out.height=y;out.getContext('2d').drawImage(cv,0,0);
+  return new Promise(res=>out.toBlob(b=>res(b),'image/png'))}
+async function shareReportImage(d){toast('Đang tạo ảnh báo cáo…');const blob=await reportImage(d);if(!blob)return toast('Chưa có số liệu ngày '+dmy(d));
+  const name=`Bao-cao-dang-ky-${d}.png`,file=new File([blob],name,{type:'image/png'}),url=URL.createObjectURL(blob);
+  const canShare=!!(navigator.canShare&&navigator.canShare({files:[file]}));
+  const v=await ask('Ảnh báo cáo ngày '+dmy(d),`<img src="${url}" alt="Ảnh báo cáo" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;max-height:60vh;object-fit:contain;background:#FAF2E8">
+    <small class="count" style="display:block;margin-top:8px">${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad cũng có thể bấm giữ vào ảnh để lưu.</small>`,
+    [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
+  if(v==='share'){try{await navigator.share({files:[file],title:'Báo cáo đăng ký '+dmy(d)})}catch(e){if(e&&e.name!=='AbortError')download(blob,name)}}
+  else if(v==='dl')download(blob,name);setTimeout(()=>URL.revokeObjectURL(url),60000)}
+
 document.addEventListener('change',e=>{if(e.target.id==='askInput'&&document.getElementById('drText'))document.getElementById('drText').value=dayReport(e.target.value)||''});
 async function exportDayReport(d){if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');const x=S.reg.days[d];if(!x)return;
   const pd=prevDay(d),p=pd?S.reg.days[pd]:null,E=EV(),wb=new ExcelJS.Workbook(),FN={name:'Times New Roman',size:12},th={style:'thin'},BD={top:th,left:th,bottom:th,right:th};
