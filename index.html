@@ -1752,7 +1752,7 @@ function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNga
     <div class="actions" style="margin:10px 0 0"><button type="button" class="btn sm danger" data-sy="newconf">⏏ Thoát hội nghị / chuyển hội nghị khác</button><span class="count">Dữ liệu hội nghị này vẫn lưu trên mạng — nhập lại mã là quay lại được.</span></div>`}
   $('#dkSyncNote').innerHTML=(S.event.loaiHN?`<span class="chip">🏷️ ${esc(S.event.loaiHN)}</span> `:'')+(typeof SYNC_OK!=='undefined'&&SYNC_OK?(SY.on?`☁️ Theo dõi chung — mã <b>${esc(SY.event)}</b>`:'Chưa có mã hội nghị — số liệu chỉ lưu trên máy này'):'')}
 $('#dkNgay').addEventListener('change',e=>{S.event.ngayHN=e.target.value;save();renderReg()});
-const LOAI_HN=['HNKH cấp Công ty','HNKH cấp Phòng PTKD','HNKH cấp Ban / VPKV','HNKH cấp nhóm','Hội thảo giới thiệu sản phẩm','Tri ân khách hàng'];
+const LOAI_HN=['HNKH cấp Tổng Công ty','HNKH cấp Công ty','HNKH cấp Phòng PTKD','HNKH cấp Ban / VPKV','HNKH cấp nhóm','Hội thảo giới thiệu sản phẩm','Tri ân khách hàng'];
 /* tạo hội nghị từ phần Đăng ký: chọn loại hội nghị + tên */
 async function createFromReg(){
   const cur=S.event.loaiHN||'';
