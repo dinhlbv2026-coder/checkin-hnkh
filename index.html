@@ -335,6 +335,8 @@ body.pop-on .dkfab{display:none!important}
 .dpbtn:hover{border-color:var(--brand)}
 .dpnative{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0}
 .atcell{width:150px!important;min-width:140px}
+body.info-locked #dkOpen,body.info-locked #dkFab,body.info-locked #dk2Table .mini.del,body.info-locked #dk2Table [data-khdk]{display:none!important}
+.lockchip{background:var(--danger-soft);color:var(--danger);border-color:transparent;font-weight:700}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -639,7 +641,8 @@ dialog .foot .sp{flex:1}
   <div class="card pad dkconf" id="dkConf" hidden></div>
   <div class="card pad dkbar">
     <label class="lbl" for="dkNgay" style="margin:0">Ngày hội nghị</label><span class="dpick"><input class="inp" id="dkNgayT" inputmode="numeric" placeholder="dd/mm/yyyy" autocomplete="off" style="max-width:140px;padding:7px 10px" title="Ngày hội nghị (dd/mm/yyyy)"><span class="dpbtn" title="Chọn trên lịch">📅<input type="date" id="dkNgay" class="dpnative" tabindex="-1" aria-label="Chọn ngày hội nghị trên lịch"></span></span>
-    <span id="dkLeft"></span><span class="count" id="dkSyncNote"></span><span style="flex:1"></span>
+    <label class="lbl" for="dkGioT" style="margin:0">Giờ bắt đầu</label><input class="inp" id="dkGioT" inputmode="numeric" placeholder="hh:mm" autocomplete="off" style="max-width:86px;padding:7px 10px" title="Giờ bắt đầu hội nghị (24 giờ, VD 08:00) — 3 giờ sau sẽ khoá sửa thông tin khách">
+    <span id="dkLeft"></span><span id="dkLockNote"></span><span class="count" id="dkSyncNote"></span><span style="flex:1"></span>
     <button type="button" class="btn sm" id="dkCreate" hidden>☁️ Tạo mã hội nghị để theo dõi chung</button>
     <button type="button" class="btn primary" id="dkReport">📝 Báo cáo ngày</button>
   </div>
@@ -888,7 +891,19 @@ document.addEventListener('click',ev=>{const p=ev.target.closest('#phongSeg [dat
   if(p){const v=p.dataset.p;if(S.event.phong!==v){S.event.phong=v;S.event.khuVuc=''}}else if(k){S.event.khuVuc=S.event.khuVuc===k.dataset.kv?'':k.dataset.kv}else return;
   save();renderOrg();renderHeader()});
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defState();return{...d,...o,event:{...d.event,...(o.event||{})}}}}catch(e){}return defState()}
-function save(){try{if(typeof trackChanges==='function')trackChanges()}catch(e){}let ok=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){ok=false}
+/* ===== khoá thông tin khách: 3 giờ sau khi bắt đầu hội nghị ===== */
+const LOCK_H=3;var lastCust=null,lockWarnAt=0;
+function hnStart(){const d=S.event.ngayHN;if(!d)return null;const g=String(S.event.gioHN||'');
+  if(/^\d{2}:\d{2}$/.test(g)){const[y,mo,da]=d.split('-').map(Number),[h,mi]=g.split(':').map(Number);return new Date(y,mo-1,da,h,mi).getTime()}
+  const t=(S.guests||[]).filter(x=>x.attended&&x.at&&atDay(new Date(x.at).getTime())===d).map(x=>new Date(x.at).getTime()).sort((a,b)=>a-b)[0];return t||null}
+function lockAt(){const st=hnStart();return st==null?null:st+LOCK_H*3600e3}
+function infoLocked(){const t=lockAt();return t!=null&&Date.now()>=t}
+const custKey=()=>JSON.stringify([(S.reg&&S.reg.kh)||{},S.guests||[]]);
+function lockGuard(){if(typeof applying!=='undefined'&&applying){lastCust=custKey();return}
+  const k=custKey();if(lastCust!=null&&k!==lastCust&&infoLocked()){const[kh,gs]=JSON.parse(lastCust);S.reg=S.reg||{};S.reg.kh=kh;S.guests=gs;
+    if(Date.now()-lockWarnAt>1500){lockWarnAt=Date.now();setTimeout(()=>{try{renderAll()}catch(e){}toast('🔒 Đã khoá thông tin khách hàng (quá 3 giờ sau khi bắt đầu hội nghị) — không lưu thay đổi')},0)}return}
+  lastCust=k}
+function save(){try{lockGuard()}catch(e){}try{if(typeof trackChanges==='function')trackChanges()}catch(e){}let ok=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){ok=false}
   const el=$('#saved');el.textContent=ok?'Đã lưu trên máy · '+hm(new Date().toISOString()):'⚠ Không lưu được — hãy sao lưu';
   if(typeof scheduleWrite==='function')scheduleWrite()}
 
@@ -1525,7 +1540,7 @@ if(!SY.device){SY.device='m'+Math.random().toString(36).slice(2,8);sySave()}
 if(/^Máy [A-Z0-9]{3}$/.test(SY.name||'')){SY.name='';sySave()}
 const SYNC_OK=!!FB_URL&&window.self===window.top&&location.protocol!=='data:';
 const recKey=g=>JSON.stringify(g);
-const evKey=()=>JSON.stringify([S.event.tenHN||'',S.event.phong||'',S.event.khuVuc||'',S.event.ngayHN||'',S.event.loaiHN||'']);
+const evKey=()=>JSON.stringify([S.event.tenHN||'',S.event.phong||'',S.event.khuVuc||'',S.event.ngayHN||'',S.event.loaiHN||'',S.event.gioHN||'']);
 const regKey=()=>JSON.stringify(S.reg||{});
 const buildSnap=()=>({g:new Map(S.guests.map(g=>[g.id,recKey(g)])),e:evKey(),r:regKey()});
 const fbUrl=p=>`${FB_URL}/events/${encodeURIComponent(SY.event)}${p}.json`;
@@ -1537,7 +1552,7 @@ function trackChanges(){if(!SY||!SY.on||applying)return false;if(!snap){snap=bui
   let ch=false;const cur=new Map();
   S.guests.forEach(g=>{const k=recKey(g);if(snap.g.get(g.id)!==k){SY.pend['guests/'+g.id]=cleanRec(g);ch=true}cur.set(g.id,k)});
   snap.g.forEach((k,id)=>{if(!cur.has(id)){SY.pend['guests/'+id]=null;ch=true}});
-  const ek=evKey();if(ek!==snap.e){Object.assign(SY.pend,{'info/tenHN':S.event.tenHN||'','info/phong':S.event.phong||'','info/khuVuc':S.event.khuVuc||'','info/ngayHN':S.event.ngayHN||'','info/loaiHN':S.event.loaiHN||''});ch=true}
+  const ek=evKey();if(ek!==snap.e){Object.assign(SY.pend,{'info/tenHN':S.event.tenHN||'','info/phong':S.event.phong||'','info/khuVuc':S.event.khuVuc||'','info/ngayHN':S.event.ngayHN||'','info/loaiHN':S.event.loaiHN||'','info/gioHN':S.event.gioHN||''});ch=true}
   const rk=regKey();if(rk!==snap.r){SY.pend['reg']=JSON.parse(rk);ch=true}
   snap={g:cur,e:ek,r:rk};if(ch){sySave();clearTimeout(flushT);flushT=setTimeout(flush,300)}return ch}
 async function flush(){if(!SY.on||!Object.keys(SY.pend).length)return;const body={...SY.pend};
@@ -1555,7 +1570,7 @@ function applyRemote(){if(!R)return;applying=true;
   for(const[id,g]of Object.entries(R.guests||{})){const pk='guests/'+id;if(pk in pend){if(pend[pk])list.push(pend[pk])}else list.push({...g,id})}
   for(const k in pend)if(k.startsWith('guests/')&&pend[k]&&!(R.guests||{})[k.slice(7)])list.push(pend[k]);
   S.guests=list;const inf=R.info||{};
-  ['tenHN','phong','khuVuc','ngayHN','loaiHN'].forEach(f=>{if(!('info/'+f in pend)&&f in inf)S.event[f]=inf[f]});
+  ['tenHN','phong','khuVuc','ngayHN','loaiHN','gioHN'].forEach(f=>{if(!('info/'+f in pend)&&f in inf)S.event[f]=inf[f]});
   if(!('reg' in pend)){const rg=R.reg||{};S.reg={groups:rg.groups||{},kh:rg.kh||{},days:rg.days||{}}}
   if(typeof syncRegToGuests==='function')syncRegToGuests();
   snap=buildSnap();save();applying=false;syState.last=new Date();if(syState.st!=='err')syState.st='ok';renderAll();renderSync()}
@@ -1619,7 +1634,7 @@ async function createEvent(){
     const nm=tc((document.getElementById('askInput')||{}).value||'');if(v==='ok'&&nm){S.event.tenHN=nm;save()}}
   let code=newCode(S.event.tenHN);SY.event=code;
   const guests={};S.guests.forEach(g=>{guests[g.id]=cleanRec(g)});
-  const body=()=>({info:{tenHN:S.event.tenHN||'',phong:S.event.phong||'',khuVuc:S.event.khuVuc||'',ngayHN:S.event.ngayHN||'',loaiHN:S.event.loaiHN||'',by:SY.name,dev:SY.device,at:Date.now(),n:S.guests.length},guests,reg:S.reg||{groups:{},kh:{},days:{}},devices:{[SY.device]:{name:SY.name,at:Date.now()}}});
+  const body=()=>({info:{tenHN:S.event.tenHN||'',phong:S.event.phong||'',khuVuc:S.event.khuVuc||'',ngayHN:S.event.ngayHN||'',loaiHN:S.event.loaiHN||'',gioHN:S.event.gioHN||'',by:SY.name,dev:SY.device,at:Date.now(),n:S.guests.length},guests,reg:S.reg||{groups:{},kh:{},days:{}},devices:{[SY.device]:{name:SY.name,at:Date.now()}}});
   try{await fbReq('PUT','',body())}
   catch(e){SY.event='';return toast('Không tạo được mã hội nghị: '+(navigator.onLine?e.message:'mất mạng'))}
   Object.assign(SY,{on:true,pend:{},host:true});sySave();R=null;snap=buildSnap();$('#syncBox').open=true;renderSync();
@@ -1920,7 +1935,7 @@ $('#dkAdd').onclick=dkAdd;
 document.addEventListener('click',e=>{const n=e.target.closest('.dpnative');if(n&&n.showPicker){try{n.showPicker()}catch(_){}}});
 /* pop-up pha lê nhập khách mới */
 var dkPopCount=0;
-function dkPopOpen(){if(ROLE==='ht')return;const o=$('#dkPop');if(!o.hidden)return;dkPopCount=0;$('#dkPopN').textContent='';o.hidden=false;document.body.classList.add('pop-on');
+function dkPopOpen(){if(ROLE==='ht')return;if(infoLocked())return toast('🔒 Đã khoá thông tin khách hàng — không nhập thêm khách');const o=$('#dkPop');if(!o.hidden)return;dkPopCount=0;$('#dkPopN').textContent='';o.hidden=false;document.body.classList.add('pop-on');
   requestAnimationFrame(()=>o.classList.add('on'));setTimeout(()=>(!$('#dkTn').value.trim()&&!$('#dkTvv').value.trim()?$('#dkTn'):$('#dkName')).focus(),120)}
 function dkPopClose(){const o=$('#dkPop');if(o.hidden)return;o.classList.remove('on');document.body.classList.remove('pop-on');$$('#dkPop .pick').forEach(p=>p.hidden=true);setTimeout(()=>{o.hidden=true},180);
   if(dkPopCount)toast(`Đã nhập ${dkPopCount} lượt khách`)}
@@ -2002,7 +2017,7 @@ function renderDays(){const box=$('#dkDays');if(!box)return;const KH=Object.valu
     <div class="scroll" style="margin-top:12px"><table class="t daytbl"><thead><tr><th>Ngày</th><th class="n">Tổng vé<br><small>(lũy kế)</small></th><th class="n" title="Số vé nhập mới trong ngày (theo ngày giờ nhập)">Tăng<br><small>(nhập mới)</small></th><th class="n">KH có thông tin<br><small>(lũy kế)</small></th><th class="n">Tăng<br><small>(nhập mới)</small></th><th class="n">Tỷ lệ</th></tr></thead><tbody>${rows.slice().reverse().map(r=>{const cur=r.d===last.d;return`<tr class="${cur?'curday':''}"><td>${dmy(r.d)}${cur?' <span class="chip solid">Đang báo cáo</span>':''}</td><td class="n num"><b>${r.ve}</b></td><td class="n num ${r.dv>0?'up':''}">${r.dv?'+'+r.dv:'0'}</td><td class="n num">${r.info}</td><td class="n num ${r.di>0?'up':''}">${r.di?'+'+r.di:'0'}</td><td class="n num">${r.ve?Math.round(r.info/r.ve*100)+'%':'—'}</td></tr>`}).join('')}</tbody>
       <tfoot><tr class="daytot"><td>Tổng cộng <small class="count">(${rows.length} ngày · đến ${dmy(last.d)})</small></td><td class="n num">${last.ve}</td><td class="n num up">+${rows.reduce((a,r)=>a+(r.dv||0),0)}</td><td class="n num">${last.info}</td><td class="n num up">+${rows.reduce((a,r)=>a+(r.di||0),0)}</td><td class="n num">${last.ve?Math.round(last.info/last.ve*100)+'%':'—'}</td></tr></tfoot></table></div>`;
   requestAnimationFrame(()=>requestAnimationFrame(()=>$$('#dkDays .b').forEach(b=>b.style.height=b.dataset.h+'%')))}
-function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNgay'))$('#dkNgay').value=S.event.ngayHN||'';if(document.activeElement!==$('#dkNgayT'))$('#dkNgayT').value=dmy(S.event.ngayHN||'');
+function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNgay'))$('#dkNgay').value=S.event.ngayHN||'';if(document.activeElement!==$('#dkNgayT'))$('#dkNgayT').value=dmy(S.event.ngayHN||'');if(document.activeElement!==$('#dkGioT'))$('#dkGioT').value=S.event.gioHN||'';renderLockNote();
   $('#dkLeft').innerHTML=dl==null?'<span class="count">Chưa đặt ngày hội nghị</span>':dl>0?`<span class="chip solid">⏳ Còn <b>${dl}</b> ngày</span>`:dl===0?'<span class="chip solid">📅 Hôm nay là ngày hội nghị</span>':`<span class="chip">Đã qua ${-dl} ngày</span>`;
   const btn=$('#dkCreate');if(btn)btn.hidden=true;
   const ok=typeof SYNC_OK!=='undefined'&&SYNC_OK;$('#dkStart').hidden=!ok||SY.on;$('#dkConf').hidden=!ok||!SY.on;
@@ -2011,7 +2026,17 @@ function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNga
     <p class="hint" style="margin:8px 0 0">🔗 Đã liên kết với phần <b>Checkin</b>: ${n} khách đăng ký có sẵn trong danh sách chờ checkin. Ngày hội nghị, lễ tân nhập mã này ở phần Checkin.</p>
     <div class="actions" style="margin:10px 0 0"><button type="button" class="btn sm danger" data-sy="newconf">⏏ Thoát hội nghị / chuyển hội nghị khác</button><span class="count">Dữ liệu hội nghị này vẫn lưu trên mạng — nhập lại mã là quay lại được.</span></div>`}
   $('#dkSyncNote').innerHTML=(S.event.loaiHN?`<span class="chip">🏷️ ${esc(S.event.loaiHN)}</span> `:'')+(typeof SYNC_OK!=='undefined'&&SYNC_OK?(SY.on?`☁️ Theo dõi chung — mã <b>${esc(SY.event)}</b>`:'Chưa có mã hội nghị — số liệu chỉ lưu trên máy này'):'')}
-$('#dkNgay').addEventListener('change',e=>{S.event.ngayHN=e.target.value;$('#dkNgayT').value=dmy(e.target.value);save();renderReg()});
+$('#dkNgay').addEventListener('change',async e=>{if(e.target.value!==(S.event.ngayHN||'')&&!await lockFieldOk()){e.target.value=S.event.ngayHN||'';$('#dkNgayT').value=dmy(S.event.ngayHN||'');return}lastCust=custKey();S.event.ngayHN=e.target.value;$('#dkNgayT').value=dmy(e.target.value);save();renderReg()});
+function renderLockNote(){const el=$('#dkLockNote');const t=lockAt(),L=infoLocked();document.body.classList.toggle('info-locked',L);if(!el)return;
+  const f=x=>{const d=new Date(x);return atHM(x)+' '+dmy(atDay(x))};
+  el.innerHTML=t==null?'':L?`<span class="chip lockchip">🔒 Đã khoá sửa thông tin khách từ ${f(t)}</span>`:`<span class="count" title="${S.event.gioHN?'Theo giờ bắt đầu đã nhập':'Chưa nhập giờ bắt đầu — tính từ lượt checkin đầu tiên'}">🔓 Khoá sửa thông tin khách lúc ${f(t)}</span>`}
+setInterval(()=>{const L=infoLocked();if(L!==document.body.classList.contains('info-locked')){renderLockNote();try{renderAll()}catch(e){}if(L)toast('🔒 Đã quá 3 giờ sau khi bắt đầu hội nghị — khoá sửa thông tin khách hàng')}},30000);
+async function lockFieldOk(){if(!infoLocked())return true;return okAsk('Đang khoá thông tin khách',`Thông tin khách đã khoá từ ${atHM(lockAt())} ${dmy(atDay(lockAt()))}.<br>Đổi ngày / giờ bắt đầu có thể <b>mở khoá</b> lại. Chỉ làm khi đã nhập sai ngày giờ hội nghị. Tiếp tục?`,'Đổi ngày giờ')}
+$('#dkGioT').addEventListener('change',async e=>{const v=e.target.value.trim();let g='';
+  if(v){const m=v.match(/^(\d{1,2})(?:[:hH.\s]?(\d{2}))?$/);if(!m||+m[1]>23||+(m[2]||0)>59){e.target.value=S.event.gioHN||'';return flash(e.target,'Giờ theo dạng hh:mm (24 giờ), VD: 08:00 hoặc 13:30')}g=pad2(+m[1])+':'+pad2(+(m[2]||0))}
+  if(g===(S.event.gioHN||'')){e.target.value=g;return}if(!await lockFieldOk()){e.target.value=S.event.gioHN||'';return}
+  S.event.gioHN=g;e.target.value=g;lastCust=custKey();save();renderReg();renderLockNote();toast(g?`Giờ bắt đầu ${g} — khoá sửa thông tin khách lúc ${atHM(lockAt())}`:'Đã xoá giờ bắt đầu')});
+$('#dkGioT').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.target.blur()}});
 $('#dkNgayT').addEventListener('change',e=>{const v=e.target.value.trim();if(!v){$('#dkNgay').value='';$('#dkNgay').dispatchEvent(new Event('change'));return}
   const r=parseDMY(v);if(!r){e.target.value=dmy(S.event.ngayHN||'');return flash(e.target,'Ngày theo dạng dd/mm/yyyy, VD: 20/11/2026')}
   e.target.value=dmy(r.iso);$('#dkNgay').value=r.iso;$('#dkNgay').dispatchEvent(new Event('change'))});
@@ -2339,7 +2364,7 @@ const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk
   if(ROLE==='ht'&&SYNC_OK&&!SY.on&&$('#login').hidden)lgShow('htcode')};
 /* người hỗ trợ: phần Đăng ký chỉ xem tổng hợp, không sửa */
 const _renderReg0=renderReg;renderReg=function(){if(ROLE==='ht')dkTabN='1';_renderReg0();
-  $$('#v-dangky input,#v-dangky select,#v-dangky textarea').forEach(el=>{if(el.id!=='dkQ'&&el.id!=='dkOnly')el.disabled=ROLE==='ht'})};
+  const LK=infoLocked();$$('#v-dangky input,#v-dangky select,#v-dangky textarea').forEach(el=>{if(el.id==='dkQ'||el.id==='dkOnly'||el.id==='dk2Q'||el.dataset.dkf!=null||el.id==='dk2Group')return;el.disabled=ROLE==='ht'||(LK&&!!el.closest('#dk2Table,#dkPop'))})};
 function roleInit(){if(ROLE==='tk'&&!isAdmin())setRole('');applyRole();if(!ROLE)return lgShow('role');if(ROLE==='ht'&&SYNC_OK&&!SY.on)lgShow('htcode')}
 /* ----- xoá hội nghị (chỉ thư ký) ----- */
 var delBusy=false;
@@ -2349,7 +2374,7 @@ function renderConfCard(){const card=$('#confCard');if(!card)return;card.hidden=
     <button type="button" class="btn sm danger" style="align-self:center;margin-right:10px" data-delconf="${esc(c.code)}">🗑 Xoá</button></div>`}).join('')}</div>`
    :'<p class="count" style="margin:0">Máy này chưa có hội nghị nào.</p>'}
 function confClearLocal(){stopStream();Object.assign(SY,{on:false,event:'',pend:{},host:false});sySave();snap=null;R=null;setSy('off','');
-  S.guests=[];S.recent=[];S.guestFile=null;S.tomb={};S.reg={groups:{},kh:{},days:{}};Object.assign(S.event,{tenHN:'',phong:'',khuVuc:'',loaiHN:'',ngayHN:''});save();renderAll();renderSync()}
+  S.guests=[];S.recent=[];S.guestFile=null;S.tomb={};S.reg={groups:{},kh:{},days:{}};Object.assign(S.event,{tenHN:'',phong:'',khuVuc:'',loaiHN:'',ngayHN:'',gioHN:''});save();renderAll();renderSync()}
 function confGone(){const code=SY.event;
   try{if(S.guests.length)localStorage.setItem('hnkh-ds-cu',JSON.stringify({at:new Date().toISOString(),guests:S.guests}))}catch(e){}
   confClearLocal();lsSet(CONF_KEY,JSON.stringify(tkConfs().filter(c=>c.code!==code)));
@@ -2378,6 +2403,9 @@ window.addEventListener('storage',e=>{if(e.key===KEY){S=load();renderAll()}});
 setMode(MODE);updateTvvUI();renderAll();initAuto();renderSync();if(SY.on&&SYNC_OK){snap=buildSnap();startStream()}
 roleInit();
 if(embNew)toast(`Đã nạp danh sách TVV mới: ${EMB.tvv.length} người`);
+
+/* mốc so sánh cho khoá thông tin khách */
+try{lastCust=custKey();renderLockNote()}catch(e){}
 </script>
 </body>
 </html>
