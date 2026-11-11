@@ -1186,9 +1186,9 @@ function buildWorkbook(withData){
   ['TT','Họ tên khách hàng ','Tên TVV','Ban/\nnhóm','Phí đăng ký tại HNKH','Quà tặng','Ghi chú','KH tham dự','Khách mới','Lễ tân checkin'].forEach((h,i)=>put(w,7,i+1,h,{...H,font:{size:11,bold:true}}));
   w.getRow(7).height=34;let r=8;const r0=r;
   R.rows.forEach((g,i)=>{put(w,r,1,i+1,{b:true,al:C});put(w,r,2,tc(g.name),{b:true});put(w,r,3,tc(g.tvvName),{b:true});put(w,r,4,g.group,{b:true});
-    put(w,r,5,g.fee??null,{b:true,fmt:'#,##0.##'});put(w,r,6,g.gift?'x':'',{b:true,al:C});put(w,r,7,g.note||'',{b:true});put(w,r,8,g.attended?'x':'',{b:true,al:C});put(w,r,9,g.registered?'':'x',{b:true,al:C});put(w,r,10,g.attended?(g.leTan||''):'',{b:true});r++});
+    put(w,r,5,g.fee??null,{b:true,fmt:NF(g.fee)});put(w,r,6,g.gift?'x':'',{b:true,al:C});put(w,r,7,g.note||'',{b:true});put(w,r,8,g.attended?'x':'',{b:true,al:C});put(w,r,9,g.registered?'':'x',{b:true,al:C});put(w,r,10,g.attended?(g.leTan||''):'',{b:true});r++});
   w.mergeCells(r,1,r,4);put(w,r,1,'Tổng cộng',{font:{bold:true},al:C});box(w,r,1,10);
-  put(w,r,5,{formula:`SUM(E${r0}:E${Math.max(r0,r-1)})`,result:R.fee},{font:{bold:true},b:true,fmt:'#,##0.##'});put(w,r,8,R.total,{font:{bold:true},b:true,al:C});put(w,r,9,R.rows.filter(g=>!g.registered).length,{font:{bold:true},b:true,al:C});r+=2;
+  put(w,r,5,{formula:`SUM(E${r0}:E${Math.max(r0,r-1)})`,result:R.fee},{font:{bold:true},b:true,fmt:NF(R.fee)});put(w,r,8,R.total,{font:{bold:true},b:true,al:C});put(w,r,9,R.rows.filter(g=>!g.registered).length,{font:{bold:true},b:true,al:C});r+=2;
 
   /* Sheet 2 */
   const s=wb.addWorksheet('In danh sách thuế',{pageSetup:page});
@@ -1331,6 +1331,9 @@ $('#clearGuests').onclick=async()=>{if(!S.guests.length)return;if(!await okAsk('
 /* ============ tự lưu danh sách khách ra file Excel ============ */
 /* sheet khách đăng ký trong file báo cáo: mỗi người một dòng (khách + người đi kèm); vé chưa có thông tin KH chỉ ghi 1 dòng số lượng vé.
    Gộp ô trùng: Nhóm, Trưởng nhóm, TVV mời; và các ô chung của một lượt đăng ký (thông tin KH, checkin, nộp tiền, FYP, ghi chú). */
+/* định dạng số: số nguyên không có dấu chấm thừa (100 chứ không phải 100.) */
+function NF(v){return Number.isInteger(+v)?'#,##0':'#,##0.0#'}
+function fixNum(col){col.eachCell({includeEmpty:false},c=>{const v=c.value&&typeof c.value==='object'&&'result' in c.value?c.value.result:c.value;if(typeof v==='number')c.numFmt=NF(v)})}
 function addRegSheet(wb,sheetName){
   const list=Object.values((S.reg&&S.reg.kh)||{}).map(c=>({c,tn:tnOf(c.group),tv:tc(c.tvvName||'')}))
     .sort((a,b)=>(a.c.group||'').localeCompare(b.c.group||'','vi')||a.tn.localeCompare(b.tn,'vi')||a.tv.localeCompare(b.tv,'vi')||(a.c.name?0:1)-(b.c.name?0:1)||(a.c.at||0)-(b.c.at||0));
@@ -1360,7 +1363,7 @@ function addRegSheet(wb,sheetName){
   [C.info,C.ci,C.paid,C.thu,C.note].forEach(col=>merge(col,(a,b)=>a.blk===b.blk));
   const tr=ws.addRow(['',`Tổng cộng: ${ve} khách`,`${nkh} khách đăng ký + ${ndk} người đi kèm${nvt?' + '+nvt+' vé chưa có thông tin':''}`,ve,'','','',`${co} có thông tin`,`${den} đã đến`,paid,thu,'']);
   tr.eachCell({includeEmpty:true},x=>{x.font={...FN,bold:true};x.border=BD;x.alignment={vertical:'middle',wrapText:true}});
-  ws.getColumn(C.thu).numFmt='#,##0.##';[C.tt,C.ve,C.info,C.ci,C.paid].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'})}
+  fixNum(ws.getColumn(C.thu));[C.tt,C.ve,C.info,C.ci,C.paid].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'})}
 function addDataSheet(wb){const thin={style:'thin'},BD={top:thin,left:thin,bottom:thin,right:thin},FN={name:'Times New Roman',size:12};
   const ws=wb.addWorksheet('Du lieu KH',{views:[{state:'frozen',ySplit:1}]});
   const H=['TT','Họ tên khách hàng','Tên TVV','Mã TVV','Nhóm','Khu vực','Phí đăng ký tại HNKH','Quà tặng','Ghi chú','Trạng thái','Giờ đến','Nguồn','Lễ tân checkin'];
@@ -1851,7 +1854,7 @@ async function exportDayReport(d){if(!window.ExcelJS)return toast('Chưa tải �
   const gs=Object.entries(x.g||{}).map(([k,v])=>({ve:v[0],info:v[1],dt:v[2],name:v[3],thu:v[4]||0,paid:v[5]||0,pve:p&&p.g&&p.g[k]?p.g[k][0]:0})).sort((a,b)=>b.ve-a.ve);
   gs.forEach((g,i)=>w.addRow([i+1,g.name,tnOf(g.name),g.ve,p?g.ve-g.pve:'',g.paid,g.info,g.ve?g.info/g.ve:'',g.thu]).eachCell({includeEmpty:true},c=>{c.font=FN;c.border=BD}));
   const tr=w.addRow(['','Tổng cộng','',x.ve,p?x.ve-p.ve:'',x.paid||0,x.info,x.ve?x.info/x.ve:'',x.thu||0]);tr.eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
-  w.getColumn(8).numFmt='0%';w.getColumn(9).numFmt='#,##0.##';
+  w.getColumn(8).numFmt='0%';fixNum(w.getColumn(9));
   addCountSheet(wb);addRegSheet(wb,'Thong tin khach hang');const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bao cao dang ky ${dmy(d).replace(/\//g,'.')}.xlsx`);toast('Đã xuất báo cáo ngày '+dmy(d))}
 /* số lượng khách hàng theo nhóm (mỗi vé = 1 người: khách đăng ký + người đi kèm; vé TN/TVV báo chưa có tên vẫn tính) */
 function khCount(){const by={},T={kh:0,dk:0,vt:0,tong:0,info:0,den:0,thu:0,paid:0};
@@ -1869,7 +1872,7 @@ function addCountSheet(wb){const T=khCount();if(!T.tong)return;const th={style:'
   const ntvv=new Set(Object.values(S.reg.kh).map(c=>norm(c.tvvName)).filter(Boolean)).size;
   ws.addRow(['','Tổng cộng','',ntvv,T.kh,T.dk,T.vt,T.tong,T.paid,T.info,T.tong-T.info,T.den,T.thu]).eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD;c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFAF2E8'}}});
   ws.addRow([]);ws.addRow(['',`Tổng số khách hàng = khách đăng ký + người đi kèm${T.vt?' + vé chưa có tên KH':''} = ${T.kh} + ${T.dk}${T.vt?' + '+T.vt:''} = ${T.tong} người · đã nộp tiền ${T.paid}/${T.tong} vé`]).getCell(2).font={...FN,italic:true};
-  ws.getColumn(13).numFmt='#,##0.##';[1,4,5,6,7,8,9,10,11,12].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'});ws.getColumn(8).font={...FN,bold:true}}
+  fixNum(ws.getColumn(13));[1,4,5,6,7,8,9,10,11,12].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'});ws.getColumn(8).font={...FN,bold:true}}
 $('#dkReport').onclick=openDayReport;
 
 /* ============ đăng nhập: Thư ký (mật khẩu, danh sách hội nghị đã tạo trên máy) · Người hỗ trợ (nhập mã) ============ */
