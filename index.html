@@ -1969,13 +1969,15 @@ function regSnapshot(){syncRegToGuests();const rows=dkRows(),T=dkTotals(rows),g=
   const kc=khCount();S.reg.days=S.reg.days||{};S.reg.days[today()]={ve:T.ve,dt:T.dt,thu:T.thu,info:T.info,kh:T.kh,tick:T.tick,paid:T.paid,kc:[kc.kh,kc.dk,kc.vt,kc.tong],g}}
 function daysLeft(){const d=S.event.ngayHN;if(!d)return null;return Math.round((new Date(d+'T00:00')-new Date(today()+'T00:00'))/864e5)}
 function prevDay(d){return Object.keys(S.reg.days||{}).filter(x=>x<d).sort().pop()||null}
+/* "Tăng" = số vé NHẬP MỚI trong ngày (theo ngày giờ nhập) — không âm, không phụ thuộc số liệu chụp hôm trước */
+function newOn(d){const o={ve:0,info:0,n:0,g:{}};Object.values(S.reg.kh||{}).forEach(c=>{if(!c.at||atDay(c.at)!==d)return;const v=Math.max(1,+c.ve||1),k=gkey(c.group||'(Chưa rõ nhóm)');o.ve+=v;o.n++;if(c.info)o.info+=v;o.g[k]=(o.g[k]||0)+v});return o}
 function renderDays(){const box=$('#dkDays');if(!box)return;const days=Object.keys(S.reg.days||{}).sort().slice(-14);
   if(!days.length){box.innerHTML='<div class="none">Chưa có số liệu theo ngày. Mỗi lần nhập số vé hoặc thêm khách, số liệu của ngày đó được ghi lại.</div>';$('#dkT3').textContent='Tiến độ đăng ký theo ngày';return}
-  const rows=days.map((d,i)=>{const x=S.reg.days[d],p=i?S.reg.days[days[i-1]]:(S.reg.days[prevDay(d)]||null);return{d,...x,dv:p?x.ve-p.ve:null,di:p?x.info-p.info:null}});
+  const rows=days.map(d=>{const x=S.reg.days[d],nw=newOn(d);return{d,...x,dv:nw.ve,di:nw.info}});
   const mx=Math.max(1,...rows.map(r=>Math.max(r.ve,r.info))),last=rows[rows.length-1];
-  $('#dkT3').textContent=`Tiến độ theo ngày — ${dmy(last.d).slice(0,5)}: ${last.ve} vé${last.dv!=null?` (${last.dv>=0?'+':''}${last.dv} so với hôm trước)`:''}`;
+  $('#dkT3').textContent=`Tiến độ theo ngày — ${dmy(last.d).slice(0,5)}: ${last.ve} vé${last.dv?` (+${last.dv} vé nhập mới trong ngày)`:''}`;
   box.innerHTML=`<div class="dcols">${rows.map(r=>`<div class="dcol" title="${dmy(r.d)}: ${r.ve} vé, ${r.info} KH có thông tin"><div class="dbars"><i class="b ve" data-h="${r.ve/mx*100}"></i><i class="b inf" data-h="${r.info/mx*100}"></i></div><em class="num">${r.ve}</em><span>${dmy(r.d).slice(0,5)}</span></div>`).join('')}</div>
-    <div class="scroll" style="margin-top:12px"><table class="t"><thead><tr><th>Ngày</th><th class="n">Tổng vé</th><th class="n">Tăng</th><th class="n">KH có thông tin</th><th class="n">Tăng</th><th class="n">Tỷ lệ</th></tr></thead><tbody>${rows.slice().reverse().map(r=>`<tr><td>${dmy(r.d)}</td><td class="n num">${r.ve}</td><td class="n num ${r.dv>0?'up':''}">${r.dv==null?'—':(r.dv>=0?'+':'')+r.dv}</td><td class="n num">${r.info}</td><td class="n num ${r.di>0?'up':''}">${r.di==null?'—':(r.di>=0?'+':'')+r.di}</td><td class="n num">${r.ve?Math.round(r.info/r.ve*100)+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`;
+    <div class="scroll" style="margin-top:12px"><table class="t"><thead><tr><th>Ngày</th><th class="n">Tổng vé</th><th class="n" title="Số vé nhập mới trong ngày (theo ngày giờ nhập)">Tăng<br><small>(nhập mới)</small></th><th class="n">KH có thông tin</th><th class="n" title="Số vé có thông tin KH trong các lượt nhập mới của ngày">Tăng<br><small>(nhập mới)</small></th><th class="n">Tỷ lệ</th></tr></thead><tbody>${rows.slice().reverse().map(r=>`<tr><td>${dmy(r.d)}</td><td class="n num">${r.ve}</td><td class="n num ${r.dv>0?'up':''}">${r.dv==null?'—':(r.dv>=0?'+':'')+r.dv}</td><td class="n num">${r.info}</td><td class="n num ${r.di>0?'up':''}">${r.di==null?'—':(r.di>=0?'+':'')+r.di}</td><td class="n num">${r.ve?Math.round(r.info/r.ve*100)+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`;
   requestAnimationFrame(()=>requestAnimationFrame(()=>$$('#dkDays .b').forEach(b=>b.style.height=b.dataset.h+'%')))}
 function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNgay'))$('#dkNgay').value=S.event.ngayHN||'';
   $('#dkLeft').innerHTML=dl==null?'<span class="count">Chưa đặt ngày hội nghị</span>':dl>0?`<span class="chip solid">⏳ Còn <b>${dl}</b> ngày</span>`:dl===0?'<span class="chip solid">📅 Hôm nay là ngày hội nghị</span>':`<span class="chip">Đã qua ${-dl} ngày</span>`;
@@ -2011,7 +2013,7 @@ function dayReport(d){const x=S.reg.days[d];if(!x)return null;const pd=prevDay(d
   const ld=ts=>{const t=new Date(ts);return t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate())};
   const nw=Object.values(S.reg.kh||{}).filter(c=>c.at&&ld(c.at)===d),nve=nw.reduce((a,c)=>a+Math.max(1,+c.ve||1),0),npd=nw.reduce((a,c)=>a+Math.min(Math.max(1,+c.ve||1),+c.paid||0),0);
   const ng={};nw.forEach(c=>{const k=c.group||'(Chưa rõ nhóm)';ng[k]=(ng[k]||0)+Math.max(1,+c.ve||1)});
-  const kc=x.kc?{kh:x.kc[0],dk:x.kc[1],vt:x.kc[2],tong:x.kc[3]}:d===today()?khCount():null;
+  const kc=x.kc?{kh:x.kc[0],dk:x.kc[1],vt:x.kc[2],tong:x.kc[3]}:d===today()?khCount():null,NWG=newOn(d).g;
   return[`BÁO CÁO ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(d)}`,
     S.event.loaiHN?`• Loại hội nghị: ${S.event.loaiHN}`:null,
     S.event.ngayHN?`• Ngày hội nghị: ${dmy(S.event.ngayHN)}${dl!=null?(dl>0?` (còn ${dl} ngày)`:dl===0?' (hôm nay)':''):''}`:null,
@@ -2021,14 +2023,14 @@ function dayReport(d){const x=S.reg.days[d];if(!x)return null;const pd=prevDay(d
     ...Object.entries(ng).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`   – ${k}${tnOf(k)?' (TN '+tnOf(k)+')':''}: +${v} vé`),
     '',
     `📊 LŨY KẾ ĐẾN NGÀY ${dmy(d)}:`,
-    `• Tổng vé đăng ký: ${x.ve} vé${dv(x.ve-(p?p.ve:0))}`,
+    `• Tổng vé đăng ký: ${x.ve} vé${nve?` (+${nve} vé nhập mới trong ngày)`:''}`,
     kc&&kc.tong?`• Số khách hàng: ${kc.tong} người (${kc.kh} khách đăng ký + ${kc.dk} người đi kèm${kc.vt?` + ${kc.vt} vé chưa có tên`:''})`:null,
     `• Vé đã nộp tiền: ${x.paid||0}/${x.ve} vé (${x.ve?Math.round((x.paid||0)/x.ve*100):0}%)${p?dv((x.paid||0)-(p.paid||0)):''}`,
     `• KH đã có thông tin: ${x.info}/${x.ve} vé (${x.ve?Math.round(x.info/x.ve*100):0}%)${dv(x.info-(p?p.info:0))}`,
     `• FYP dự kiến: ${fmt(x.thu||0)||0} triệu đồng${p?' ('+((x.thu||0)-(p.thu||0)>=0?'+':'-')+(fmt(Math.abs((x.thu||0)-(p.thu||0)))||0)+' tr so với '+dmy(pd).slice(0,5)+')':''}`,
     `• Nhóm đã đăng ký: ${gs.filter(g=>g.ve>0).length} nhóm · đủ thông tin KH: ${x.tick||0} nhóm`,
     gs.length?'':null,gs.length?'Theo nhóm (vé · đã nộp tiền · có thông tin · FYP dự kiến):':null,
-    ...gs.map((g,i)=>`${i+1}. ${g.name}${tnOf(g.name)?' (TN '+tnOf(g.name)+')':''}: ${g.ve} vé${p&&g.ve!==g.pve?` (${g.ve-g.pve>=0?'+':''}${g.ve-g.pve})`:''} · ${g.paid} đã nộp · ${g.info} có TT · FYP ${fmt(g.thu)||0} tr`),
+    ...gs.map((g,i)=>`${i+1}. ${g.name}${tnOf(g.name)?' (TN '+tnOf(g.name)+')':''}: ${g.ve} vé${NWG[g.k]?` (+${NWG[g.k]})`:''} · ${g.paid} đã nộp · ${g.info} có TT · FYP ${fmt(g.thu)||0} tr`),
     none.length?`Nhóm chưa đăng ký (${none.length}): ${none.join(', ')}`:null].filter(v=>v!=null&&v!==false).join('\n').replace(/\n{3,}/g,'\n\n')}
 async function openDayReport(){const days=Object.keys(S.reg.days||{}).sort();regSnapshot();save();
   const d0=today(),all=Object.keys(S.reg.days).sort().reverse();
@@ -2080,7 +2082,7 @@ async function reportImage(d){const R=repData(d);if(!R)return null;const{x,p,pd,
   /* thẻ chỉ số */
   y+=26;const cw=(W-2*P-24)/2,ch=170;
   const kp=[
-    ['Tổng vé đăng ký',`${x.ve}`,'vé',p?`${sg(x.ve-p.ve)} so với hôm trước`:'',C.br],
+    ['Tổng vé đăng ký',`${x.ve}`,'vé',`+${R.nve} vé nhập mới trong ngày`,C.br],
     ['Số khách hàng',kc&&kc.tong?`${kc.tong}`:`${x.ve}`,'người',kc&&kc.tong?`${kc.kh} KH + ${kc.dk} đi kèm${kc.vt?' + '+kc.vt+' vé chưa tên':''}`:'',C.br],
     ['Vé đã nộp tiền',`${x.paid||0}`,`/ ${x.ve} vé`,`${pct(x.paid||0,x.ve)}%${p?' · '+sg((x.paid||0)-(p.paid||0)):''}`,C.ok],
     ['KH có thông tin',`${x.info}`,`/ ${x.ve} vé`,`${pct(x.info,x.ve)}%${p?' · '+sg(x.info-(p.info||0)):''}`,C.ok],
@@ -2107,7 +2109,7 @@ async function reportImage(d){const R=repData(d);if(!R)return null;const{x,p,pd,
   gs.forEach((r,i)=>{const ty=y+i*rh;if(i%2)rr(P+12,ty+6,W-2*P-24,rh-8,14,'#FFF8F1');
     rr(col.n,ty+rh-9,Math.max(6,300*r.ve/mx),5,3,C.pe);
     txt(fit(`${i+1}. ${r.name}`,440,700,27),col.n,ty+36,700,27,C.ink);const tn=tnOf(r.name);if(tn)txt(fit('TN '+tn,440,400,21),col.n,ty+59,400,21,C.mu);
-    txt(`${r.ve}`,col.ve,ty+40,700,30,C.ink,'right');if(p&&r.ve!==r.pve)txt(sg(r.ve-r.pve),col.ve,ty+64,600,20,r.ve-r.pve>=0?C.up:C.dn,'right');
+    txt(`${r.ve}`,col.ve,ty+40,700,30,C.ink,'right');{const nv=newOn(d).g[r.k]||0;if(nv)txt('+'+nv,col.ve,ty+64,600,20,C.up,'right')}
     txt(`${r.paid}`,col.pd,ty+40,600,27,r.paid>=r.ve?C.ok:C.ink,'right');txt(`${r.info}`,col.inf,ty+40,600,27,r.info>=r.ve?C.ok:C.ink,'right');txt(nf2(r.thu),col.thu,ty+40,500,27,C.ink,'right')});
   y+=gs.length*rh+10;if(!gs.length){txt('Chưa có nhóm nào đăng ký',W/2,y+10,500,26,C.mu,'center');y+=40}
   y+=40;
@@ -2133,10 +2135,10 @@ async function exportDayReport(d){if(typeof ROLE!=='undefined'&&ROLE==='ht')retu
   const w=wb.addWorksheet('Bao cao ngay');w.columns=[6,22,24,10,12,12,14,10,16].map(width=>({width}));
   w.mergeCells(1,1,1,9);Object.assign(w.getCell(1,1),{value:`BÁO CÁO ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(d)}`});w.getCell(1,1).font={...FN,bold:true,size:14};w.getCell(1,1).alignment={horizontal:'center'};
   w.mergeCells(2,1,2,9);w.getCell(2,1).value=`Ngày hội nghị: ${S.event.ngayHN?dmy(S.event.ngayHN):'—'} · So sánh với: ${pd?dmy(pd):'—'}`;w.getCell(2,1).font={...FN,italic:true};w.getCell(2,1).alignment={horizontal:'center'};
-  w.addRow([]);w.addRow(['TT','Tên nhóm','Trưởng nhóm','Số vé','Tăng so với hôm trước','Vé đã nộp tiền','KH có thông tin','Tỷ lệ','FYP dự kiến (triệu đ)']).eachCell(c=>{c.font={...FN,bold:true};c.border=BD;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDE3C8'}}});
-  const gs=Object.entries(x.g||{}).map(([k,v])=>({ve:v[0],info:v[1],dt:v[2],name:v[3],thu:v[4]||0,paid:v[5]||0,pve:p&&p.g&&p.g[k]?p.g[k][0]:0})).sort((a,b)=>b.ve-a.ve);
-  gs.forEach((g,i)=>w.addRow([i+1,g.name,tnOf(g.name),g.ve,p?g.ve-g.pve:'',g.paid,g.info,g.ve?g.info/g.ve:'',g.thu]).eachCell({includeEmpty:true},c=>{c.font=FN;c.border=BD}));
-  const tr=w.addRow(['','Tổng cộng','',x.ve,p?x.ve-p.ve:'',x.paid||0,x.info,x.ve?x.info/x.ve:'',x.thu||0]);tr.eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
+  w.addRow([]);w.addRow(['TT','Tên nhóm','Trưởng nhóm','Số vé','Tăng (vé nhập mới trong ngày)','Vé đã nộp tiền','KH có thông tin','Tỷ lệ','FYP dự kiến (triệu đ)']).eachCell(c=>{c.font={...FN,bold:true};c.border=BD;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDE3C8'}}});
+  const NW=newOn(d),gs=Object.entries(x.g||{}).map(([k,v])=>({k,ve:v[0],info:v[1],dt:v[2],name:v[3],thu:v[4]||0,paid:v[5]||0})).sort((a,b)=>b.ve-a.ve);
+  gs.forEach((g,i)=>w.addRow([i+1,g.name,tnOf(g.name),g.ve,NW.g[g.k]||0,g.paid,g.info,g.ve?g.info/g.ve:'',g.thu]).eachCell({includeEmpty:true},c=>{c.font=FN;c.border=BD}));
+  const tr=w.addRow(['','Tổng cộng','',x.ve,NW.ve,x.paid||0,x.info,x.ve?x.info/x.ve:'',x.thu||0]);tr.eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
   w.getColumn(8).numFmt='0%';fixNum(w.getColumn(9));
   addCountSheet(wb);addRegSheet(wb,'Thong tin khach hang',d);const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bao cao dang ky ${dmy(d).replace(/\//g,'.')}.xlsx`);toast('Đã xuất báo cáo ngày '+dmy(d))}
 /* số lượng khách hàng theo nhóm (mỗi vé = 1 người: khách đăng ký + người đi kèm; vé TN/TVV báo chưa có tên vẫn tính) */
