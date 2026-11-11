@@ -1717,14 +1717,19 @@ document.addEventListener('change',e=>{const t=e.target;
   if(t.matches('[data-khn]')){const c=S.reg.kh[t.dataset.khn];if(c){c.note=t.value.trim();save()}}});
 /* tab 2: thêm khách */
 let dkT=null;
-picker($('#dkTvv'),$('#dkPick'),{autoHi:false,tabPick:false,source:q=>{const g=norm($('#dkGroup').value),l=searchTvv(q,40);return(g?[...l.filter(t=>norm(t.group)===g),...l.filter(t=>norm(t.group)!==g)]:l).slice(0,8)},render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
+picker($('#dkTvv'),$('#dkPick'),{autoHi:false,tabPick:false,source:q=>{const g=norm($('#dkGroup').value),l=searchTvv(q,40);return(g?[...l.filter(t=>norm(t.group)===g),...l.filter(t=>norm(t.group)!==g)]:l).slice(0,8)},render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;if(t.group&&norm($('#dkGroup').value)!==norm(t.group)){$('#dkGroup').value=t.group;dkTnFill()}dkHint();$('#dkName').focus()}});
 $('#dkTvv').addEventListener('input',()=>{dkT=null;dkHint()});
 picker($('#dkGroup'),$('#dkPG'),{autoHi:false,source:groupSource,render:groupRender,onPick:g=>{$('#dkGroup').value=g.name;dkTnFill();dkTnMoiSync();(dkTnMoiOn()?$('#dkName'):$('#dkTvv')).focus()}});
 function dkTnMoiOn(){return!!($('#dkTnMoi')&&$('#dkTnMoi').checked)}
 $('#dkTvvClr').onclick=()=>{$('#dkTvv').value='';$('#dkTnMoi').checked=false;dkT=null;$('#dkPick').hidden=true;dkHint();$('#dkTvv').focus()};
-function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkT||matchTvvName(typed);$('#dkTvvClr').hidden=!$('#dkTvv').value;
-  $('#dkTvvHint').innerHTML=m?`${m.cv||m.cd?`<span class="chip solid">${esc(CV_LBL[m.cv]||m.cd||m.cv)}</span> `:''}${m.ban?'Ban '+esc(m.ban)+' · ':''}Mã ${esc(m.code||'—')}`:typed?'<span class="count">TVV chưa có trong danh sách — chọn nhóm</span>':'';
-  const g=$('#dkGroup');if(m&&m.group&&norm(g.value)!==norm(m.group)){g.value=m.group;dkTnFill()}
+/* TVV khớp đúng họ tên (hoặc mã) TRONG nhóm đang chọn — trùng tên ở nhóm khác thì coi là TVV mới */
+function tvvIn(name,group){const n=norm(name),g=norm(group);if(!n||!g)return null;return S.tvv.find(t=>(norm(t.name)===n||(t.code&&norm(t.code)===n))&&norm(t.group)===g)||null}
+function dkResolve(){const typed=$('#dkTvv').value.trim(),grp=$('#dkGroup').value.trim();if(!typed)return null;
+  if(dkT&&(!grp||norm(dkT.group)===norm(grp)))return dkT;return grp?tvvIn(typed,grp):matchTvvName(typed)}
+function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkResolve(),grp0=$('#dkGroup').value.trim();$('#dkTvvClr').hidden=!$('#dkTvv').value;
+  $('#dkTvvHint').innerHTML=m?`${m.cv||m.cd?`<span class="chip solid">${esc(CV_LBL[m.cv]||m.cd||m.cv)}</span> `:''}${m.ban?'Ban '+esc(m.ban)+' · ':''}Mã ${esc(m.code||'—')}`:typed?(()=>{const o=S.tvv.filter(t=>norm(t.name)===norm(typed));
+      return o.length&&grp0?`<span class="count">Trùng tên TVV nhóm ${esc([...new Set(o.map(t=>t.group))].join(', '))} — khi thêm sẽ tạo <b>TVV mới ở nhóm ${esc(grp0)}</b></span>`:'<span class="count">TVV chưa có trong danh sách — chọn nhóm</span>'})():'';
+  const g=$('#dkGroup');if(m&&m.group&&!g.value.trim()){g.value=m.group;dkTnFill()}
   const cb=$('#dkTnMoi');if(cb)cb.checked=!!typed&&!!$('#dkTn').value.trim()&&norm(typed)===norm($('#dkTn').value)}
 const CV_LBL={TN:'Trưởng nhóm',TTN:'Tiền trưởng nhóm',TB:'Trưởng ban'};
 /* trưởng nhóm của nhóm: thư ký đã gán tay (đồng bộ) > danh sách TVV (chức vụ Trưởng nhóm) */
@@ -1750,17 +1755,17 @@ function dkTnMoiSync(){const cb=$('#dkTnMoi');if(!cb||!cb.checked)return;const t
 $('#dkTnMoi').addEventListener('change',e=>{if(e.target.checked){if(!$('#dkTn').value.trim()||isTTN($('#dkTn').value,$('#dkGroup').value.trim())){e.target.checked=false;return flash($('#dkTn'),'Chọn nhóm / nhập trưởng nhóm trước')}dkTnMoiSync();$('#dkName').focus()}
   else{$('#dkTvv').value='';dkT=null;dkHint();$('#dkTvv').focus()}});
 async function dkAdd(){const name=tc($('#dkName').value);
-  const typed=$('#dkTvv').value.trim(),t=dkT||matchTvvName(typed);if(!t&&!typed)return flash($('#dkTvv'),'Chọn TVV mời');
-  const group=t?t.group:tc($('#dkGroup').value);if(!group)return flash($('#dkGroup'),'Nhập nhóm của TVV');
+  const typed=$('#dkTvv').value.trim(),t=dkResolve();if(!t&&!typed)return flash($('#dkTvv'),'Chọn TVV mời');
+  const group=tc($('#dkGroup').value)||(t?t.group:'');if(!group)return flash($('#dkGroup'),'Nhập nhóm của TVV');
   if(name&&Object.values(S.reg.kh).some(c=>norm(c.name)===norm(name)&&norm(c.tvvName)===norm(t?t.name:typed)))return toast('Khách này đã có trong danh sách đăng ký');
-  if(!t&&typed&&!matchTvvName(typed,group)){const v=await ask('Thêm TVV mới?',`<b>${esc(tc(typed))}</b> chưa có trong danh sách TVV.<br>Thêm TVV mới này vào <b>nhóm ${esc(group)}</b>?`,[{v:'yes',l:'Có — thêm TVV mới',primary:true},{v:'no',l:'Không — sửa lại tên TVV'}]);
+  if(!t&&typed){const o=S.tvv.filter(x=>norm(x.name)===norm(typed));const v=await ask('Thêm TVV mới?',`<b>${esc(tc(typed))}</b> chưa có trong <b>nhóm ${esc(group)}</b>${o.length?` (đang trùng tên với TVV nhóm ${esc([...new Set(o.map(x=>x.group))].join(', '))})`:''}.<br>Thêm TVV mới này vào <b>nhóm ${esc(group)}</b>?`,[{v:'yes',l:'Có — thêm TVV mới',primary:true},{v:'no',l:'Không — sửa lại tên TVV'}]);
     if(v!=='yes'){$('#dkTvv').focus();$('#dkTvv').select();return}}
   const ve=Math.max(1,Math.round(num($('#dkVe').value)||1));
   const paid=Math.min(ve,Math.max(0,Math.round(num($('#dkPaid').value)||0)));const tn=tc($('#dkTn').value);
   if(isTTN(tn,group))return flash($('#dkTn'),tn+' là Tiền trưởng nhóm — chưa đủ điều kiện, để trống hoặc chọn trưởng nhóm');
   if(tn!==tnOf(group)){const k=gkey(group),gg=S.reg.groups[k]||{name:group,ve:0,dt:0,tick:false};gg.name=gg.name||group;gg.tn=tn;S.reg.groups[k]=gg}
   const thu=num($('#dkThu').value)||0;const dk0=readComp('#dkComp').slice(0,ve-1);if(!name&&dk0.some(x=>x.name))return flash($('#dkName'),'Đã nhập người đi kèm — nhập tên khách hàng');const dk=name?dk0:[];const id=uid();S.reg.kh[id]={id,name,ve,paid,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,tn,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
-  rememberGroup(group);if(!t&&typed&&!matchTvvName(typed,group)){const nt={name:tc(typed),group,code:'',tay:true};S.tvv.push(nt);dkT=nt;toast(`Đã ghi nhớ TVV mới ${nt.name} · nhóm ${group}`)}
+  rememberGroup(group);if(!t&&typed){const nt={name:tc(typed),group,code:'',tay:true};S.tvv.push(nt);dkT=nt;toast(`Đã ghi nhớ TVV mới ${nt.name} · nhóm ${group}`)}
   regSnapshot();save();['#dkName','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkPaid').value=0;$('#dkThu').value='';$('#dkInfo').checked=false;if(t)dkT=t;if(dkT)$('#dkTvv').value=dkT.name;dkHint();renderReg();toast('✓ Đã thêm '+(name||ve+' vé (chưa có tên KH)')+' — TVV '+(dkT?dkT.name:tc(typed))+' giữ nguyên để thêm tiếp');$('#dkName').focus()}
 $('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
 [$('#dkName'),$('#dkTvv'),$('#dkGroup'),$('#dkTn')].forEach(autoCap);
