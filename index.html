@@ -242,6 +242,11 @@ td.up{color:var(--ok);font-weight:700}
 .modebar button[data-mode=dangky].on{background:var(--hero);color:var(--hero-ink)}.modebar button[data-mode=dangky].on small{color:var(--hero-ink)}
 @media (max-width:900px){.modebar{margin-top:10px;gap:8px}.modebar button{padding:9px 12px}.modebar button b{font-size:14.5px}.modebar button small{display:none}}
 .grid2>*{min-width:0}
+.compbox{border:1.5px dashed var(--peach);border-radius:14px;padding:10px 12px;margin:0 0 12px;background:var(--surface-2)}
+.comprow{display:grid;grid-template-columns:22px minmax(0,1.4fr) minmax(0,1fr);gap:8px;align-items:center;margin-top:8px}
+.comprow .inp{padding:8px 10px}
+.complist{font-size:12.5px;color:var(--muted);margin-top:2px}
+#ask .comprow{grid-template-columns:20px minmax(0,1fr) 130px}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -566,6 +571,10 @@ dialog .foot .sp{flex:1}
         <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Nhóm của TVV"></div>
         <div class="field"><span class="lbl">KH có thông tin</span><label class="toggle"><input type="checkbox" id="dkInfo"> Đã có thông tin</label></div>
         <div class="field dkwide"><label class="lbl" for="dkNote">Ghi chú</label><input class="inp" id="dkNote" placeholder="Ghi chú"></div>
+      </div>
+      <div class="compbox" id="dkCompWrap" hidden>
+        <div class="lbl">Người đi kèm <span class="count" id="dkCompN"></span></div>
+        <div id="dkComp"></div>
       </div>
       <button type="button" class="btn primary" id="dkAdd">＋ Thêm khách</button>
     </div>
@@ -923,11 +932,11 @@ function checkinGuest(id,fromForm,prev0){const g=S.guests.find(x=>x.id===id);if(
 /* hộp hỏi có/không (thay confirm, vì trong link không dùng được confirm) */
 async function okAsk(t,html,yes){return(await ask(t,html,[{v:'yes',l:yes||'Đồng ý',danger:true},{v:'no',l:'Huỷ',primary:true}]))==='yes'}
 /* hộp hỏi nhiều lựa chọn */
-function ask(title,html,opts){return new Promise(res=>{const d=$('#ask');$('#askT').textContent=title;$('#askM').innerHTML=html;
+function ask(title,html,opts,after){return new Promise(res=>{const d=$('#ask');$('#askT').textContent=title;$('#askM').innerHTML=html;
   const box=$('#askB');box.innerHTML=opts.map((o,i)=>`<button type="button" class="btn${o.primary?' primary':''}${o.danger?' danger':''}" data-i="${i}">${esc(o.l)}</button>`).join('');
   let done=false;const fin=v=>{if(done)return;done=true;d.close();res(v)};
   box.querySelectorAll('button').forEach(b=>b.onclick=()=>fin(opts[+b.dataset.i].v));
-  d.oncancel=ev=>{ev.preventDefault();fin('cancel')};d.onclose=null;d.showModal();const ai=document.getElementById('askInput');if(ai){setTimeout(()=>ai.focus(),30);ai.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();box.querySelector('.primary')?.click()}}}box.querySelector('.primary')?.focus()})}
+  d.oncancel=ev=>{ev.preventDefault();fin('cancel')};d.onclose=null;if(after)try{after()}catch(e){};d.showModal();const ai=document.getElementById('askInput');if(ai){setTimeout(()=>ai.focus(),30);ai.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();box.querySelector('.primary')?.click()}}}box.querySelector('.primary')?.focus()})}
 const tvLabel=g=>`TVV ${g.tvvName}${g.group?' · '+g.group:''}`;
 /* đổi khách đăng ký sang TVV đang chọn rồi cho đến dự */
 function moveTvv(g,tv){Object.assign(g,{tvvCode:tv.tvvCode,tvvName:tv.tvvName,group:tv.group})}
@@ -1553,7 +1562,7 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     if(q)list=list.filter(c=>(norm(c.name)+' '+norm(c.tvvName)+' '+norm(c.note)).includes(q));
     const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);const th=list.reduce((x,c)=>x+(+c.thu||0),0);$('#dk2Count').textContent=`${list.length} khách · ${tv} vé · ${inf} vé có thông tin · FYP dự kiến ${fmt(th)||0} tr.đ`;
     $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th>Tên KH</th><th class="n">Số vé</th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
-      <td class="n num">${i+1}</td><td><b>${esc(c.name)}</b>${(+c.ve||1)>1?`<small class="count"> · +${(+c.ve)-1} người đi kèm</small>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td class="n"><input class="inp num cell thu" inputmode="decimal" data-khthu="${esc(c.id)}" value="${c.thu||''}" placeholder="0"></td><td>${esc(c.tvvName||'—')}</td>
+      <td class="n num">${i+1}</td><td><b>${esc(c.name)}</b>${(+c.ve||1)>1?`<div class="complist">${compText(c)||`+${(+c.ve)-1} người đi kèm`} <button type="button" class="glink" data-khdk="${esc(c.id)}">✎ Sửa người đi kèm</button></div>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td class="n"><input class="inp num cell thu" inputmode="decimal" data-khthu="${esc(c.id)}" value="${c.thu||''}" placeholder="0"></td><td>${esc(c.tvvName||'—')}</td>
       <td><button type="button" class="glink" data-g1="${esc(gkey(c.group||'(Chưa rõ nhóm)'))}" title="Xem nhóm ở tab ①">${esc(c.group||'—')}</button></td>
       <td><label class="tick"><input type="checkbox" data-kh="${esc(c.id)}" ${c.info?'checked':''}> <span>${c.info?'Có':'Chưa'}</span></label></td>
       <td><input class="inp cell note" data-khn="${esc(c.id)}" value="${esc(c.note||'')}" placeholder="—"></td>
@@ -1569,7 +1578,7 @@ document.addEventListener('change',e=>{const t=e.target;
   if(t.matches('#dkTable [data-f]')){const f=t.dataset.f;dkSetGroup(t.dataset.k,t.dataset.n,{[f]:f==='tick'?t.checked:(num(t.value)||0)});return}
   if(t.matches('[data-kh]')){const c=S.reg.kh[t.dataset.kh];if(c){c.info=t.checked;regSnapshot();save();renderReg()}return}
   if(t.matches('[data-khthu]')){const c=S.reg.kh[t.dataset.khthu];if(c){c.thu=num(t.value)||0;regSnapshot();save();renderReg()}return}
-  if(t.matches('[data-khv]')){const c=S.reg.kh[t.dataset.khv];if(c){c.ve=Math.max(1,Math.round(num(t.value)||1));regSnapshot();save();renderReg()}return}
+  if(t.matches('[data-khv]')){const c=S.reg.kh[t.dataset.khv];if(c){const old=Math.max(1,+c.ve||1);c.ve=Math.max(1,Math.round(num(t.value)||1));c.dk=(c.dk||[]).slice(0,c.ve-1);regSnapshot();save();renderReg();if(c.ve>old)editComp(c.id)}return}
   if(t.matches('[data-khn]')){const c=S.reg.kh[t.dataset.khn];if(c){c.note=t.value.trim();save()}}});
 /* tab 2: thêm khách */
 let dkT=null;
@@ -1582,8 +1591,8 @@ function dkAdd(){const name=tc($('#dkName').value);if(!name)return flash($('#dkN
   const group=t?t.group:tc($('#dkGroup').value);if(!group)return flash($('#dkGroup'),'Nhập nhóm của TVV');
   if(Object.values(S.reg.kh).some(c=>norm(c.name)===norm(name)&&norm(c.tvvName)===norm(t?t.name:typed)))return toast('Khách này đã có trong danh sách đăng ký');
   const ve=Math.max(1,Math.round(num($('#dkVe').value)||1));
-  const thu=num($('#dkThu').value)||0;const id=uid();S.reg.kh[id]={id,name,ve,thu,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
-  rememberGroup(group);regSnapshot();save();['#dkName','#dkTvv','#dkGroup','#dkNote'].forEach(s=>$(s).value='');$('#dkVe').value=1;$('#dkThu').value='';$('#dkInfo').checked=false;dkT=null;dkHint();renderReg();toast('✓ Đã thêm '+name);$('#dkName').focus()}
+  const thu=num($('#dkThu').value)||0;const dk=readComp('#dkComp').slice(0,ve-1);const id=uid();S.reg.kh[id]={id,name,ve,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
+  rememberGroup(group);regSnapshot();save();['#dkName','#dkTvv','#dkGroup','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkThu').value='';$('#dkInfo').checked=false;dkT=null;dkHint();renderReg();toast('✓ Đã thêm '+name);$('#dkName').focus()}
 $('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
 [$('#dkName'),$('#dkTvv'),$('#dkGroup')].forEach(autoCap);
 /* đưa khách đăng ký sang danh sách Checkin */
@@ -1591,7 +1600,7 @@ $('#dkToCheckin').onclick=async()=>{const list=dkKhList();if(!list.length)return
   const add=list.filter(c=>!S.guests.some(g=>norm(g.name)===norm(c.name)&&norm(g.tvvName)===norm(c.tvvName)));
   if(!add.length)return toast('Tất cả khách đăng ký đã có trong danh sách Checkin');
   if(!await okAsk('Đưa vào danh sách Checkin',`Chép <b>${add.length}</b> khách đăng ký vào danh sách chờ Checkin?`,'Đưa vào'))return;
-  add.forEach(c=>S.guests.push({id:uid(),name:c.name,tvvCode:c.tvvCode,tvvName:c.tvvName,group:c.group,fee:null,gift:false,note:[(+c.ve||1)>1?`Đi kèm ${(+c.ve)-1} người (${c.ve} vé)`:'',c.note||''].filter(Boolean).join(' · '),ve:Math.max(1,+c.ve||1),registered:true,attended:false,at:null}));
+  add.forEach(c=>S.guests.push({id:uid(),name:c.name,tvvCode:c.tvvCode,tvvName:c.tvvName,group:c.group,fee:null,gift:false,note:[(+c.ve||1)>1?`Đi kèm ${(+c.ve)-1} người${compText(c)?': '+compText(c):''} (${c.ve} vé)`:'',c.note||''].filter(Boolean).join(' · '),ve:Math.max(1,+c.ve||1),registered:true,attended:false,at:null}));
   save();renderAll();toast(`Đã đưa ${add.length} khách vào danh sách Checkin`)};
 /* xuất Excel theo dõi đăng ký */
 $('#dkExport').onclick=async()=>{if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');
@@ -1604,10 +1613,24 @@ $('#dkExport').onclick=async()=>{if(!window.ExcelJS)return toast('Chưa tải đ
   sheet('Tong hop nhom',[6,24,14,18,14,10,16,16],['TT','Tên nhóm','Số vé đăng ký','Mục tiêu doanh thu (triệu đ)','FYP dự kiến (triệu đ)','Đạt','Vé có thông tin KH','Đã có thông tin KH'],
     [...act.map((r,i)=>[i+1,r.name,r.ve,r.dt,r.thu,r.dt?Math.round(r.thu/r.dt*100)+'%':'',r.info,r.tick?'x':'']),['','Tổng cộng',act.reduce((s,r)=>s+r.ve,0),act.reduce((s,r)=>s+r.dt,0),act.reduce((s,r)=>s+r.thu,0),'',act.reduce((s,r)=>s+r.info,0),act.filter(r=>r.tick).length]],
     `THEO DÕI ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(today())}`);
-  sheet('Khach dang ky',[6,26,10,14,24,16,14,26],['TT','Tên KH','Số vé','FYP dự kiến (triệu đ)','TVV mời','Nhóm','KH có thông tin','Ghi chú'],
-    [...dkKhList().map((c,i)=>[i+1,tc(c.name),Math.max(1,+c.ve||1),+c.thu||0,tc(c.tvvName),c.group,c.info?'x':'',c.note||'']),['','Tổng cộng',dkKhList().reduce((x,c)=>x+Math.max(1,+c.ve||1),0),dkKhList().reduce((x,c)=>x+(+c.thu||0),0),'','','','']],`DANH SÁCH KHÁCH ĐĂNG KÝ ${E.hnUp}`);
+  sheet('Khach dang ky',[6,26,10,36,14,24,16,14,26],['TT','Tên KH','Số vé','Người đi kèm (mối quan hệ)','FYP dự kiến (triệu đ)','TVV mời','Nhóm','KH có thông tin','Ghi chú'],
+    [...dkKhList().map((c,i)=>[i+1,tc(c.name),Math.max(1,+c.ve||1),compText(c),+c.thu||0,tc(c.tvvName),c.group,c.info?'x':'',c.note||'']),['','Tổng cộng',dkKhList().reduce((x,c)=>x+Math.max(1,+c.ve||1),0),'',dkKhList().reduce((x,c)=>x+(+c.thu||0),0),'','','','']],`DANH SÁCH KHÁCH ĐĂNG KÝ ${E.hnUp}`);
   const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Theo doi dang ky ${dmy(today()).replace(/\//g,'.')}.xlsx`);toast('Đã xuất file theo dõi đăng ký')};
 
+/* ----- người đi kèm: từ 2 vé trở lên nhập họ tên + mối quan hệ ----- */
+const QUAN_HE=['Vợ','Chồng','Con','Bố','Mẹ','Anh/Chị/Em','Ông/Bà','Cháu','Bạn bè','Đồng nghiệp','Khác'];
+function compText(c){return(c.dk||[]).filter(x=>x&&x.name).map(x=>x.name+(x.qh?' ('+x.qh+')':'')).join(', ')}
+function compRows(box,n,cur){const el=typeof box==='string'?$(box):box;const old=readComp(el);cur=cur||old;
+  el.innerHTML=Array.from({length:n},(_,i)=>{const v=cur[i]||{};return`<div class="comprow"><span class="count">${i+1}.</span>
+    <input class="inp cname" placeholder="Họ tên người đi kèm" value="${esc(v.name||'')}" autocomplete="off">
+    <select class="inp cqh"><option value="">Mối quan hệ…</option>${QUAN_HE.map(q=>`<option${q===v.qh?' selected':''}>${q}</option>`).join('')}</select></div>`}).join('');
+  el.querySelectorAll('.cname').forEach(autoCap)}
+function readComp(box){const el=typeof box==='string'?$(box):box;if(!el)return[];return[...el.querySelectorAll('.comprow')].map(r=>({name:tc(r.querySelector('.cname').value),qh:r.querySelector('.cqh').value}))}
+$('#dkVe').addEventListener('input',()=>{const n=Math.max(1,Math.round(num($('#dkVe').value)||1))-1;$('#dkCompWrap').hidden=n<1;$('#dkCompN').textContent=n?`(${n} người · họ tên và mối quan hệ)`:'';if(n>=1)compRows('#dkComp',n)});
+async function editComp(id){const c=S.reg.kh[id];if(!c)return;const n=Math.max(1,+c.ve||1)-1;if(n<1)return;
+  const v=await ask('Người đi kèm',`<b>${esc(c.name)}</b> · ${c.ve} vé — nhập họ tên và mối quan hệ của ${n} người đi kèm:<div id="askComp" style="margin-top:10px"></div>`,[{v:'ok',l:'Lưu',primary:true},{v:'no',l:'Huỷ'}],()=>compRows('#askComp',n,c.dk||[]));
+  if(v!=='ok')return;c.dk=readComp('#askComp');save();renderReg();toast('Đã lưu người đi kèm của '+c.name)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-khdk]');if(b){e.preventDefault();editComp(b.dataset.khdk)}});
 /* ----- theo dõi theo ngày & báo cáo lãnh đạo ----- */
 S.reg.days=S.reg.days||{};
 const ymd=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
