@@ -220,6 +220,7 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .tick{display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-size:13.5px}.tick input{width:18px;height:18px;accent-color:var(--peach-2)}
 .mini-prog{display:inline-block;width:46px;height:6px;border-radius:6px;background:var(--surface-2);margin-right:8px;vertical-align:middle;overflow:hidden}.mini-prog i{display:block;height:100%;background:var(--peach)}
 .dkgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}.dkgrid .field{margin:0}.dkgrid .dkwide{grid-column:1/-1}
+#dk2Table .cell.ve{width:64px;padding:6px 8px;text-align:right}
 #dk2Table .note{width:100%;min-width:140px;padding:6px 9px}
 @media (max-width:760px){.dkgrid{grid-template-columns:1fr 1fr}.hb{grid-template-columns:90px 1fr 46px}}
 @media (prefers-reduced-motion:reduce){.hb .fill{transition:none}}
@@ -545,6 +546,7 @@ dialog .foot .sp{flex:1}
       <h3>Thêm khách đăng ký</h3>
       <div class="dkgrid">
         <div class="field"><label class="lbl" for="dkName">Tên khách hàng</label><input class="inp" id="dkName" placeholder="Họ tên khách" autocomplete="off"></div>
+        <div class="field"><label class="lbl" for="dkVe">Số lượng vé <span class="count">(khách + người đi kèm)</span></label><input class="inp num" id="dkVe" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
         <div class="field"><label class="lbl" for="dkTvv">TVV mời</label><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
         <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Nhóm của TVV"></div>
         <div class="field"><span class="lbl">KH có thông tin</span><label class="toggle"><input type="checkbox" id="dkInfo"> Đã có thông tin</label></div>
@@ -1485,8 +1487,9 @@ let dkTabN='1',dkFilter='',dkSel=null;
 function dkKhList(){return Object.values(S.reg.kh||{}).sort((a,b)=>(a.at||0)-(b.at||0))}
 function dkRows(){const m=new Map();
   allGroups().forEach(g=>m.set(gkey(g.name),{key:gkey(g.name),name:g.name,ve:0,dt:0,tick:false,kh:0,info:0}));
-  for(const[k,g]of Object.entries(S.reg.groups||{})){const r=m.get(k)||{key:k,name:g.name,kh:0,info:0};Object.assign(r,{name:g.name||r.name,ve:+g.ve||0,dt:+g.dt||0,tick:!!g.tick});m.set(k,r)}
-  dkKhList().forEach(c=>{const k=gkey(c.group||'(Chưa rõ nhóm)');if(!m.has(k))m.set(k,{key:k,name:c.group||'(Chưa rõ nhóm)',ve:0,dt:0,tick:false,kh:0,info:0});const r=m.get(k);r.kh++;if(c.info)r.info++});
+  for(const[k,g]of Object.entries(S.reg.groups||{})){const r=m.get(k)||{key:k,name:g.name,kh:0,info:0};Object.assign(r,{name:g.name||r.name,veM:+g.ve||0,dt:+g.dt||0,tick:!!g.tick});m.set(k,r)}
+  dkKhList().forEach(c=>{const k=gkey(c.group||'(Chưa rõ nhóm)');if(!m.has(k))m.set(k,{key:k,name:c.group||'(Chưa rõ nhóm)',ve:0,dt:0,tick:false,kh:0,info:0});const r=m.get(k);const v=Math.max(1,+c.ve||1);r.kh+=v;r.nkh=(r.nkh||0)+1;if(c.info)r.info+=v});
+  m.forEach(r=>{r.veM=r.veM||0;r.ve=r.veM||r.kh||0});
   return[...m.values()].sort((a,b)=>(b.ve-a.ve)||a.name.localeCompare(b.name,'vi'))}
 function dkSetGroup(key,name,patch){const g=S.reg.groups[key]||{name,ve:0,dt:0,tick:false};Object.assign(g,{name},patch);S.reg.groups[key]=g;regSnapshot();save();renderReg()}
 function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')renderDays();
@@ -1497,7 +1500,7 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
   if(dkTabN==='1'){
     $('#dkKpi').innerHTML=`<div class="card kpi hero"><small>Tổng vé đăng ký</small><b class="num">${fmt(T.ve)||0}</b><div class="bar"><i style="width:${Math.min(100,pct)}%"></i></div></div>
       <div class="card kpi"><small>Mục tiêu doanh thu</small><b class="num">${fmt(T.dt)||0}<em> tr.đ</em></b></div>
-      <div class="card kpi"><small>KH đã có thông tin</small><b class="num">${T.info}<em> / ${T.ve} vé · ${pct}%</em></b></div>
+      <div class="card kpi"><small>Vé đã có thông tin KH</small><b class="num">${T.info}<em> / ${T.ve} vé · ${pct}%</em></b></div>
       <div class="card kpi"><small>Nhóm đã đủ thông tin</small><b class="num">${T.tick}<em> / ${act.length} nhóm</em></b></div>`;
     const chartRows=act.filter(r=>r.ve||r.info).slice(0,18),mx=Math.max(1,...chartRows.map(r=>Math.max(r.ve,r.info)));
     const top=chartRows[0];$('#dkT1').textContent=top?`Vé đăng ký theo nhóm — ${top.name} dẫn đầu với ${top.ve} vé`:'Vé đăng ký theo nhóm';
@@ -1509,9 +1512,9 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     const ae=document.activeElement,keep=ae&&ae.dataset&&ae.dataset.f?[ae.dataset.k,ae.dataset.f]:null;
     const q=norm($('#dkQ').value),only=$('#dkOnly').checked;
     const show=rows.filter(r=>(!only||r.ve||r.dt||r.kh)&&(!q||norm(r.name).includes(q)));
-    $('#dkTable').innerHTML=`<thead><tr><th>Tên nhóm</th><th class="n">Số vé đăng ký</th><th class="n">Mục tiêu doanh thu<br><small>(triệu đ)</small></th><th class="n">KH có thông tin</th><th>Đã có thông tin KH</th></tr></thead>
+    $('#dkTable').innerHTML=`<thead><tr><th>Tên nhóm</th><th class="n">Số vé đăng ký</th><th class="n">Mục tiêu doanh thu<br><small>(triệu đ)</small></th><th class="n">Vé có thông tin KH</th><th>Đã có thông tin KH</th></tr></thead>
       <tbody>${show.map(r=>`<tr class="${dkSel===r.key?'sel':''}${r.ve&&!r.tick?' warnrow':''}"><td><button type="button" class="glink" data-g="${esc(r.key)}" title="Xem khách của nhóm ở tab ②">${esc(r.name)} ›</button></td>
-        <td class="n"><input class="inp num cell" inputmode="numeric" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="ve" value="${r.ve||''}" placeholder="0"></td>
+        <td class="n"><input class="inp num cell" inputmode="numeric" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="ve" value="${r.veM||''}" placeholder="${r.kh||0}" title="${r.veM?'Số vé nhóm báo':'Để trống = tự lấy tổng vé khách ở tab ② ('+(r.kh||0)+')'}"></td>
         <td class="n"><input class="inp num cell" inputmode="decimal" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="dt" value="${r.dt||''}" placeholder="0"></td>
         <td class="n num"><span class="mini-prog"><i style="width:${r.ve?Math.min(100,r.info/r.ve*100):0}%"></i></span>${r.info}${r.ve?' / '+r.ve:''}</td>
         <td><label class="tick"><input type="checkbox" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="tick" ${r.tick?'checked':''}> <span>${r.tick?'Đã có':r.ve&&r.info>=r.ve?'Đủ — bấm để xác nhận':'Chưa'}</span></label></td></tr>`).join('')}</tbody>
@@ -1521,9 +1524,9 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     const sel=$('#dk2Group'),cur=dkFilter;sel.innerHTML='<option value="">Tất cả nhóm</option>'+rows.filter(r=>r.kh||r.ve).map(r=>`<option value="${esc(r.key)}"${r.key===cur?' selected':''}>${esc(r.name)} (${r.kh})</option>`).join('');
     const q=norm($('#dk2Q').value);let list=dkKhList();if(cur)list=list.filter(c=>gkey(c.group||'(Chưa rõ nhóm)')===cur);
     if(q)list=list.filter(c=>(norm(c.name)+' '+norm(c.tvvName)+' '+norm(c.note)).includes(q));
-    const inf=list.filter(c=>c.info).length;$('#dk2Count').textContent=`${list.length} khách · ${inf} có thông tin`;
-    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th>Tên KH</th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
-      <td class="n num">${i+1}</td><td><b>${esc(c.name)}</b></td><td>${esc(c.tvvName||'—')}</td>
+    const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);$('#dk2Count').textContent=`${list.length} khách · ${tv} vé · ${inf} vé có thông tin`;
+    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th>Tên KH</th><th class="n">Số vé</th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
+      <td class="n num">${i+1}</td><td><b>${esc(c.name)}</b>${(+c.ve||1)>1?`<small class="count"> · +${(+c.ve)-1} người đi kèm</small>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td>${esc(c.tvvName||'—')}</td>
       <td><button type="button" class="glink" data-g1="${esc(gkey(c.group||'(Chưa rõ nhóm)'))}" title="Xem nhóm ở tab ①">${esc(c.group||'—')}</button></td>
       <td><label class="tick"><input type="checkbox" data-kh="${esc(c.id)}" ${c.info?'checked':''}> <span>${c.info?'Có':'Chưa'}</span></label></td>
       <td><input class="inp cell note" data-khn="${esc(c.id)}" value="${esc(c.note||'')}" placeholder="—"></td>
@@ -1538,6 +1541,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('change',e=>{const t=e.target;
   if(t.matches('#dkTable [data-f]')){const f=t.dataset.f;dkSetGroup(t.dataset.k,t.dataset.n,{[f]:f==='tick'?t.checked:(num(t.value)||0)});return}
   if(t.matches('[data-kh]')){const c=S.reg.kh[t.dataset.kh];if(c){c.info=t.checked;regSnapshot();save();renderReg()}return}
+  if(t.matches('[data-khv]')){const c=S.reg.kh[t.dataset.khv];if(c){c.ve=Math.max(1,Math.round(num(t.value)||1));regSnapshot();save();renderReg()}return}
   if(t.matches('[data-khn]')){const c=S.reg.kh[t.dataset.khn];if(c){c.note=t.value.trim();save()}}});
 /* tab 2: thêm khách */
 let dkT=null;
@@ -1549,16 +1553,17 @@ function dkAdd(){const name=tc($('#dkName').value);if(!name)return flash($('#dkN
   const typed=$('#dkTvv').value.trim(),t=dkT||matchTvvName(typed);if(!t&&!typed)return flash($('#dkTvv'),'Chọn TVV mời');
   const group=t?t.group:tc($('#dkGroup').value);if(!group)return flash($('#dkGroup'),'Nhập nhóm của TVV');
   if(Object.values(S.reg.kh).some(c=>norm(c.name)===norm(name)&&norm(c.tvvName)===norm(t?t.name:typed)))return toast('Khách này đã có trong danh sách đăng ký');
-  const id=uid();S.reg.kh[id]={id,name,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
-  rememberGroup(group);regSnapshot();save();['#dkName','#dkTvv','#dkGroup','#dkNote'].forEach(s=>$(s).value='');$('#dkInfo').checked=false;dkT=null;dkHint();renderReg();toast('✓ Đã thêm '+name);$('#dkName').focus()}
-$('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
+  const ve=Math.max(1,Math.round(num($('#dkVe').value)||1));
+  const id=uid();S.reg.kh[id]={id,name,ve,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
+  rememberGroup(group);regSnapshot();save();['#dkName','#dkTvv','#dkGroup','#dkNote'].forEach(s=>$(s).value='');$('#dkVe').value=1;$('#dkInfo').checked=false;dkT=null;dkHint();renderReg();toast('✓ Đã thêm '+name);$('#dkName').focus()}
+$('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
 [$('#dkName'),$('#dkTvv'),$('#dkGroup')].forEach(autoCap);
 /* đưa khách đăng ký sang danh sách Checkin */
 $('#dkToCheckin').onclick=async()=>{const list=dkKhList();if(!list.length)return toast('Chưa có khách đăng ký');
   const add=list.filter(c=>!S.guests.some(g=>norm(g.name)===norm(c.name)&&norm(g.tvvName)===norm(c.tvvName)));
   if(!add.length)return toast('Tất cả khách đăng ký đã có trong danh sách Checkin');
   if(!await okAsk('Đưa vào danh sách Checkin',`Chép <b>${add.length}</b> khách đăng ký vào danh sách chờ Checkin?`,'Đưa vào'))return;
-  add.forEach(c=>S.guests.push({id:uid(),name:c.name,tvvCode:c.tvvCode,tvvName:c.tvvName,group:c.group,fee:null,gift:false,note:c.note||'',registered:true,attended:false,at:null}));
+  add.forEach(c=>S.guests.push({id:uid(),name:c.name,tvvCode:c.tvvCode,tvvName:c.tvvName,group:c.group,fee:null,gift:false,note:[(+c.ve||1)>1?`Đi kèm ${(+c.ve)-1} người (${c.ve} vé)`:'',c.note||''].filter(Boolean).join(' · '),ve:Math.max(1,+c.ve||1),registered:true,attended:false,at:null}));
   save();renderAll();toast(`Đã đưa ${add.length} khách vào danh sách Checkin`)};
 /* xuất Excel theo dõi đăng ký */
 $('#dkExport').onclick=async()=>{if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');
@@ -1568,11 +1573,11 @@ $('#dkExport').onclick=async()=>{if(!window.ExcelJS)return toast('Chưa tải đ
     w.addRow([]);w.addRow(head).eachCell(x=>{x.font={...FN,bold:true};x.border=BD;x.alignment={horizontal:'center',vertical:'middle',wrapText:true};x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDE3C8'}}});
     rows.forEach(r=>w.addRow(r).eachCell({includeEmpty:true},x=>{x.font=FN;x.border=BD}));return w};
   const E=EV(),act=dkRows().filter(r=>r.ve||r.dt||r.kh);
-  sheet('Tong hop nhom',[6,24,14,18,16,16],['TT','Tên nhóm','Số vé đăng ký','Mục tiêu doanh thu (triệu đ)','KH có thông tin','Đã có thông tin KH'],
+  sheet('Tong hop nhom',[6,24,14,18,16,16],['TT','Tên nhóm','Số vé đăng ký','Mục tiêu doanh thu (triệu đ)','Vé có thông tin KH','Đã có thông tin KH'],
     [...act.map((r,i)=>[i+1,r.name,r.ve,r.dt,r.info,r.tick?'x':'']),['','Tổng cộng',act.reduce((s,r)=>s+r.ve,0),act.reduce((s,r)=>s+r.dt,0),act.reduce((s,r)=>s+r.info,0),act.filter(r=>r.tick).length]],
     `THEO DÕI ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(today())}`);
-  sheet('Khach dang ky',[6,26,24,16,14,26],['TT','Tên KH','TVV mời','Nhóm','KH có thông tin','Ghi chú'],
-    dkKhList().map((c,i)=>[i+1,tc(c.name),tc(c.tvvName),c.group,c.info?'x':'',c.note||'']),`DANH SÁCH KHÁCH ĐĂNG KÝ ${E.hnUp}`);
+  sheet('Khach dang ky',[6,26,10,24,16,14,26],['TT','Tên KH','Số vé','TVV mời','Nhóm','KH có thông tin','Ghi chú'],
+    [...dkKhList().map((c,i)=>[i+1,tc(c.name),Math.max(1,+c.ve||1),tc(c.tvvName),c.group,c.info?'x':'',c.note||'']),['','Tổng cộng',dkKhList().reduce((x,c)=>x+Math.max(1,+c.ve||1),0),'','','','']],`DANH SÁCH KHÁCH ĐĂNG KÝ ${E.hnUp}`);
   const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Theo doi dang ky ${dmy(today()).replace(/\//g,'.')}.xlsx`);toast('Đã xuất file theo dõi đăng ký')};
 
 /* ----- theo dõi theo ngày & báo cáo lãnh đạo ----- */
