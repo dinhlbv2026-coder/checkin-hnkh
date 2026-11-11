@@ -269,7 +269,8 @@ body.lg-on{overflow:hidden}
 .lg-pick{flex:1;min-width:0;text-align:left;font:inherit;color:inherit;background:none;border:0;padding:12px 14px;cursor:pointer;display:grid;gap:2px}
 .lg-pick:hover{background:var(--surface-2)}.lg-pick b{font-size:16px}.lg-pick small{color:var(--muted);overflow-wrap:anywhere}.lg-pick .chip{justify-self:start;margin-top:4px}
 .lg-x{border:0;background:none;color:var(--muted);font-size:22px;padding:0 14px;cursor:pointer}.lg-x:hover{color:var(--danger)}
-.lg-more{margin-top:14px}.lg-more summary{cursor:pointer;font-weight:600;font-size:14px;margin-bottom:8px}
+.lg-more{margin-top:14px}.lg-h3{font-size:15px;margin:18px 0 6px}.lg-all .lg-list{max-height:340px;overflow:auto}
+.lg-more summary{cursor:pointer;font-weight:600;font-size:14px;margin-bottom:8px}
 body.role-ht [data-dk="2"],body.role-ht #dkTab,body.role-ht #dk2,body.role-ht #dkStart,body.role-ht #dkReport,body.role-ht #dkCreate,body.role-ht #fileBar,body.role-ht #guestCard,body.role-ht #orgBox,body.role-ht [data-sy="newconf"],body.role-ht [data-sy="create"]{display:none!important}
 @media (max-width:560px){.lg-roles{grid-template-columns:1fr}.rolebtn{padding:6px 8px;font-size:12px}}
 .tnmoi{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;font-weight:600;cursor:pointer;line-height:1.3}.tnmoi input{width:18px;height:18px;accent-color:var(--peach);margin:0}
@@ -1932,7 +1933,7 @@ function isAdmin(){try{return ROLE==='tk'&&!!USER&&!!ACCS[USER]&&ACCS[USER].quye
 async function accCheck(u,p){const a=ACCS[u];if(!a)return false;try{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);
   const b=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new Uint8Array(a.salt.match(/../g).map(x=>parseInt(x,16))),iterations:a.it},k,256);
   return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')===a.h}catch(e){return false}}
-function setUser(u){USER=u||'';try{u?sessionStorage.setItem('hnkh-user',u):sessionStorage.removeItem('hnkh-user')}catch(e){}}
+function setUser(u){USER=u||'';if(!u){REG_KEY=null;REG_LIST=null}try{u?sessionStorage.setItem('hnkh-user',u):sessionStorage.removeItem('hnkh-user')}catch(e){}}
 async function pwHash(p){const t='hnkh-tk|'+p;try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
   catch(e){let h=5381;for(const c of t)h=((h*33)^c.charCodeAt(0))>>>0;return'x'+h.toString(16)}}
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
@@ -1965,8 +1966,8 @@ function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-b
        <b>${esc(c.ten||'Chưa đặt tên')}</b><small>${esc([c.loai,c.ngay?'Ngày '+dmy(c.ngay):'',c.code].filter(Boolean).join(' · '))}</small>${SY.on&&SY.event===c.code?'<span class="chip solid">Đang mở</span>':''}</button>
        <button type="button" class="lg-x" data-lg="forget" data-code="${esc(c.code)}" title="Bỏ khỏi danh sách trên máy này" aria-label="Bỏ khỏi danh sách">×</button></div>`).join('')
       :'<p class="empty-note" style="margin:0">Máy này chưa có hội nghị nào. Bấm <b>Tạo hội nghị mới</b>, hoặc nhập mã hội nghị đã tạo ở máy khác.</p>'}</div>
-    <div class="actions"><button type="button" class="btn primary" data-lg="new">＋ Tạo hội nghị mới</button>${SY.on?'':'<button type="button" class="btn" data-lg="enter">Vào không chọn hội nghị</button>'}</div>
-    <details class="lg-more"><summary>Có mã hội nghị tạo ở máy khác?</summary><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn" data-lg="tkjoin">Vào</button></div></details>`;return}
+    ${isAdmin()?'<div id="lgAll" class="lg-all"></div>':''}<div class="actions"><button type="button" class="btn primary" data-lg="new">＋ Tạo hội nghị mới</button>${SY.on?'':'<button type="button" class="btn" data-lg="enter">Vào không chọn hội nghị</button>'}</div>
+    <details class="lg-more"><summary>Có mã hội nghị tạo ở máy khác?</summary><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn" data-lg="tkjoin">Vào</button></div></details>`;if(isAdmin())regRender();return}
   if(st==='htcode'){b.innerHTML=`${back}<h2>🤝 Người hỗ trợ</h2>${SY.on?`<div class="jcode" style="margin-bottom:12px"><div><small>Đang ở hội nghị</small><b>${esc(S.event.tenHN||SY.event)}</b><small>${esc(SY.event)}</small></div><button type="button" class="btn primary" data-lg="enter">Tiếp tục</button></div><p class="sub">Hoặc nhập mã khác để chuyển hội nghị:</p>`:'<p class="sub">Nhập tên của bạn và <b>mã hội nghị</b> thư ký gửi để vào checkin.</p>'}
     <label class="lbl" for="lgName">Tên người hỗ trợ</label><input class="inp" id="lgName" value="${esc(SY.name&&SY.name!=='Thư ký'?SY.name:'')}" placeholder="VD: Nguyễn Thị Hà" autocomplete="off" autocapitalize="words" style="margin-bottom:10px">
     <label class="lbl" for="lgCode">Mã hội nghị</label><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn primary" data-lg="htjoin">Vào checkin</button></div>`;
@@ -1983,7 +1984,9 @@ document.addEventListener('click',async e=>{const a=e.target.closest('[data-lg]'
     lsSet(PW_KEY,await pwHash(p));setRole('tk');toast('Đã đặt mật khẩu thư ký trên máy này');return lgStep('tkconf')}
   if(k==='accok'){const u=$('#lgUser').value.trim().toLowerCase(),p=$('#lgUPw').value;if(!u)return flash($('#lgUser'),'Nhập tên đăng nhập');
     if(!await accCheck(u,p)){$('#lgUPw').value='';return flash($('#lgUPw'),'Sai tên đăng nhập hoặc mật khẩu')}
+    if(ACCS[u].quyen==='admin')try{await regUnlock(p)}catch(e){}
     setRole('tk');setUser(u);applyRole();toast('Đã đăng nhập: '+(ACCS[u].ten||u)+(ACCS[u].quyen==='admin'?' · toàn quyền':''));return lgStep('tkconf')}
+  if(k==='regopen'){try{await regUnlock($('#lgRegPw').value)}catch(e){$('#lgRegPw').value='';return flash($('#lgRegPw'),'Sai mật khẩu')}return regRender()}
   if(k==='pwok'){if(await pwHash($('#lgPw').value)!==lsGet(PW_KEY)){$('#lgPw').value='';return flash($('#lgPw'),'Sai mật khẩu')}setRole('tk');return lgStep('tkconf')}
   if(k==='forgot'){if(!await okAsk('Quên mật khẩu',`Đặt lại mật khẩu thư ký trên máy này?<br>Danh sách hội nghị ghi nhớ trên máy sẽ được xoá. Dữ liệu các hội nghị <b>vẫn còn trên mạng</b> — nhập lại mã là vào được.`,'Đặt lại mật khẩu'))return;
     lsSet(PW_KEY,null);lsSet(CONF_KEY,null);return lgStep('tkpw')}
@@ -1998,7 +2001,7 @@ document.addEventListener('click',async e=>{const a=e.target.closest('[data-lg]'
   if(k==='htjoin'){const nm=tc($('#lgName').value);if(nm.length<2)return flash($('#lgName'),'Nhập tên của bạn');const c=normCode($('#lgCode').value);if(!c)return flash($('#lgCode'),'Mã có dạng HNKH-1511-QTTK7M');
     SY.name=nm;sySave();a.disabled=true;const ok=await gotoConf(c);a.disabled=false;if(ok){lgHide();setMode('checkin');toast('Đã vào hội nghị '+(S.event.tenHN||c))}else lgStep('htcode')}});
 document.addEventListener('keydown',e=>{if(e.key!=='Enter'||$('#login').hidden)return;const id=e.target.id;
-  const m={lgUser:'accok',lgUPw:'accok',lgPw:lsGet(PW_KEY)?'pwok':'pwset',lgPw2:'pwset',lgCode:ROLE==='ht'?'htjoin':'tkjoin',lgName:'htjoin'}[id];if(m){e.preventDefault();$(`#lgBody [data-lg="${m}"]`)?.click()}});
+  const m={lgRegPw:'regopen',lgUser:'accok',lgUPw:'accok',lgPw:lsGet(PW_KEY)?'pwok':'pwset',lgPw2:'pwset',lgCode:ROLE==='ht'?'htjoin':'tkjoin',lgName:'htjoin'}[id];if(m){e.preventDefault();$(`#lgBody [data-lg="${m}"]`)?.click()}});
 $('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',`Đang đăng nhập với vai trò <b>thư ký</b>.`,[{v:'list',l:'🗂️ Danh sách hội nghị',primary:true},{v:'pw',l:'Đổi mật khẩu'},{v:'out',l:'Đăng xuất'},{v:'no',l:'Huỷ'}]);
     if(v==='list')return lgShow('tkconf');if(v==='out'){setRole('');return lgShow('role')}
     if(v==='pw'){const r=await ask('Đổi mật khẩu thư ký',`<label class="lbl">Mật khẩu hiện tại</label><input class="inp" type="password" id="askPw0" style="margin-bottom:10px"><label class="lbl">Mật khẩu mới (từ 4 ký tự)</label><input class="inp" type="password" id="askPw1">`,[{v:'ok',l:'Đổi mật khẩu',primary:true},{v:'no',l:'Huỷ'}]);
@@ -2006,7 +2009,38 @@ $('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',`Đ
       if(await pwHash(p0)!==lsGet(PW_KEY))return toast('Mật khẩu hiện tại chưa đúng — chưa đổi');if(p1.length<4)return toast('Mật khẩu mới cần từ 4 ký tự — chưa đổi');lsSet(PW_KEY,await pwHash(p1));toast('Đã đổi mật khẩu thư ký')}return}
   if(await okAsk('Người hỗ trợ',`Đổi vai trò? Bạn vẫn ở hội nghị đang mở cho tới khi bấm <b>Rời hội nghị</b>.`,'Đổi vai trò')){setRole('');lgShow('role')}};
 /* sau mỗi lần cập nhật đồng bộ: thư ký ghi nhớ hội nghị; người hỗ trợ mất mã (rời / bị xoá) thì phải nhập lại mã */
-const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk')tkRemember();
+
+/* ============ sổ hội nghị (mã hoá): máy nào mở hội nghị cũng ghi vào sổ; chỉ tài khoản admin đọc được ============ */
+const REG={"code": "HNKH-0000-FMREEUF3NM", "pub": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqI1cS9syJqRt+ZWBouAzKBVCD4pJB7nXEywmNLoPGzZrTi8XedjS6ilPmvEc8kKTdxjWquULZ7S8RLvb59v2Iv2txba3U2+uwrtTQwgILtcZvNlblHBwVkiuQHCs3kWcaaUldP/4BvLjEypT4CLrysQdOcjLQ+IZ8S7lhD2ixG94wg7d2y3xRsgLsaaSV0jjPtgC9BLBiwGF6cllYFrfJ136R6hagsvZgvsaECB4XRbcnZ8wnbPM9GrhrcYqf2dEpRWlNtGiClip/wseGTR5/trANKaAnaIKNu0dD82p2aqdNyXgpoD9N29algHljmbUZ3Erl2aMeTS8/4KTJN7cwQIDAQAB", "priv": {"salt": "PQ9FtTep9LiSVIybamfdTg==", "it": 210000, "iv": "EaY/waxXKJQqmvoi", "ct": "Kb6ESC3YVQh6gfG+E6utXBkD+79CQj3fpBa3ZGzKVDhOe3qGrQCR3Suu7lqaomxbqfjtmuQ85DmlCbiJOpSc7MKlk2jZe1GwRb5nYtZocAUjSCW9EyNjDr3m1rLY4jTA060jq7Vh0B2HIsk2w1fdUaFPi3YUOOKDkFiAxWCdcCXkHOBcSDSPc3gIaPEWrz4jyROvJFhL1dJE0kpDh3gLjl0grsUxWdXYWBTcKlFHBx0QpyF/h7zZ43C1J/cADltEuTOdvDlTrx+/J7LSYu9NurzSREW0OhURvX13v8krnJMMlBDwaQCSNNAnpwcpZx1LENy80x9y6A6vcJ/TpLxnpHjhAuYlZKiQZZREaB/cTdz30PHLqKOEfiinCcyt8f1g06uD9j0SkWVnbylY18krEcrch4X+4dn+lxSlgxEqGy0Ovp+EiP6umsizK3Kzv+DYoLqHinXfvRvEZlwdjr+M09wGrP/932L9G+b1Si3W1F5FC7JgfYgD18tYkj+jeQS9eCgyu40sWQRlW4/zjoZodAvDKZbntAE5x+0IBqgiiCkRfTKaCCZd64RclbeAOuiMWzzgsTXj8R7a3oNc8n6ZSC5U8qWxCkrENeiScSQvT8+iHOLEjINHu57AWNgxghxiyaZLbAEy0mV9oJJU2udAfEiDWD+dnAe6pQHhJDX6u0bHRH+PxTiUaIP2+yc7y9fbZca9+V6/xOU60uJhonypizXTtG+crObABgvNoH3ZChoo5SPiENSW2gHASY2x8S3yk6RApFfJhYY3GcQuSF96qFD9hcm4+hclrUkENJJ7ycgNXJobttqSEK4lZOQSasnytpil9ZNzFfJEeTfr3JBSN7vNzYMwhQsYiyjzmznFYYYVqWYQAvYXteBl06K9mU0nhnE+dBqmSqmI4eNbuZyuZ2C28DuU8Yglg1t6kfSXfHmCXFulh55xU4gjOWJHmgM1kr4KjIhOyrs4YQ+8oi1aJZXBJl/dfsN8bEPPY0MF311OEm32cQVp6dTAkN7ojgpI2sGFOVkMA7xEoD8wOyYdO3hgfdXzh7WZTJnvhO+9TTTptfe/EQXEoCMx6JkhWm1xNKs7xW+g2l4UPoxbsutFayrOTSiauRS7MyT4b1pEvWsA1e+DH/nvcngs3lHzdBSkQBcdh2sav1Tviek0TP3gX6nQ23quGLR/4RphJjVGD0uG8raoAp+leP9Gi/tClWWTItG7AoEcQ8ywMet9xpRMKXhLhCBQvBdTroZ3YqC8cYWK2xByau0/G9+yz+rucbVOYCDY/VqRi7csIaUe5tA8/Dp4ULwBn3UDv0K4Cwqdw5Z4QURvvywCfI9cstCr1iadZuTCnYbW6KJ5ZsG2PiefQaPQEpOCg2LqzESbL3hlza2ef3HGLlh7IRjGhGK6iuW2cNnPDEmb1w/kbPMSkLh6g101oI65uNCVk0/Sgwu2iidGhmwjRyup7QeKWddGu9UrEdDe9HRx8mPP2RoKjAEV+P1MLlV0rNpNC/p/XddRHjK9Jrsj1ViXZR4XYLUZaC+qq68R6uJyfhVOxz1qfwagCxsEMH5wzo3e4HCadh7biim2x9ZyN1k9wPCrnxmI1Dwb/HQjr0Oomf/YEd3CSBF6cOGrbggqZUb0JtMwmJ4Nq+X9yg=="}};
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),b64e=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+async function regId(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('hnkh-reg|'+t));return[...new Uint8Array(b)].slice(0,12).map(x=>x.toString(16).padStart(2,'0')).join('')}
+const regUrl=p=>`${FB_URL}/events/${REG.code}/c${p||''}.json`;
+var regLast='',REG_KEY=null,REG_LIST=null;
+async function confRegister(){try{if(!SYNC_OK||!SY.on||!SY.event||SY.event===REG.code||!(window.crypto&&crypto.subtle))return;
+  const meta={code:SY.event,ten:S.event.tenHN||'',loai:S.event.loaiHN||'',ngay:S.event.ngayHN||''},sig=JSON.stringify(meta);if(sig===regLast)return;regLast=sig;
+  const pub=await crypto.subtle.importKey('spki',b64d(REG.pub),{name:'RSA-OAEP',hash:'SHA-256'},false,['encrypt']);
+  const ak=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt']),iv=crypto.getRandomValues(new Uint8Array(12));
+  const d=await crypto.subtle.encrypt({name:'AES-GCM',iv},ak,new TextEncoder().encode(JSON.stringify({...meta,at:Date.now()})));
+  const k=await crypto.subtle.encrypt({name:'RSA-OAEP'},pub,await crypto.subtle.exportKey('raw',ak));
+  const r=await fetch(regUrl('/'+await regId(SY.event)),{method:'PUT',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({k:b64e(k),iv:b64e(iv),d:b64e(d)})});if(!r.ok)regLast=''}catch(e){regLast=''}}
+async function regUnlock(p){const a=REG.priv,k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
+  const ak=await crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:b64d(a.salt),iterations:a.it},k,{name:'AES-GCM',length:256},false,['decrypt']);
+  const pk=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(a.iv)},ak,b64d(a.ct));
+  REG_KEY=await crypto.subtle.importKey('pkcs8',pk,{name:'RSA-OAEP',hash:'SHA-256'},false,['decrypt'])}
+async function regList(){const r=await fetch(regUrl(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);const j=(await r.json())||{},out=[];
+  for(const[h,v]of Object.entries(j)){try{const raw=await crypto.subtle.decrypt({name:'RSA-OAEP'},REG_KEY,b64d(v.k)),key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+    out.push({...JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(v.iv)},key,b64d(v.d)))),h})}catch(e){}}
+  REG_LIST=out.sort((a,b)=>(b.at||0)-(a.at||0));return REG_LIST}
+async function regRender(){const el=$('#lgAll');if(!el)return;const H='<h3 class="lg-h3">📚 Tất cả hội nghị trên hệ thống</h3>';
+  if(!REG_KEY){el.innerHTML=H+`<p class="sub">Nhập lại mật khẩu tài khoản để mở sổ hội nghị.</p><div class="joinrow"><input class="inp" type="password" id="lgRegPw" autocomplete="current-password"><button type="button" class="btn" data-lg="regopen">Mở sổ</button></div>`;return}
+  el.innerHTML=H+'<p class="sub">Đang tải sổ hội nghị…</p>';let l;try{l=await regList()}catch(e){el.innerHTML=H+'<p class="sub">Không tải được sổ — kiểm tra mạng rồi mở lại.</p>';return}
+  el.innerHTML=`<h3 class="lg-h3">📚 Tất cả hội nghị trên hệ thống (${l.length})</h3>`+(l.length?`<input class="inp" id="lgAllQ" placeholder="Tìm tên, loại, mã hội nghị…" autocomplete="off" style="margin-bottom:8px">
+    <div class="lg-list" id="lgAllL">${l.map(c=>{const cur=SY.on&&SY.event===c.code;return`<div class="lg-conf${cur?' cur':''}" data-q="${esc(norm([c.ten,c.loai,c.code].join(' ')))}"><button type="button" class="lg-pick" data-lg="pick" data-code="${esc(c.code)}">
+      <b>${esc(c.ten||'Chưa đặt tên')}</b><small>${esc([c.loai,c.ngay?'Ngày '+dmy(c.ngay):'',c.code].filter(Boolean).join(' · '))}</small>${cur?'<span class="chip solid">Đang mở</span>':''}</button></div>`}).join('')}</div>`
+    :'<p class="sub">Sổ chưa có hội nghị nào. Hội nghị tự vào sổ khi có máy mở nó bằng bản app mới.</p>');renderConfCard()}
+document.addEventListener('input',e=>{if(e.target.id!=='lgAllQ')return;const q=norm(e.target.value);$$('#lgAllL .lg-conf').forEach(d=>d.hidden=!!q&&!d.dataset.q.includes(q))});
+const _confRows1=confRows;confRows=function(){const l=_confRows1();if(isAdmin()&&REG_LIST)REG_LIST.forEach(c=>{if(!l.some(x=>x.code===c.code))l.push({code:c.code,ten:c.ten,loai:c.loai,ngay:c.ngay})});return l};
+const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk')tkRemember();confRegister();
   if(ROLE==='ht'&&SYNC_OK&&!SY.on&&$('#login').hidden)lgShow('htcode')};
 /* người hỗ trợ: phần Đăng ký chỉ xem tổng hợp, không sửa */
 const _renderReg0=renderReg;renderReg=function(){if(ROLE==='ht')dkTabN='1';_renderReg0();
@@ -2035,6 +2069,7 @@ async function deleteConf(code){if(ROLE!=='tk')return toast('Chỉ thư ký đư
   delBusy=true;if(cur)stopStream();
   try{const r=await fetch(`${FB_URL}/events/${encodeURIComponent(code)}.json`,{method:'DELETE',cache:'no-store'});if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,100))}
   catch(e){delBusy=false;if(cur)startStream();return toast('Không xoá được: '+(navigator.onLine?e.message:'mất mạng'))}
+  try{await fetch(regUrl('/'+await regId(code)),{method:'DELETE',cache:'no-store'});if(REG_LIST)REG_LIST=REG_LIST.filter(x=>x.code!==code)}catch(e){}
   delBusy=false;if(cur)confClearLocal();lsSet(CONF_KEY,JSON.stringify(tkConfs().filter(x=>x.code!==code)));renderAll();toast('Đã xoá hội nghị '+(c.ten||code))}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-delconf]');if(b){e.preventDefault();deleteConf(b.dataset.delconf)}});
 /* ============ khởi động ============ */
