@@ -272,6 +272,7 @@ body.lg-on{overflow:hidden}
 .lg-more{margin-top:14px}.lg-more summary{cursor:pointer;font-weight:600;font-size:14px;margin-bottom:8px}
 body.role-ht [data-dk="2"],body.role-ht #dkTab,body.role-ht #dk2,body.role-ht #dkStart,body.role-ht #dkReport,body.role-ht #dkCreate,body.role-ht #fileBar,body.role-ht #guestCard,body.role-ht #orgBox,body.role-ht [data-sy="newconf"],body.role-ht [data-sy="create"]{display:none!important}
 @media (max-width:560px){.lg-roles{grid-template-columns:1fr}.rolebtn{padding:6px 8px;font-size:12px}}
+.tnmoi{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;font-weight:600;cursor:pointer;line-height:1.3}.tnmoi input{width:18px;height:18px;accent-color:var(--peach);margin:0}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -601,9 +602,9 @@ dialog .foot .sp{flex:1}
     <div class="card pad dkform">
       <h3>Thêm khách đăng ký</h3>
       <div class="dkgrid">
+        <div class="field" id="dkGroupWrap"><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Gõ hoặc chọn nhóm…" autocomplete="off"><div class="pick" id="dkPG" hidden></div></div>
+        <div class="field"><label class="lbl" for="dkTn">Trưởng nhóm</label><input class="inp" id="dkTn" placeholder="Tự điền theo danh sách" autocomplete="off"><div class="pick" id="dkPT" hidden></div><div class="hint" id="dkTnHint"></div><label class="tnmoi"><input type="checkbox" id="dkTnMoi"> Trưởng nhóm mời khách</label></div>
         <div class="field dktvv"><label class="lbl" for="dkTvv">TVV mời <span class="count">(giữ lại cho khách sau)</span></label><div class="tvv-in"><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><button type="button" class="clr" id="dkTvvClr" hidden title="Xoá TVV" aria-label="Xoá TVV">×</button></div><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
-        <div class="field" id="dkGroupWrap"><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Tự điền theo TVV" autocomplete="off"><div class="pick" id="dkPG" hidden></div></div>
-        <div class="field"><label class="lbl" for="dkTn">Trưởng nhóm</label><input class="inp" id="dkTn" placeholder="Tự điền theo danh sách" autocomplete="off"><div class="pick" id="dkPT" hidden></div><div class="hint" id="dkTnHint"></div></div>
         <div class="field"><label class="lbl" for="dkName">Tên khách hàng <span class="count">(để trống nếu TN/TVV chỉ báo số vé)</span></label><input class="inp" id="dkName" placeholder="Họ tên khách" autocomplete="off"></div>
         <div class="field"><label class="lbl" for="dkVe">Số lượng vé <span class="count">(khách + người đi kèm)</span></label><input class="inp num" id="dkVe" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
         <div class="field"><label class="lbl" for="dkPaid">Vé đã nộp tiền</label><input class="inp num" id="dkPaid" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
@@ -1664,24 +1665,35 @@ document.addEventListener('change',e=>{const t=e.target;
   if(t.matches('[data-khn]')){const c=S.reg.kh[t.dataset.khn];if(c){c.note=t.value.trim();save()}}});
 /* tab 2: thêm khách */
 let dkT=null;
-picker($('#dkTvv'),$('#dkPick'),{source:q=>searchTvv(q),render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
+picker($('#dkTvv'),$('#dkPick'),{source:q=>{const g=norm($('#dkGroup').value),l=searchTvv(q,40);return(g?[...l.filter(t=>norm(t.group)===g),...l.filter(t=>norm(t.group)!==g)]:l).slice(0,8)},render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
 $('#dkTvv').addEventListener('input',()=>{dkT=null;dkHint()});
-picker($('#dkGroup'),$('#dkPG'),{autoHi:false,source:q=>$('#dkGroup').readOnly?[]:groupSource(q),render:groupRender,onPick:g=>{$('#dkGroup').value=g.name;dkTnFill();$('#dkName').focus()}});
-$('#dkTvvClr').onclick=()=>{$('#dkTvv').value='';$('#dkGroup').value='';$('#dkTn').value='';dkT=null;$('#dkPick').hidden=true;dkHint();$('#dkTvv').focus()};
+picker($('#dkGroup'),$('#dkPG'),{autoHi:false,source:groupSource,render:groupRender,onPick:g=>{$('#dkGroup').value=g.name;dkTnFill();dkTnMoiSync();(dkTnMoiOn()?$('#dkName'):$('#dkTvv')).focus()}});
+const dkTnMoiOn=()=>!!($('#dkTnMoi')&&$('#dkTnMoi').checked);
+$('#dkTvvClr').onclick=()=>{$('#dkTvv').value='';$('#dkTnMoi').checked=false;dkT=null;$('#dkPick').hidden=true;dkHint();$('#dkTvv').focus()};
 function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkT||matchTvvName(typed);$('#dkTvvClr').hidden=!$('#dkTvv').value;
   $('#dkTvvHint').innerHTML=m?`${m.cv?`<span class="chip solid">${esc(CV_LBL[m.cv]||m.cv)}</span> `:''}${m.ban?'Ban '+esc(m.ban)+' · ':''}Mã ${esc(m.code||'—')}`:typed?'<span class="count">TVV chưa có trong danh sách — chọn nhóm</span>':'';
-  const g=$('#dkGroup');if(m){g.value=m.group||'';g.readOnly=true}else{g.readOnly=false;if(!typed)g.value=''}dkTnFill()}
+  const g=$('#dkGroup');if(m&&m.group&&norm(g.value)!==norm(m.group)){g.value=m.group;dkTnFill()}
+  const cb=$('#dkTnMoi');if(cb)cb.checked=!!typed&&!!$('#dkTn').value.trim()&&norm(typed)===norm($('#dkTn').value)}
 const CV_LBL={TN:'Trưởng nhóm',TTN:'Tiền trưởng nhóm',TB:'Trưởng ban'};
 /* trưởng nhóm của nhóm: thư ký đã gán tay (đồng bộ) > danh sách TVV (chức vụ Trưởng nhóm) */
 function tnList(group){const t=S.tvv.find(x=>x.cv==='TN'&&norm(x.group)===norm(group));return t?t.name:''}
-function tnOf(group){if(!group)return'';const g=(S.reg.groups||{})[gkey(group)];return(g&&g.tn)||tnList(group)}
+function tnOf(group){if(!group)return'';const g=(S.reg.groups||{})[gkey(group)];const m=g&&g.tn&&!S.tvv.some(t=>t.cv==='TTN'&&norm(t.name)===norm(g.tn))?g.tn:'';return m||tnList(group)}
 function dkTnFill(){const grp=$('#dkGroup').value.trim(),el=$('#dkTn');if(document.activeElement===el)return;el.value=tnOf(grp);dkTnHint()}
+/* Tiền trưởng nhóm chưa đủ điều kiện làm trưởng nhóm */
+function isTTN(name,group){const n=norm(name);if(!n)return null;return S.tvv.find(t=>t.cv==='TTN'&&norm(t.name)===n&&(!group||norm(t.group)===norm(group)))||null}
 function dkTnHint(){const grp=$('#dkGroup').value.trim(),v=tc($('#dkTn').value),l=tnList(grp);
+  if(isTTN(v,grp))return $('#dkTnHint').innerHTML='<span style="color:var(--danger)">'+esc(v)+' là Tiền trưởng nhóm — chưa đủ điều kiện làm trưởng nhóm</span>';
   $('#dkTnHint').innerHTML=!grp?'':!v?'<span class="count">Nhóm chưa có trưởng nhóm — gõ để gán</span>':norm(v)===norm(l)?'Theo danh sách TVV':'<span class="count">Gán tay — ghi nhớ cho nhóm '+esc(grp)+'</span>'}
 picker($('#dkTn'),$('#dkPT'),{autoHi:false,source:q=>{const grp=norm($('#dkGroup').value),n=norm(q);const rk=t=>t.cv==='TN'?0:t.cv==='TTN'?1:2;
-    return S.tvv.filter(t=>(!grp||norm(t.group)===grp)&&(!n||norm(t.name).includes(n))).sort((a,b)=>rk(a)-rk(b)||a.name.localeCompare(b.name,'vi')).slice(0,12)},
-  render:t=>tvvRender(t).replace('</b>',`</b>${t.cv?' · '+(CV_LBL[t.cv]||t.cv):''}`),onPick:t=>{$('#dkTn').value=t.name;dkTnHint();$('#dkName').focus()}});
-$('#dkTn').addEventListener('input',dkTnHint);$('#dkGroup').addEventListener('input',()=>{if(!$('#dkGroup').readOnly)dkTnFill()});
+    return S.tvv.filter(t=>t.cv!=='TTN'&&(!grp||norm(t.group)===grp)&&(!n||norm(t.name).includes(n))).sort((a,b)=>rk(a)-rk(b)||a.name.localeCompare(b.name,'vi')).slice(0,12)},
+  render:t=>tvvRender(t).replace('</b>',`</b>${t.cv?' · '+(CV_LBL[t.cv]||t.cv):''}`),onPick:t=>{$('#dkTn').value=t.name;dkTnHint();dkTnMoiSync();$('#dkName').focus()}});
+$('#dkTn').addEventListener('input',()=>{dkTnHint();dkTnMoiSync()});$('#dkGroup').addEventListener('input',()=>{dkTnFill();dkTnMoiSync()});
+/* tick "Trưởng nhóm mời khách" → TVV mời = trưởng nhóm */
+function dkTnMoiSync(){const cb=$('#dkTnMoi');if(!cb||!cb.checked)return;const tn=tc($('#dkTn').value);if(!tn||isTTN(tn,$('#dkGroup').value.trim()))return;
+  dkT=matchTvvName(tn,$('#dkGroup').value.trim())||matchTvvName(tn)||null;$('#dkTvv').value=dkT?dkT.name:tn;$('#dkTvvClr').hidden=false;
+  $('#dkTvvHint').innerHTML=dkT?`${dkT.cv?`<span class="chip solid">${esc(CV_LBL[dkT.cv]||dkT.cv)}</span> `:''}${dkT.ban?'Ban '+esc(dkT.ban)+' · ':''}Mã ${esc(dkT.code||'—')}`:''}
+$('#dkTnMoi').addEventListener('change',e=>{if(e.target.checked){if(!$('#dkTn').value.trim()||isTTN($('#dkTn').value,$('#dkGroup').value.trim())){e.target.checked=false;return flash($('#dkTn'),'Chọn nhóm / nhập trưởng nhóm trước')}dkTnMoiSync();$('#dkName').focus()}
+  else{$('#dkTvv').value='';dkT=null;dkHint();$('#dkTvv').focus()}});
 async function dkAdd(){const name=tc($('#dkName').value);
   const typed=$('#dkTvv').value.trim(),t=dkT||matchTvvName(typed);if(!t&&!typed)return flash($('#dkTvv'),'Chọn TVV mời');
   const group=t?t.group:tc($('#dkGroup').value);if(!group)return flash($('#dkGroup'),'Nhập nhóm của TVV');
@@ -1690,6 +1702,7 @@ async function dkAdd(){const name=tc($('#dkName').value);
     if(v!=='yes'){$('#dkTvv').focus();$('#dkTvv').select();return}}
   const ve=Math.max(1,Math.round(num($('#dkVe').value)||1));
   const paid=Math.min(ve,Math.max(0,Math.round(num($('#dkPaid').value)||0)));const tn=tc($('#dkTn').value);
+  if(isTTN(tn,group))return flash($('#dkTn'),tn+' là Tiền trưởng nhóm — chưa đủ điều kiện, để trống hoặc chọn trưởng nhóm');
   if(tn!==tnOf(group)){const k=gkey(group),gg=S.reg.groups[k]||{name:group,ve:0,dt:0,tick:false};gg.name=gg.name||group;gg.tn=tn;S.reg.groups[k]=gg}
   const thu=num($('#dkThu').value)||0;const dk=name?readComp('#dkComp').slice(0,ve-1):[];const id=uid();S.reg.kh[id]={id,name,ve,paid,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,tn,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
   rememberGroup(group);if(!t&&typed&&!matchTvvName(typed,group)){const nt={name:tc(typed),group,code:'',tay:true};S.tvv.push(nt);dkT=nt;toast(`Đã ghi nhớ TVV mới ${nt.name} · nhóm ${group}`)}
