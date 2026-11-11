@@ -1501,10 +1501,12 @@ async function leaveConf(q){const code=SY.event;
 /* Hội nghị mới: hỏi đã lưu chưa rồi xoá danh sách hiện tại trên máy */
 async function newConference(){
   savedAsked=false;if(SY.on){if(!await leaveConf('Rời hội nghị này để bắt đầu hội nghị mới?'))return}
-  if(S.guests.length&&!savedAsked){const v=await ask('Đã lưu danh sách chưa?',`Danh sách hiện tại có <b>${S.guests.length}</b> khách (${S.guests.filter(g=>g.attended).length} đã checkin).<br>Bắt đầu hội nghị mới sẽ <b>xoá danh sách này</b> khỏi máy.`,
+  if((S.guests.length||Object.keys((S.reg&&S.reg.groups)||{}).length)&&!savedAsked){const v=await ask('Đã lưu danh sách chưa?',`Danh sách hiện tại có <b>${S.guests.length}</b> khách (${S.guests.filter(g=>g.attended).length} đã checkin).<br>Bắt đầu hội nghị mới sẽ <b>xoá danh sách này</b> khỏi máy.`,
       [{v:'export',l:'Xuất file Excel rồi xoá',primary:true},{v:'clear',l:'Đã lưu rồi — xoá luôn',danger:true},{v:'no',l:'Huỷ'}]);
     if(v==='no'||v==='cancel')return;if(v==='export'){try{await exportXlsx()}catch(e){return toast('Chưa xuất được file — danh sách chưa bị xoá')}}}
   S.guests=[];S.recent=[];S.guestFile=null;S.tomb={};S.reg={groups:{},kh:{},days:{}};Object.assign(S.event,{tenHN:'',phong:'',khuVuc:''});save();renderAll();renderSync();
+  S.event.loaiHN='';S.event.ngayHN='';save();
+  if(MODE==='dangky'){renderReg();toast('Đã thoát hội nghị — tạo hội nghị mới hoặc nhập mã hội nghị khác');setTimeout(()=>{$('#dkStart')?.scrollIntoView({behavior:'smooth',block:'center'});$('#dkStartCode')?.focus()},200);return}
   $('#orgBox').open=true;toast('Đã bắt đầu hội nghị mới — nhập tên hội nghị và file danh sách khách');setTimeout(()=>$('#tenHN')?.focus(),200)}
 function syncDisable(){document.activeElement?.blur?.();stopStream();Object.assign(SY,{on:false,event:'',pend:{},host:false});sySave();snap=null;R=null;setSy('off','');toast('Đã rời hội nghị — dữ liệu vẫn còn trên máy');renderAll()}
 document.addEventListener('click',async e=>{const kb=e.target.closest('[data-kick]');if(kb){e.preventDefault();if(!isHost())return;const id=kb.dataset.kick,nm=kb.dataset.kname||'máy này';
@@ -1702,7 +1704,8 @@ function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNga
   const ok=typeof SYNC_OK!=='undefined'&&SYNC_OK;$('#dkStart').hidden=!ok||SY.on;$('#dkConf').hidden=!ok||!SY.on;
   if(ok&&SY.on){const n=S.guests.filter(g=>g.regId).length;$('#dkConf').innerHTML=`<div class="dkconf-row"><div class="dkconf-main"><small>${esc(S.event.loaiHN||'Hội nghị')}</small><b>${esc(S.event.tenHN||'Chưa đặt tên')}</b></div>
     <div class="jcode"><div><small>Mã hội nghị</small><b>${esc(SY.event)}</b></div><button type="button" class="btn primary" data-sy="copy">📋 Copy mã</button></div></div>
-    <p class="hint" style="margin:8px 0 0">🔗 Đã liên kết với phần <b>Checkin</b>: ${n} khách đăng ký có sẵn trong danh sách chờ checkin. Ngày hội nghị, lễ tân nhập mã này ở phần Checkin.</p>`}
+    <p class="hint" style="margin:8px 0 0">🔗 Đã liên kết với phần <b>Checkin</b>: ${n} khách đăng ký có sẵn trong danh sách chờ checkin. Ngày hội nghị, lễ tân nhập mã này ở phần Checkin.</p>
+    <div class="actions" style="margin:10px 0 0"><button type="button" class="btn sm danger" data-sy="newconf">⏏ Thoát hội nghị / chuyển hội nghị khác</button><span class="count">Dữ liệu hội nghị này vẫn lưu trên mạng — nhập lại mã là quay lại được.</span></div>`}
   $('#dkSyncNote').innerHTML=(S.event.loaiHN?`<span class="chip">🏷️ ${esc(S.event.loaiHN)}</span> `:'')+(typeof SYNC_OK!=='undefined'&&SYNC_OK?(SY.on?`☁️ Theo dõi chung — mã <b>${esc(SY.event)}</b>`:'Chưa có mã hội nghị — số liệu chỉ lưu trên máy này'):'')}
 $('#dkNgay').addEventListener('change',e=>{S.event.ngayHN=e.target.value;save();renderReg()});
 const LOAI_HN=['HNKH cấp Công ty','HNKH cấp Phòng PTKD','HNKH cấp Ban / VPKV','HNKH cấp nhóm','Hội thảo giới thiệu sản phẩm','Tri ân khách hàng'];
