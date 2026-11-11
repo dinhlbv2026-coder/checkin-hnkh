@@ -271,7 +271,7 @@ body.lg-on{overflow:hidden}
 .lg-x{border:0;background:none;color:var(--muted);font-size:22px;padding:0 14px;cursor:pointer}.lg-x:hover{color:var(--danger)}
 .lg-more{margin-top:14px}.lg-h3{font-size:15px;margin:18px 0 6px}.lg-all .lg-list{max-height:340px;overflow:auto}
 .lg-more summary{cursor:pointer;font-weight:600;font-size:14px;margin-bottom:8px}
-body.role-ht [data-dk="2"],body.role-ht #dkTab,body.role-ht #dk2,body.role-ht #dkStart,body.role-ht #dkReport,body.role-ht #dkCreate,body.role-ht #fileBar,body.role-ht #guestCard,body.role-ht #orgBox,body.role-ht [data-sy="newconf"],body.role-ht [data-sy="create"]{display:none!important}
+body.role-ht [data-dk="2"],body.role-ht #dkTab,body.role-ht #dk2,body.role-ht #dkStart,body.role-ht #exportBtn,body.role-ht [data-auto],body.role-ht #backup,body.role-ht #autoBar,body.role-ht #dkCreate,body.role-ht #fileBar,body.role-ht #guestCard,body.role-ht #orgBox,body.role-ht [data-sy="newconf"],body.role-ht [data-sy="create"]{display:none!important}
 @media (max-width:560px){.lg-roles{grid-template-columns:1fr}.rolebtn{padding:6px 8px;font-size:12px}}
 .tnmoi{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;font-weight:600;cursor:pointer;line-height:1.3}.tnmoi input{width:18px;height:18px;accent-color:var(--peach);margin:0}
 .dkfilters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 18px 12px}
@@ -1272,12 +1272,13 @@ function buildWorkbook(withData){
   put(s,r,7,{formula:`SUM(G3:G${r-1})`,result:R.total*R.rate},{font:{bold:true},b:true,fmt:NUM});r++;
 
   addRegSheet(wb);addDataSheet(wb);return wb}
-async function exportXlsx(){if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra kết nối mạng rồi tải lại trang');
+async function exportXlsx(){if(typeof ROLE!=='undefined'&&ROLE==='ht')return toast('Người hỗ trợ chỉ xuất báo cáo bằng ảnh');if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra kết nối mạng rồi tải lại trang');
   const E=EV(),wb=buildWorkbook(false);
   const buf=await wb.xlsx.writeBuffer();const[y,mo,d]=(E.date||today()).split('-');
   download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`${d}.${mo} Danh sách Khách hàng HNKH - QT Thuế.xlsx`);
   toast('Đã xuất file Excel')}
 async function download(blob,name){
+  if(typeof ROLE!=='undefined'&&ROLE==='ht'&&!/\.png$/i.test(name||'')){toast('Người hỗ trợ chỉ xuất báo cáo bằng ảnh');return}
   /* trong link claude.ai: dùng hộp lưu file của Claude (điện thoại mở bảng chia sẻ) */
   if(window.self!==window.top&&window.claude?.use){try{const dl=await window.claude.use('downloads');
     if(dl){await dl.save({filename:name,data:blob});toast('Đã lưu file '+name);return}}
@@ -1465,7 +1466,7 @@ const idb={open(){return new Promise((res,rej)=>{const r=indexedDB.open('hnkh-ch
   async get(k){const db=await this.open();return new Promise(res=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})},
   async set(k,v){const db=await this.open();return new Promise(res=>{const q=db.transaction('kv','readwrite').objectStore('kv').put(v,k);q.onsuccess=()=>res(true);q.onerror=()=>res(false)})}};
 let fh=null,fhReady=false,lastWrite=null,writeTimer=null,writing=false,dirty=false;
-async function linkFile(){if(!FS_OK)return downloadData();
+async function linkFile(){if(typeof ROLE!=='undefined'&&ROLE==='ht')return toast('Người hỗ trợ chỉ xuất báo cáo bằng ảnh');if(!FS_OK)return downloadData();
   try{const[y,mo,d]=evDate().split('-');
     fh=await showSaveFilePicker({suggestedName:`${d}.${mo} Danh sách KH HNKH - tự lưu.xlsx`,types:[{description:'Excel',accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]});
     await idb.set('fh',fh).catch(()=>{});fhReady=true;await writeNow();toast('Đã bật tự lưu ra file '+fh.name)}
@@ -1478,7 +1479,7 @@ async function writeNow(){if(!fhReady||!window.ExcelJS)return;if(writing){dirty=
   try{const buf=await buildWorkbook(true).xlsx.writeBuffer();const w=await fh.createWritable();await w.write(buf);await w.close();lastWrite=new Date()}
   catch(e){fhReady=false;toast('⚠ Không ghi được file tự lưu — bấm “Kết nối lại”')}
   writing=false;renderAuto();if(dirty){dirty=false;scheduleWrite()}}
-async function downloadData(){if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');
+async function downloadData(){if(typeof ROLE!=='undefined'&&ROLE==='ht')return toast('Người hỗ trợ chỉ xuất báo cáo bằng ảnh');if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');
   const buf=await buildWorkbook(true).xlsx.writeBuffer();const[y,mo,d]=evDate().split('-');
   download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`${d}.${mo} Danh sách KH HNKH - bản lưu ${hm(new Date().toISOString()).replace(':','h')}.xlsx`);
   S.lastDl=new Date().toISOString();save();renderAuto()}
@@ -1774,7 +1775,7 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
 var dkLastList=dkLastList||[];
 /* bảo mật: ảnh chỉ ghi họ khách hàng + dấu … (VD: Nguyễn …) */
 function maskName(n){const w=tc(n||'').trim().split(/\s+/).filter(Boolean);if(!w.length)return'';return w.length>1?w[0]+' …':w[0].charAt(0)+'…'}
-function dkFilterText(){const o=[];const g=$('#dk2Group');if(g&&g.value)o.push('Nhóm '+g.options[g.selectedIndex].text.replace(/\s*\(\d+\)$/,''));
+function dkFilterText(){const o=[];if(ROLE==='ht')return o;const g=$('#dk2Group');if(g&&g.value)o.push('Nhóm '+g.options[g.selectedIndex].text.replace(/\s*\(\d+\)$/,''));
   $$('[data-dkf]').forEach(el=>{if(el.value)o.push(el.options[el.selectedIndex].text.replace(/\s*\(\d+\)$/,''))});const q=$('#dk2Q').value.trim();if(q)o.push('Tìm “'+q+'”');return o}
 async function listImages(list){try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
   const W=1080,P=56,F='"Be Vietnam Pro",-apple-system,"Segoe UI",Roboto,Arial,sans-serif',C={bg:'#FAF2E8',card:'#FFFFFF',ink:'#3A2A21',mu:'#8C7363',line:'#F1E0CE',br:'#D9663D',ok:'#1E8A62',cp:'#FDE3C8',alt:'#FFF8F1'},E=EV();
@@ -1815,7 +1816,7 @@ async function listImages(list){try{await document.fonts.ready;await document.fo
     y+=Math.max(LH,100)+40;const now=new Date();txt(`BVL DTH Checkin · xuất lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} ${dmy(today())}`,W/2,y,500,22,C.mu,'center');y+=40;
     const o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(cv,0,0);out.push(await new Promise(res=>o.toBlob(b=>res(b),'image/png')))}
   return out}
-async function shareListImages(){renderReg();const list=dkLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');toast('Đang tạo ảnh danh sách…');
+async function shareListImages(lst){if(!Array.isArray(lst)){renderReg();lst=null}const list=lst||dkLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');toast('Đang tạo ảnh danh sách…');
   const blobs=await listImages(list),d=today(),pw=String(blobs.length).length,files=blobs.map((b,i)=>new File([b],`Danh-sach-khach-${d}${blobs.length>1?'-anh'+String(i+1).padStart(Math.max(2,pw),'0')+'-cua-'+blobs.length:''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
   const canShare=!!(navigator.canShare&&navigator.canShare({files}));
   const v=await ask(`Ảnh danh sách khách (${list.length} lượt${blobs.length>1?' · '+blobs.length+' ảnh':''})`,`<div style="max-height:60vh;overflow:auto;display:grid;gap:8px">${urls.map((u,i)=>`${urls.length>1?`<small class="count">Ảnh ${i+1}/${urls.length}</small>`:''}<img src="${u}" alt="Ảnh danh sách khách" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:#FAF2E8">`).join('')}</div>
@@ -1823,7 +1824,7 @@ async function shareListImages(){renderReg();const list=dkLastList||[];if(!list.
     [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
   if(v==='share'){try{await navigator.share({files,title:'Danh sách khách đăng ký'})}catch(e){if(e&&e.name!=='AbortError')files.forEach(f=>download(f,f.name))}}
   else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*700));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)}
-$('#dk2Img').onclick=shareListImages;
+$('#dk2Img').onclick=()=>shareListImages();
 /* lọc danh sách khách đăng ký */
 var dkF={day:'',tn:'',tvv:'',info:'',paid:'',name:''};
 document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.dkf;if(!k)return;dkF[k]=e.target.value;if(k==='tn')dkF.tvv='';renderReg()});
@@ -2031,10 +2032,13 @@ function dayReport(d){const x=S.reg.days[d];if(!x)return null;const pd=prevDay(d
     none.length?`Nhóm chưa đăng ký (${none.length}): ${none.join(', ')}`:null].filter(v=>v!=null&&v!==false).join('\n').replace(/\n{3,}/g,'\n\n')}
 async function openDayReport(){const days=Object.keys(S.reg.days||{}).sort();regSnapshot();save();
   const d0=today(),all=Object.keys(S.reg.days).sort().reverse();
+  const HT=ROLE==='ht';
   const v=await ask('Báo cáo ngày',`<label class="lbl">Chọn ngày</label><select class="inp" id="askInput" style="margin-bottom:10px">${all.map(d=>`<option value="${d}">${dmy(d)}${d===d0?' (hôm nay)':''}</option>`).join('')}</select>
-    <textarea class="inp" id="drText" readonly style="min-height:260px;font-family:var(--font);font-size:13.5px;white-space:pre-wrap">${esc(dayReport(d0))}</textarea>`,
-    [{v:'img',l:'🖼️ Ảnh báo cáo (điện thoại)',primary:IS_TOUCH},{v:'copy',l:'📋 Copy nội dung (gửi Zalo)',primary:!IS_TOUCH},{v:'xlsx',l:'Xuất Excel báo cáo ngày'},{v:'no',l:'Đóng'}]);
+    ${HT?'<p class="sub" style="margin:4px 0 0">Người hỗ trợ xuất báo cáo bằng ảnh: ảnh số liệu theo nhóm, hoặc ảnh danh sách khách (tên khách chỉ ghi họ).</p>':`<textarea class="inp" id="drText" readonly style="min-height:260px;font-family:var(--font);font-size:13.5px;white-space:pre-wrap">${esc(dayReport(d0))}</textarea>`}`,
+    HT?[{v:'img',l:'🖼️ Ảnh báo cáo ngày',primary:true},{v:'limg',l:'🖼️ Ảnh danh sách khách'},{v:'no',l:'Đóng'}]
+      :[{v:'img',l:'🖼️ Ảnh báo cáo (điện thoại)',primary:IS_TOUCH},{v:'copy',l:'📋 Copy nội dung (gửi Zalo)',primary:!IS_TOUCH},{v:'xlsx',l:'Xuất Excel báo cáo ngày'},{v:'no',l:'Đóng'}]);
   const sel=(document.getElementById('askInput')||{}).value||d0;
+  if(v==='limg')return shareListImages(dkKhList());if(HT&&(v==='copy'||v==='xlsx'))return;
   if(v==='copy'){const t=dayReport(sel);try{await navigator.clipboard.writeText(t);toast('Đã copy báo cáo ngày '+dmy(sel))}catch(e){toast('Không copy được — bấm giữ nội dung để sao chép')}}
   if(v==='xlsx')exportDayReport(sel);if(v==='img')shareReportImage(sel)}
 const IS_TOUCH=matchMedia('(pointer:coarse)').matches||/iPad|iPhone|Android/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -2124,7 +2128,7 @@ async function shareReportImage(d){toast('Đang tạo ảnh báo cáo…');const
   else if(v==='dl')download(blob,name);setTimeout(()=>URL.revokeObjectURL(url),60000)}
 
 document.addEventListener('change',e=>{if(e.target.id==='askInput'&&document.getElementById('drText'))document.getElementById('drText').value=dayReport(e.target.value)||''});
-async function exportDayReport(d){if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');const x=S.reg.days[d];if(!x)return;
+async function exportDayReport(d){if(typeof ROLE!=='undefined'&&ROLE==='ht')return toast('Người hỗ trợ chỉ xuất báo cáo bằng ảnh');if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');const x=S.reg.days[d];if(!x)return;
   const pd=prevDay(d),p=pd?S.reg.days[pd]:null,E=EV(),wb=new ExcelJS.Workbook(),FN={name:'Times New Roman',size:12},th={style:'thin'},BD={top:th,left:th,bottom:th,right:th};
   const w=wb.addWorksheet('Bao cao ngay');w.columns=[6,22,24,10,12,12,14,10,16].map(width=>({width}));
   w.mergeCells(1,1,1,9);Object.assign(w.getCell(1,1),{value:`BÁO CÁO ĐĂNG KÝ ${E.hnUp} — NGÀY ${dmy(d)}`});w.getCell(1,1).font={...FN,bold:true,size:14};w.getCell(1,1).alignment={horizontal:'center'};
