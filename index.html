@@ -1720,6 +1720,8 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
 
 /* ============ ảnh dọc danh sách khách đăng ký (theo bộ lọc đang chọn) ============ */
 var dkLastList=dkLastList||[];
+/* bảo mật: ảnh chỉ ghi họ khách hàng + dấu … (VD: Nguyễn …) */
+function maskName(n){const w=tc(n||'').trim().split(/\s+/).filter(Boolean);if(!w.length)return'';return w.length>1?w[0]+' …':w[0].charAt(0)+'…'}
 function dkFilterText(){const o=[];const g=$('#dk2Group');if(g&&g.value)o.push('Nhóm '+g.options[g.selectedIndex].text.replace(/\s*\(\d+\)$/,''));
   $$('[data-dkf]').forEach(el=>{if(el.value)o.push(el.options[el.selectedIndex].text.replace(/\s*\(\d+\)$/,''))});const q=$('#dk2Q').value.trim();if(q)o.push('Tìm “'+q+'”');return o}
 async function listImages(list){try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
@@ -1746,10 +1748,10 @@ async function listImages(list){try{await document.fonts.ready;await document.fo
     kp.forEach(([l,v],i)=>{const x=P+i*(kw+14);rr(x,y,kw,120,22,C.card);txt(String(v),x+kw/2,y+64,700,44,i===2||i===3?C.ok:C.ink,'center');txt(l,x+kw/2,y+100,500,22,C.mu,'center')});
     y+=150;
     /* danh sách */
-    rr(P,y,W-2*P,20,0,C.bg);const rows=part.map((c,i)=>{const ti=pg*PER+i+1,dk=c.name&&vv(c)>1?(compText(c)||`+${vv(c)-1} người đi kèm`):'';return{c,ti,dk,h:dk?118:88}});
+    rr(P,y,W-2*P,20,0,C.bg);const rows=part.map((c,i)=>{const ti=pg*PER+i+1,dkn=(c.dk||[]).filter(x=>x&&x.name).map(x=>maskName(x.name)+(x.qh?' ('+x.qh+')':'')).join(', '),dk=c.name&&vv(c)>1?(dkn||`+${vv(c)-1} người đi kèm`):'';return{c,ti,dk,h:dk?118:88}});
     const LH=rows.reduce((a,r)=>a+r.h,0)+16;rr(P,y,W-2*P,LH,26,C.card);let ry=y+8;
     rows.forEach((r,i)=>{const c=r.c;if(i%2)rr(P+8,ry,W-2*P-16,r.h,14,C.alt);
-      const nm=c.name?tc(c.name):`(Chưa có tên KH — ${vv(c)} vé)`;txt(`${r.ti}.`,P+24,ry+40,700,26,C.mu);
+      const nm=c.name?maskName(c.name):`(Chưa có tên KH — ${vv(c)} vé)`;txt(`${r.ti}.`,P+24,ry+40,700,26,C.mu);
       txt(fit(nm,600,c.name?700:500,28),P+84,ry+40,c.name?700:500,28,c.name?C.ink:C.mu);
       txt(`${vv(c)} vé`,W-P-24,ry+40,700,28,C.br,'right');
       const meta=[c.at?atHM(c.at)+' '+dmy(atDay(c.at)).slice(0,5):'',c.tvvName?'TVV '+tc(c.tvvName):'',c.group||''].filter(Boolean).join(' · ');
@@ -1765,7 +1767,7 @@ async function shareListImages(){renderReg();const list=dkLastList||[];if(!list.
   const blobs=await listImages(list),d=today(),files=blobs.map((b,i)=>new File([b],`Danh-sach-khach-${d}${blobs.length>1?'-trang'+(i+1):''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
   const canShare=!!(navigator.canShare&&navigator.canShare({files}));
   const v=await ask(`Ảnh danh sách khách (${list.length} lượt${blobs.length>1?' · '+blobs.length+' ảnh':''})`,`<div style="max-height:60vh;overflow:auto;display:grid;gap:8px">${urls.map(u=>`<img src="${u}" alt="Ảnh danh sách khách" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:#FAF2E8">`).join('')}</div>
-    <small class="count" style="display:block;margin-top:8px">Ảnh theo đúng bộ lọc đang chọn${blobs.length>1?'; danh sách dài được chia mỗi ảnh 60 lượt':''}. ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad có thể bấm giữ vào ảnh để lưu.</small>`,
+    <small class="count" style="display:block;margin-top:8px">Ảnh theo đúng bộ lọc đang chọn; tên khách chỉ ghi họ (bảo mật)${blobs.length>1?'; danh sách dài được chia mỗi ảnh 60 lượt':''}. ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad có thể bấm giữ vào ảnh để lưu.</small>`,
     [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
   if(v==='share'){try{await navigator.share({files,title:'Danh sách khách đăng ký'})}catch(e){if(e&&e.name!=='AbortError')files.forEach(f=>download(f,f.name))}}
   else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*400));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)}
