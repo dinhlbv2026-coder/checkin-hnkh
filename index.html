@@ -233,6 +233,14 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .dcol:hover .b{transform:translateY(-4px)}.dcol em{font-style:normal;font-weight:700;color:var(--ink)}
 td.up{color:var(--ok);font-weight:700}
 @media (prefers-reduced-motion:reduce){.dcol .b{transition:none}}
+.modebar{max-width:1280px;margin:14px auto 0;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modebar button{display:flex;flex-direction:row;align-items:center;gap:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:18px;padding:12px 18px;text-align:left;font-size:15px;box-shadow:var(--shadow);transition:transform .12s,border-color .12s}
+.modebar button b{display:block;font-size:17px;letter-spacing:.04em}.modebar button small{display:block}.modebar .mi{font-size:24px;line-height:1}.modebar button small{color:var(--muted);font-size:12.5px}
+.modebar button:hover{border-color:var(--peach)}
+.modebar button.on{background:linear-gradient(135deg,var(--peach),var(--peach-2));border-color:transparent;color:var(--on-brand)}.modebar button.on small{color:var(--on-brand);opacity:.8}
+.modebar button[data-mode=dangky].on{background:var(--hero);color:var(--hero-ink)}.modebar button[data-mode=dangky].on small{color:var(--hero-ink)}
+@media (max-width:900px){.modebar{margin-top:10px;gap:8px}.modebar button{padding:9px 12px}.modebar button b{font-size:14.5px}.modebar button small{display:none}}
+.grid2>*{min-width:0}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -378,12 +386,13 @@ dialog .foot .sp{flex:1}
   </div>
   <div class="ev"><b id="evTitle">Checkin Khách Dự</b><span id="evSub"></span></div>
   <nav class="tabs" id="tabs">
-    <button data-v="checkin" class="on">Checkin Khách Dự</button>
-    <button data-v="list">Danh sách</button>
-    <button data-v="stats">Thống kê</button>
-    <button data-v="dangky">Đăng ký</button>
-    <button data-v="report">Xuất báo cáo</button>
-    <button data-v="settings">Cài đặt</button>
+    <button data-v="checkin" data-mode="checkin" class="on">Checkin Khách Dự</button>
+    <button data-v="list" data-mode="checkin">Danh sách</button>
+    <button data-v="stats" data-mode="checkin">Thống kê</button>
+    <button data-v="report" data-mode="checkin">Xuất báo cáo</button>
+    <button data-v="dangky" data-dk="2" data-mode="dangky">Khách hàng</button>
+    <button data-v="dangky" data-dk="1" data-mode="dangky">Tổng hợp</button>
+    <button data-v="settings" data-mode="both">Cài đặt</button>
   </nav>
   <span class="saved" id="saved">Đã lưu trên máy</span>
   <button class="icon-btn" id="themeBtn" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối">
@@ -391,6 +400,10 @@ dialog .foot .sp{flex:1}
   </button>
 </header>
 
+<div class="modebar" id="modebar" role="tablist" aria-label="Chọn phần làm việc">
+  <button type="button" data-mode="checkin" class="on"><span class="mi" aria-hidden="true">🎫</span><span><b>CHECKIN</b><small>Đón khách tại hội nghị</small></span></button>
+  <button type="button" data-mode="dangky"><span class="mi" aria-hidden="true">📝</span><span><b>ĐĂNG KÝ</b><small>Thư ký theo dõi trước hội nghị</small></span></button>
+</div>
 <main>
 <!-- ================= CHECK-IN ================= -->
 <section class="view on" id="v-checkin">
@@ -516,7 +529,7 @@ dialog .foot .sp{flex:1}
 <section class="view" id="v-dangky">
   <div class="dk-head">
     <div><h2>Theo dõi đăng ký</h2><p class="sub">Thư ký theo dõi vé đăng ký, mục tiêu doanh thu và thông tin khách của từng nhóm. Đồng bộ theo mã hội nghị.</p></div>
-    <div class="seg" id="dkTab"><button data-t="1" class="on">① Tổng hợp</button><button data-t="2">② Khách hàng</button></div>
+    <div class="seg" id="dkTab"><button data-t="2" class="on">① Khách hàng</button><button data-t="1">② Tổng hợp</button></div>
   </div>
   <div class="card pad dkbar">
     <label class="lbl" for="dkNgay" style="margin:0">Ngày hội nghị</label><input class="inp" type="date" id="dkNgay" style="max-width:170px;padding:7px 10px">
@@ -636,12 +649,13 @@ dialog .foot .sp{flex:1}
 </main>
 
 <nav class="bnav" id="bnav">
-  <button data-v="checkin" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Checkin Khách Dự</button>
-  <button data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Danh sách</button>
-  <button data-v="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Thống kê</button>
-  <button data-v="dangky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9z"/><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M8 12h8M8 16h5"/></svg>Đăng ký</button>
-  <button data-v="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 15l3 3 3-3M12 11v7"/></svg>Báo cáo</button>
-  <button data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Cài đặt</button>
+  <button data-v="checkin" data-mode="checkin" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Checkin Khách Dự</button>
+  <button data-v="list" data-mode="checkin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Danh sách</button>
+  <button data-v="stats" data-mode="checkin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Thống kê</button>
+  <button data-v="dangky" data-dk="2" data-mode="dangky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 8h5M19.5 5.5v5"/></svg>Khách hàng</button>
+  <button data-v="dangky" data-dk="1" data-mode="dangky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Tổng hợp</button>
+  <button data-v="report" data-mode="checkin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 15l3 3 3-3M12 11v7"/></svg>Báo cáo</button>
+  <button data-v="settings" data-mode="both"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Cài đặt</button>
 </nav>
 
 <div class="toast" id="toast"><span id="toastText"></span><button id="toastUndo" hidden>Hoàn tác</button></div>
@@ -738,9 +752,18 @@ $('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(m
 /* ============ điều hướng ============ */
 let view='checkin';
 function go(v){view=v;$$('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
-  $$('#tabs button,#bnav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  updNav();
   renderAll();window.scrollTo({top:0});if(v==='checkin'&&FINE)setTimeout(()=>F.tvv.focus(),50)}
-$$('#tabs button,#bnav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+$$('#tabs button,#bnav button').forEach(b=>b.onclick=()=>{if(b.dataset.dk)dkTabN=b.dataset.dk;go(b.dataset.v)});
+/* 2 mục lớn: CHECKIN / ĐĂNG KÝ */
+let MODE='checkin';try{MODE=localStorage.getItem('hnkh-mode')||'checkin'}catch(e){}
+function updNav(){$$('#tabs button,#bnav button').forEach(b=>{const m=b.dataset.mode;b.hidden=!(m==='both'||m===MODE);
+    b.classList.toggle('on',b.dataset.v===view&&(!b.dataset.dk||b.dataset.dk===dkTabN))});
+  $$('#modebar button').forEach(b=>b.classList.toggle('on',b.dataset.mode===MODE));
+  const n=$$('#bnav button').filter(b=>!b.hidden).length;$('#bnav').style.gridTemplateColumns=`repeat(${n},1fr)`}
+function setMode(m){MODE=m;try{localStorage.setItem('hnkh-mode',m)}catch(e){}
+  if(m==='dangky'){if(view!=='dangky'&&view!=='settings')go('dangky');else updNav()}else{if(view==='dangky'||view==='settings')go('checkin');else updNav()}}
+$$('#modebar button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 document.addEventListener('click',e=>{const a=e.target.closest('[data-goto]');if(a){e.preventDefault();go(a.dataset.goto)}});
 
 /* ============ toast ============ */
@@ -1483,13 +1506,13 @@ picker($('#nG'),$('#pNG'),{autoHi:false,source:groupSource,render:groupRender,on
    Tab 2 (khách) tự đếm vào nhóm ở tab 1; bấm tên nhóm ở tab 1 để xem khách nhóm đó. */
 S.reg=S.reg||{groups:{},kh:{}};S.reg.groups=S.reg.groups||{};S.reg.kh=S.reg.kh||{};
 const gkey=n=>norm(n).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'khac';
-let dkTabN='1',dkFilter='',dkSel=null;
+let dkTabN='2',dkFilter='',dkSel=null;
 function dkKhList(){return Object.values(S.reg.kh||{}).sort((a,b)=>(a.at||0)-(b.at||0))}
 function dkRows(){const m=new Map();
   allGroups().forEach(g=>m.set(gkey(g.name),{key:gkey(g.name),name:g.name,ve:0,dt:0,tick:false,kh:0,info:0}));
   for(const[k,g]of Object.entries(S.reg.groups||{})){const r=m.get(k)||{key:k,name:g.name,kh:0,info:0};Object.assign(r,{name:g.name||r.name,veM:+g.ve||0,dt:+g.dt||0,tick:!!g.tick});m.set(k,r)}
   dkKhList().forEach(c=>{const k=gkey(c.group||'(Chưa rõ nhóm)');if(!m.has(k))m.set(k,{key:k,name:c.group||'(Chưa rõ nhóm)',ve:0,dt:0,tick:false,kh:0,info:0});const r=m.get(k);const v=Math.max(1,+c.ve||1);r.kh+=v;r.nkh=(r.nkh||0)+1;if(c.info)r.info+=v});
-  m.forEach(r=>{r.veM=r.veM||0;r.ve=r.veM||r.kh||0});
+  m.forEach(r=>{r.veM=r.veM||0;r.ve=r.veM||r.kh||0;r.tick=r.ve>0&&r.info>=r.ve});
   return[...m.values()].sort((a,b)=>(b.ve-a.ve)||a.name.localeCompare(b.name,'vi'))}
 function dkSetGroup(key,name,patch){const g=S.reg.groups[key]||{name,ve:0,dt:0,tick:false};Object.assign(g,{name},patch);S.reg.groups[key]=g;regSnapshot();save();renderReg()}
 function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')renderDays();
@@ -1517,7 +1540,7 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
         <td class="n"><input class="inp num cell" inputmode="numeric" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="ve" value="${r.veM||''}" placeholder="${r.kh||0}" title="${r.veM?'Số vé nhóm báo':'Để trống = tự lấy tổng vé khách ở tab ② ('+(r.kh||0)+')'}"></td>
         <td class="n"><input class="inp num cell" inputmode="decimal" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="dt" value="${r.dt||''}" placeholder="0"></td>
         <td class="n num"><span class="mini-prog"><i style="width:${r.ve?Math.min(100,r.info/r.ve*100):0}%"></i></span>${r.info}${r.ve?' / '+r.ve:''}</td>
-        <td><label class="tick"><input type="checkbox" data-k="${esc(r.key)}" data-n="${esc(r.name)}" data-f="tick" ${r.tick?'checked':''}> <span>${r.tick?'Đã có':r.ve&&r.info>=r.ve?'Đủ — bấm để xác nhận':'Chưa'}</span></label></td></tr>`).join('')}</tbody>
+        <td>${!r.ve?'<span class="count">—</span>':r.info>=r.ve?'<span class="tag ok">✓ Đủ thông tin</span>':r.info>0?`<span class="tag wait">Thiếu ${r.ve-r.info} vé</span>`:'<span class="tag gray">Chưa có</span>'}</td></tr>`).join('')}</tbody>
       <tfoot><tr><td>Tổng cộng (${act.length} nhóm)</td><td class="n num">${fmt(T.ve)||0}</td><td class="n num">${fmt(T.dt)||0}</td><td class="n num">${T.info} / ${T.ve}</td><td>${T.tick} nhóm đã có</td></tr></tfoot>`;
     if(keep){const el=document.querySelector(`#dkTable [data-k="${keep[0]}"][data-f="${keep[1]}"]`);if(el&&el.type!=='checkbox')el.focus()}}
   else{
@@ -1532,11 +1555,11 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
       <td><input class="inp cell note" data-khn="${esc(c.id)}" value="${esc(c.note||'')}" placeholder="—"></td>
       <td><button type="button" class="mini del" data-khdel="${esc(c.id)}" title="Xoá khách">${TRASH}</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="none">Chưa có khách. Thêm khách ở khung phía trên.</td></tr></tbody>'}}
 /* chuyển tab, liên kết 2 tab */
-$$('#dkTab button').forEach(b=>b.onclick=()=>{dkTabN=b.dataset.t;renderReg()});
+$$('#dkTab button').forEach(b=>b.onclick=()=>{dkTabN=b.dataset.t;renderReg();updNav()});
 $('#dkQ').oninput=renderReg;$('#dkOnly').onchange=renderReg;$('#dk2Q').oninput=renderReg;$('#dk2Group').onchange=e=>{dkFilter=e.target.value;renderReg()};
 document.addEventListener('click',async e=>{
-  const g=e.target.closest('#dkTable .glink, #dkChart .t');if(g){dkFilter=g.dataset.g;dkTabN='2';renderReg();window.scrollTo({top:0,behavior:'smooth'});return}
-  const g1=e.target.closest('[data-g1]');if(g1){dkSel=g1.dataset.g1;dkTabN='1';$('#dkQ').value='';renderReg();setTimeout(()=>$('#dkTable tr.sel')?.scrollIntoView({block:'center',behavior:'smooth'}),60);return}
+  const g=e.target.closest('#dkTable .glink, #dkChart .t');if(g){dkFilter=g.dataset.g;dkTabN='2';renderReg();updNav();window.scrollTo({top:0,behavior:'smooth'});return}
+  const g1=e.target.closest('[data-g1]');if(g1){dkSel=g1.dataset.g1;dkTabN='1';$('#dkQ').value='';renderReg();updNav();setTimeout(()=>$('#dkTable tr.sel')?.scrollIntoView({block:'center',behavior:'smooth'}),60);return}
   const d=e.target.closest('[data-khdel]');if(d){const c=S.reg.kh[d.dataset.khdel];if(c&&await okAsk('Xoá khách đăng ký',`Xoá <b>${esc(c.name)}</b> (TVV ${esc(c.tvvName||'—')}) khỏi danh sách đăng ký?`,'Xoá')){delete S.reg.kh[c.id];regSnapshot();save();renderReg();toast('Đã xoá '+c.name)}}});
 document.addEventListener('change',e=>{const t=e.target;
   if(t.matches('#dkTable [data-f]')){const f=t.dataset.f;dkSetGroup(t.dataset.k,t.dataset.n,{[f]:f==='tick'?t.checked:(num(t.value)||0)});return}
@@ -1595,7 +1618,7 @@ function renderDays(){const box=$('#dkDays');if(!box)return;const days=Object.ke
   const mx=Math.max(1,...rows.map(r=>Math.max(r.ve,r.info))),last=rows[rows.length-1];
   $('#dkT3').textContent=`Tiến độ theo ngày — ${dmy(last.d).slice(0,5)}: ${last.ve} vé${last.dv!=null?` (${last.dv>=0?'+':''}${last.dv} so với hôm trước)`:''}`;
   box.innerHTML=`<div class="dcols">${rows.map(r=>`<div class="dcol" title="${dmy(r.d)}: ${r.ve} vé, ${r.info} KH có thông tin"><div class="dbars"><i class="b ve" data-h="${r.ve/mx*100}"></i><i class="b inf" data-h="${r.info/mx*100}"></i></div><em class="num">${r.ve}</em><span>${dmy(r.d).slice(0,5)}</span></div>`).join('')}</div>
-    <table class="t" style="margin-top:12px"><thead><tr><th>Ngày</th><th class="n">Tổng vé</th><th class="n">Tăng</th><th class="n">KH có thông tin</th><th class="n">Tăng</th><th class="n">Tỷ lệ</th></tr></thead><tbody>${rows.slice().reverse().map(r=>`<tr><td>${dmy(r.d)}</td><td class="n num">${r.ve}</td><td class="n num ${r.dv>0?'up':''}">${r.dv==null?'—':(r.dv>=0?'+':'')+r.dv}</td><td class="n num">${r.info}</td><td class="n num ${r.di>0?'up':''}">${r.di==null?'—':(r.di>=0?'+':'')+r.di}</td><td class="n num">${r.ve?Math.round(r.info/r.ve*100)+'%':'—'}</td></tr>`).join('')}</tbody></table>`;
+    <div class="scroll" style="margin-top:12px"><table class="t"><thead><tr><th>Ngày</th><th class="n">Tổng vé</th><th class="n">Tăng</th><th class="n">KH có thông tin</th><th class="n">Tăng</th><th class="n">Tỷ lệ</th></tr></thead><tbody>${rows.slice().reverse().map(r=>`<tr><td>${dmy(r.d)}</td><td class="n num">${r.ve}</td><td class="n num ${r.dv>0?'up':''}">${r.dv==null?'—':(r.dv>=0?'+':'')+r.dv}</td><td class="n num">${r.info}</td><td class="n num ${r.di>0?'up':''}">${r.di==null?'—':(r.di>=0?'+':'')+r.di}</td><td class="n num">${r.ve?Math.round(r.info/r.ve*100)+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`;
   requestAnimationFrame(()=>requestAnimationFrame(()=>$$('#dkDays .b').forEach(b=>b.style.height=b.dataset.h+'%')))}
 function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNgay'))$('#dkNgay').value=S.event.ngayHN||'';
   $('#dkLeft').innerHTML=dl==null?'<span class="count">Chưa đặt ngày hội nghị</span>':dl>0?`<span class="chip solid">⏳ Còn <b>${dl}</b> ngày</span>`:dl===0?'<span class="chip solid">📅 Hôm nay là ngày hội nghị</span>':`<span class="chip">Đã qua ${-dl} ngày</span>`;
@@ -1647,7 +1670,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKe
 window.addEventListener('storage',e=>{if(e.key===KEY){S=load();renderAll()}});
 (function(){let ok=true;try{localStorage.setItem('__t','1');localStorage.removeItem('__t')}catch(e){ok=false}$('#noStore').hidden=ok})();
 [F.name,$('#dName'),$('#nT'),F.tvv,F.group,$('#dTvv'),$('#dGroup')].forEach(autoCap);
-updateTvvUI();renderAll();initAuto();renderSync();if(SY.on&&SYNC_OK){snap=buildSnap();startStream()}
+setMode(MODE);updateTvvUI();renderAll();initAuto();renderSync();if(SY.on&&SYNC_OK){snap=buildSnap();startStream()}
 if(embNew)toast(`Đã nạp danh sách TVV mới: ${EMB.tvv.length} người`);
 </script>
 </body>
