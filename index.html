@@ -1967,7 +1967,7 @@ function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-b
        <button type="button" class="lg-x" data-lg="forget" data-code="${esc(c.code)}" title="Bỏ khỏi danh sách trên máy này" aria-label="Bỏ khỏi danh sách">×</button></div>`).join('')
       :'<p class="empty-note" style="margin:0">Máy này chưa có hội nghị nào. Bấm <b>Tạo hội nghị mới</b>, hoặc nhập mã hội nghị đã tạo ở máy khác.</p>'}</div>
     ${isAdmin()?'<div id="lgAll" class="lg-all"></div>':''}<div class="actions"><button type="button" class="btn primary" data-lg="new">＋ Tạo hội nghị mới</button>${SY.on?'':'<button type="button" class="btn" data-lg="enter">Vào không chọn hội nghị</button>'}</div>
-    <details class="lg-more"><summary>Có mã hội nghị tạo ở máy khác?</summary><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn" data-lg="tkjoin">Vào</button></div></details>`;if(isAdmin())regRender();return}
+    <details class="lg-more"><summary>Có mã hội nghị tạo ở máy khác?</summary><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn" data-lg="tkjoin">Vào</button></div></details>`;regBackfill();if(isAdmin())regRender();return}
   if(st==='htcode'){b.innerHTML=`${back}<h2>🤝 Người hỗ trợ</h2>${SY.on?`<div class="jcode" style="margin-bottom:12px"><div><small>Đang ở hội nghị</small><b>${esc(S.event.tenHN||SY.event)}</b><small>${esc(SY.event)}</small></div><button type="button" class="btn primary" data-lg="enter">Tiếp tục</button></div><p class="sub">Hoặc nhập mã khác để chuyển hội nghị:</p>`:'<p class="sub">Nhập tên của bạn và <b>mã hội nghị</b> thư ký gửi để vào checkin.</p>'}
     <label class="lbl" for="lgName">Tên người hỗ trợ</label><input class="inp" id="lgName" value="${esc(SY.name&&SY.name!=='Thư ký'?SY.name:'')}" placeholder="VD: Nguyễn Thị Hà" autocomplete="off" autocapitalize="words" style="margin-bottom:10px">
     <label class="lbl" for="lgCode">Mã hội nghị</label><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn primary" data-lg="htjoin">Vào checkin</button></div>`;
@@ -2018,11 +2018,21 @@ const regUrl=p=>`${FB_URL}/events/${REG.code}/c${p||''}.json`;
 var regLast='',REG_KEY=null,REG_LIST=null;
 async function confRegister(){try{if(!SYNC_OK||!SY.on||!SY.event||SY.event===REG.code||!(window.crypto&&crypto.subtle))return;
   const meta={code:SY.event,ten:S.event.tenHN||'',loai:S.event.loaiHN||'',ngay:S.event.ngayHN||''},sig=JSON.stringify(meta);if(sig===regLast)return;regLast=sig;
+  if(!await regPut(meta))regLast=''}catch(e){regLast=''}}
+/* ghi một hội nghị vào sổ (mã hoá bằng khoá công khai) */
+async function regPut(meta){try{
   const pub=await crypto.subtle.importKey('spki',b64d(REG.pub),{name:'RSA-OAEP',hash:'SHA-256'},false,['encrypt']);
   const ak=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt']),iv=crypto.getRandomValues(new Uint8Array(12));
   const d=await crypto.subtle.encrypt({name:'AES-GCM',iv},ak,new TextEncoder().encode(JSON.stringify({...meta,at:Date.now()})));
   const k=await crypto.subtle.encrypt({name:'RSA-OAEP'},pub,await crypto.subtle.exportKey('raw',ak));
-  const r=await fetch(regUrl('/'+await regId(SY.event)),{method:'PUT',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({k:b64e(k),iv:b64e(iv),d:b64e(d)})});if(!r.ok)regLast=''}catch(e){regLast=''}}
+  const r=await fetch(regUrl('/'+await regId(meta.code)),{method:'PUT',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({k:b64e(k),iv:b64e(iv),d:b64e(d)})});return r.ok}catch(e){return false}}
+/* máy thư ký: đưa mọi hội nghị đã ghi nhớ trên máy (còn tồn tại) vào sổ — mỗi lần mở trang một lượt */
+var regAllDone=false;
+async function regBackfill(){if(regAllDone||ROLE!=='tk'||!SYNC_OK||!(window.crypto&&crypto.subtle))return;regAllDone=true;let n=0;
+  for(const c of tkConfs()){if(!c||!c.code||c.code===REG.code)continue;
+    try{const r=await fetch(`${FB_URL}/events/${encodeURIComponent(c.code)}/info.json`,{cache:'no-store'});if(!r.ok||!(await r.json()))continue;
+      if(await regPut({code:c.code,ten:c.ten||'',loai:c.loai||'',ngay:c.ngay||''}))n++}catch(e){}}
+  if(n&&isAdmin()&&REG_KEY&&document.getElementById('lgAll'))regRender();return n}
 async function regUnlock(p){const a=REG.priv,k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);
   const ak=await crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:b64d(a.salt),iterations:a.it},k,{name:'AES-GCM',length:256},false,['decrypt']);
   const pk=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(a.iv)},ak,b64d(a.ct));
@@ -2040,7 +2050,7 @@ async function regRender(){const el=$('#lgAll');if(!el)return;const H='<h3 class
     :'<p class="sub">Sổ chưa có hội nghị nào. Hội nghị tự vào sổ khi có máy mở nó bằng bản app mới.</p>');renderConfCard()}
 document.addEventListener('input',e=>{if(e.target.id!=='lgAllQ')return;const q=norm(e.target.value);$$('#lgAllL .lg-conf').forEach(d=>d.hidden=!!q&&!d.dataset.q.includes(q))});
 const _confRows1=confRows;confRows=function(){const l=_confRows1();if(isAdmin()&&REG_LIST)REG_LIST.forEach(c=>{if(!l.some(x=>x.code===c.code))l.push({code:c.code,ten:c.ten,loai:c.loai,ngay:c.ngay})});return l};
-const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk')tkRemember();confRegister();
+const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk'){tkRemember();regBackfill()}confRegister();
   if(ROLE==='ht'&&SYNC_OK&&!SY.on&&$('#login').hidden)lgShow('htcode')};
 /* người hỗ trợ: phần Đăng ký chỉ xem tổng hợp, không sửa */
 const _renderReg0=renderReg;renderReg=function(){if(ROLE==='ht')dkTabN='1';_renderReg0();
