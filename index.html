@@ -1778,10 +1778,10 @@ function dayReport(d){const x=S.reg.days[d];if(!x)return null;const pd=prevDay(d
     `• Tổng vé đăng ký: ${x.ve} vé${dv(x.ve-(p?p.ve:0))}`,
     (()=>{const c=khCount();return c.tong?`• Số khách hàng: ${c.tong} người (${c.kh} khách đăng ký + ${c.dk} người đi kèm)`:null})(),
     `• KH đã có thông tin: ${x.info}/${x.ve} vé (${x.ve?Math.round(x.info/x.ve*100):0}%)${dv(x.info-(p?p.info:0))}`,
-    `• FYP dự kiến: ${fmt(x.thu||0)||0} / mục tiêu ${fmt(x.dt)||0} triệu đồng${x.dt?` (đạt ${Math.round((x.thu||0)/x.dt*100)}%)`:''}${p?' ('+((x.thu||0)-(p.thu||0)>=0?'+':'-')+(fmt(Math.abs((x.thu||0)-(p.thu||0)))||0)+' tr so với '+dmy(pd).slice(0,5)+')':''}`,
+    `• FYP dự kiến: ${fmt(x.thu||0)||0} triệu đồng${p?' ('+((x.thu||0)-(p.thu||0)>=0?'+':'-')+(fmt(Math.abs((x.thu||0)-(p.thu||0)))||0)+' tr so với '+dmy(pd).slice(0,5)+')':''}`,
     `• Nhóm đã đăng ký: ${gs.filter(g=>g.ve>0).length} nhóm · đủ thông tin KH: ${x.tick||0} nhóm`,
-    gs.length?'Theo nhóm (vé · có thông tin · FYP dự kiến/mục tiêu):':null,
-    ...gs.map((g,i)=>`${i+1}. ${g.name}: ${g.ve} vé${p&&g.ve!==g.pve?` (${g.ve-g.pve>=0?'+':''}${g.ve-g.pve})`:''} · ${g.info} có TT · FYP ${fmt(g.thu)||0}/${fmt(g.dt)||0} tr`),
+    gs.length?'Theo nhóm (vé · có thông tin · FYP dự kiến):':null,
+    ...gs.map((g,i)=>`${i+1}. ${g.name}: ${g.ve} vé${p&&g.ve!==g.pve?` (${g.ve-g.pve>=0?'+':''}${g.ve-g.pve})`:''} · ${g.info} có TT · FYP ${fmt(g.thu)||0} tr`),
     none.length?`Nhóm chưa đăng ký (${none.length}): ${none.join(', ')}`:null].filter(Boolean).join('\n')}
 async function openDayReport(){const days=Object.keys(S.reg.days||{}).sort();regSnapshot();save();
   const d0=today(),all=Object.keys(S.reg.days).sort().reverse();
