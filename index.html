@@ -250,6 +250,27 @@ td.up{color:var(--ok);font-weight:700}
 .dkstart{border:2px solid var(--sky);background:linear-gradient(135deg,var(--surface),var(--info-soft));margin-bottom:18px}
 .dkstart-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.dkstart-row .inp{flex:1;min-width:180px;max-width:280px;padding:9px 12px}
 .dkconf{margin-bottom:18px}.dkconf-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.dkconf-main{flex:1;min-width:200px}.dkconf-main small{display:block;color:var(--muted);font-size:12.5px}.dkconf-main b{font-size:19px}
+.rolebtn{border:0;background:rgba(255,255,255,.55);color:inherit;font:inherit;font-size:13px;font-weight:600;padding:7px 11px;border-radius:9px;cursor:pointer;flex:none;white-space:nowrap}
+.login{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px 24px}
+body.lg-on{overflow:hidden}
+.lg-box{width:100%;max-width:620px}
+.lg-head{display:flex;gap:12px;align-items:center;margin-bottom:22px}.lg-head b{display:block;font-size:20px}.lg-head small{color:var(--muted)}
+#lgBody h2{margin:0 0 12px;font-size:22px}
+.lg-roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.lg-role{display:flex;flex-direction:column;gap:6px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:20px;cursor:pointer;transition:border-color .15s,transform .15s}
+.lg-role:hover,.lg-role:focus-visible{border-color:var(--peach);transform:translateY(-2px)}
+.lg-role .lg-ic{font-size:34px}.lg-role b{font-size:19px}.lg-role small{color:var(--muted);line-height:1.5}.lg-role em{font-style:normal;font-size:13px;font-weight:600;margin-top:4px}
+.lg-back{border:0;background:none;color:var(--muted);font:inherit;font-size:14px;padding:0;margin-bottom:12px;cursor:pointer}
+.lg-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lg-list{display:grid;gap:10px;margin:6px 0 14px}
+.lg-conf{display:flex;align-items:stretch;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
+.lg-conf.cur{border-color:var(--peach)}
+.lg-pick{flex:1;min-width:0;text-align:left;font:inherit;color:inherit;background:none;border:0;padding:12px 14px;cursor:pointer;display:grid;gap:2px}
+.lg-pick:hover{background:var(--surface-2)}.lg-pick b{font-size:16px}.lg-pick small{color:var(--muted);overflow-wrap:anywhere}.lg-pick .chip{justify-self:start;margin-top:4px}
+.lg-x{border:0;background:none;color:var(--muted);font-size:22px;padding:0 14px;cursor:pointer}.lg-x:hover{color:var(--danger)}
+.lg-more{margin-top:14px}.lg-more summary{cursor:pointer;font-weight:600;font-size:14px;margin-bottom:8px}
+body.role-ht #modebar,body.role-ht [data-mode="dangky"],body.role-ht #fileBar,body.role-ht #guestCard,body.role-ht #orgBox,body.role-ht [data-sy="newconf"],body.role-ht [data-sy="create"]{display:none!important}
+@media (max-width:560px){.lg-roles{grid-template-columns:1fr}.rolebtn{padding:6px 8px;font-size:12px}}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -404,6 +425,7 @@ dialog .foot .sp{flex:1}
     <button data-v="settings" data-mode="both">Cài đặt</button>
   </nav>
   <span class="saved" id="saved">Đã lưu trên máy</span>
+  <button type="button" class="rolebtn" id="roleBtn" hidden title="Vai trò đang dùng — bấm để đổi"></button>
   <button class="icon-btn" id="themeBtn" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
   </button>
@@ -649,7 +671,7 @@ dialog .foot .sp{flex:1}
         <div class="actions"><button class="btn sm" id="reloadEmb">Nạp lại danh sách gắn sẵn</button><button class="btn sm danger" id="clearTvv">Xoá danh sách TVV</button></div>
       </div>
 
-      <div class="card pad">
+      <div class="card pad" id="guestCard">
         <h3>Khách đăng ký trước</h3>
         <label class="drop" id="dropGuest">
           <input type="file" accept=".xls,.xlsx,.csv" id="fileGuest" hidden>
@@ -685,6 +707,13 @@ dialog .foot .sp{flex:1}
 
 <div class="toast" id="toast"><span id="toastText"></span><button id="toastUndo" hidden>Hoàn tác</button></div>
 
+<div class="login" id="login" hidden>
+  <div class="lg-box">
+    <div class="lg-head"><div class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div><b>Checkin Khách Dự</b><small>Hội nghị khách hàng · BVNT Đồng Tháp</small></div></div>
+    <div id="lgBody"></div>
+  </div>
+</div>
 <dialog id="ask"><form method="dialog" onsubmit="return false"><h3 id="askT"></h3><p id="askM" style="margin:0 0 6px;line-height:1.55"></p>
   <div class="askb" id="askB"></div></form></dialog>
 <dialog id="dlg">
@@ -786,7 +815,7 @@ function updNav(){$$('#tabs button,#bnav button').forEach(b=>{const m=b.dataset.
     b.classList.toggle('on',b.dataset.v===view&&(!b.dataset.dk||b.dataset.dk===dkTabN))});
   $$('#modebar button').forEach(b=>b.classList.toggle('on',b.dataset.mode===MODE));
   const n=$$('#bnav button').filter(b=>!b.hidden).length;$('#bnav').style.gridTemplateColumns=`repeat(${n},1fr)`}
-function setMode(m){MODE=m;try{localStorage.setItem('hnkh-mode',m)}catch(e){}
+function setMode(m){if(typeof ROLE!=='undefined'&&ROLE==='ht')m='checkin';MODE=m;try{localStorage.setItem('hnkh-mode',m)}catch(e){}
   if(m==='dangky'){if(view!=='dangky'&&view!=='settings')go('dangky');else updNav()}else{if(view==='dangky'||view==='settings')go('checkin');else updNav()}}
 $$('#modebar button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 document.addEventListener('click',e=>{const a=e.target.closest('[data-goto]');if(a){e.preventDefault();go(a.dataset.goto)}});
@@ -1238,6 +1267,7 @@ async function importTvvFile(file){try{const sheets=await readRowsFromFile(file)
     if(!list.length)return toast('Không đọc được dòng TVV nào');mergeTvv(list)}catch(e){toast(e.message)}}
 const G_COLS={name:/khach hang/,tvv:/tvv|tu van vien/,code:/^ma (so )?tvv$|^msdl$/,group:/^(ban|nhom)/,fee:/^phi/,gift:/qua/,note:/ghi chu/,att:/tham du|trang thai/,time:/gio den/,src:/^nguon/,kv:/^khu vuc/,__req:['name','tvv']};
 async function importGuestFile(file){
+  if(ROLE==='ht'){await ask('Không nhập được danh sách','Chỉ <b>thư ký</b> được nhập danh sách khách từ file Excel. Người hỗ trợ nhập mã hội nghị do thư ký gửi để checkin.',[{v:'ok',l:'Đã hiểu',primary:true}]);return}
   /* máy thứ 2 trở đi (đã nhập mã) không được nhập danh sách — phải rời hội nghị trước */
   if(typeof SYNC_OK!=='undefined'&&SYNC_OK&&SY.on&&!isHost()){await ask('Không nhập được danh sách',`Máy này đang tham gia hội nghị <b>${esc(SY.event)}</b> do máy 1 tạo.<br>Muốn nhập danh sách khác, bấm <b>Rời hội nghị</b> trong khung ☁️ trước.`,[{v:'ok',l:'Đã hiểu',primary:true}]);return}
   /* Máy nào nhập danh sách mới thì máy đó thành máy 1: tạo hội nghị mới, mã mới */
@@ -1450,7 +1480,7 @@ function renderSync(){const box=$('#syncBox');if(!box)return;box.hidden=!SYNC_OK
      <div class="actions" style="margin:0 0 10px"><button type="button" class="btn primary" data-sy="newconf">＋ Hội nghị mới</button></div><p class="hint">Máy <b>nhập file danh sách khách</b> sẽ tự tạo mã hội nghị (có chữ cái đầu tên hội nghị) và có nút Copy mã.${S.guests.length?` Máy này đang có ${S.guests.length} khách — <a href="#" data-sy="create">tạo mã hội nghị ngay</a>.`:''}</p>`}
 async function joinEvent(code){
   let info;try{info=await (SY.event=code,fbReq('GET','/info'))}catch(e){return toast(e.status===401||e.status===403?'Mã hội nghị không hợp lệ':'Không kết nối được — kiểm tra mạng')}
-  if(!info){SY.event='';return flash($('#sy_join'),'Không có hội nghị nào mang mã '+code+' — kiểm tra lại mã')}
+  if(!info){SY.event='';const m='Không có hội nghị nào mang mã '+code+' — kiểm tra lại mã',el=document.getElementById('lgCode')||$('#sy_join');return el?flash(el,m):toast(m)}
   try{if(await fbReq('GET','/kicked/'+SY.device)){if(!await requestRejoin(code)){SY.event='';renderSync();return}}}catch(e){SY.event='';return toast('Không kiểm tra được: '+e.message)}
   SY.pend={};
   /* máy tham gia chỉ dùng danh sách của hội nghị — không gộp danh sách cũ trên máy (cất bản cũ làm dự phòng) */
@@ -1513,6 +1543,7 @@ document.addEventListener('click',async e=>{const kb=e.target.closest('[data-kic
     if(!await okAsk('Xoá người sử dụng',`Xoá <b>${esc(nm)}</b> khỏi hội nghị <b>${esc(SY.event)}</b>?<br>Máy đó sẽ bị ngắt ngay và không tham gia lại được bằng mã này. Khách đã checkin vẫn giữ nguyên.`,'Xoá người dùng'))return;
     try{await fbReq('PATCH','',{['kicked/'+id]:{at:Date.now(),by:SY.name||'máy 1'},['devices/'+id]:null});toast('Đã xoá '+nm+' khỏi hội nghị')}catch(err){toast('Không xoá được: '+err.message)}return}
   const a=e.target.closest('[data-sy]');if(!a)return;e.preventDefault();const k=a.dataset.sy;
+  if(ROLE==='ht'&&(k==='newconf'||k==='create'))return toast('Chỉ thư ký được tạo hội nghị mới');
   if(k==='copy'){const code=SY.event;try{await navigator.clipboard.writeText(code);toast('Đã copy mã '+code+' — dán vào Zalo gửi lễ tân khác')}
     catch(err){const t=$('#syCopyBox');t.hidden=false;t.value=code;t.focus();t.select();toast('Mã đã được chọn sẵn — bấm giữ để Sao chép')}}
   else if(k==='join'){const nm=tc($('#sy_name').value);if(nm.length<2)return flash($('#sy_name'),'Nhập tên lễ tân');SY.name=nm;sySave();
@@ -1760,6 +1791,78 @@ async function exportDayReport(d){if(!window.ExcelJS)return toast('Chưa tải �
   const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bao cao dang ky ${dmy(d).replace(/\//g,'.')}.xlsx`);toast('Đã xuất báo cáo ngày '+dmy(d))}
 $('#dkReport').onclick=openDayReport;
 
+/* ============ đăng nhập: Thư ký (mật khẩu, danh sách hội nghị đã tạo trên máy) · Người hỗ trợ (nhập mã) ============ */
+var ROLE='';try{ROLE=sessionStorage.getItem('hnkh-role')||''}catch(e){}
+const PW_KEY='hnkh-tkpw',CONF_KEY='hnkh-tk-confs';
+async function pwHash(p){const t='hnkh-tk|'+p;try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  catch(e){let h=5381;for(const c of t)h=((h*33)^c.charCodeAt(0))>>>0;return'x'+h.toString(16)}}
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+function tkConfs(){try{return JSON.parse(lsGet(CONF_KEY)||'[]')}catch(e){return[]}}
+function tkRemember(){if(ROLE!=='tk'||!SY.on||!SY.event)return;const l=tkConfs(),i=l.findIndex(c=>c.code===SY.event),o=i>=0?l[i]:{};
+  const c={code:SY.event,ten:S.event.tenHN||o.ten||'',loai:S.event.loaiHN||o.loai||'',ngay:S.event.ngayHN||o.ngay||'',at:o.at||Date.now()};
+  if(i===0&&o.ten===c.ten&&o.loai===c.loai&&o.ngay===c.ngay)return;if(i>=0)l.splice(i,1);if(i!==0)c.at=Date.now();l.unshift(c);lsSet(CONF_KEY,JSON.stringify(l.slice(0,40)))}
+function setRole(r){ROLE=r;try{r?sessionStorage.setItem('hnkh-role',r):sessionStorage.removeItem('hnkh-role')}catch(e){}applyRole()}
+function applyRole(){document.body.classList.toggle('role-ht',ROLE==='ht');document.body.classList.toggle('role-tk',ROLE==='tk');
+  const b=$('#roleBtn');b.hidden=!ROLE;b.innerHTML=ROLE==='tk'?'🗂️ Thư ký':'🤝 Người hỗ trợ';if(ROLE==='ht'&&MODE!=='checkin')setMode('checkin');else updNav()}
+function lgShow(step){$('#login').hidden=false;document.body.classList.add('lg-on');lgStep(step||'role')}
+function lgHide(){$('#login').hidden=true;document.body.classList.remove('lg-on');renderAll();renderSync()}
+function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-back" data-lg="role">← Chọn lại vai trò</button>';
+  if(st==='role'){b.innerHTML=`<h2>Bạn vào với vai trò nào?</h2>
+    <div class="lg-roles"><button type="button" class="lg-role" data-lg="tk"><span class="lg-ic">🗂️</span><b>Thư ký</b><small>Tạo hội nghị, nhập danh sách khách từ file Excel, theo dõi đăng ký và báo cáo.</small><em>🔒 Cần mật khẩu</em></button>
+    <button type="button" class="lg-role" data-lg="ht"><span class="lg-ic">🤝</span><b>Người hỗ trợ</b><small>Checkin khách tại hội nghị cùng thư ký.</small><em>🔑 Cần mã hội nghị do thư ký gửi</em></button></div>`;return}
+  if(st==='tkpw'){const has=!!lsGet(PW_KEY);b.innerHTML=`${back}<h2>🗂️ Thư ký</h2>${has?`<label class="lbl" for="lgPw">Mật khẩu thư ký</label><input class="inp" type="password" id="lgPw" autocomplete="current-password">
+      <div class="actions"><button type="button" class="btn primary" data-lg="pwok">Đăng nhập</button><button type="button" class="glink" data-lg="forgot">Quên mật khẩu?</button></div>`
+     :`<p class="sub">Lần đầu dùng trên máy này — <b>đặt mật khẩu thư ký</b> (từ 4 ký tự). Lần sau chỉ cần nhập mật khẩu.</p>
+      <label class="lbl" for="lgPw">Mật khẩu mới</label><input class="inp" type="password" id="lgPw" autocomplete="new-password" style="margin-bottom:10px">
+      <label class="lbl" for="lgPw2">Nhập lại mật khẩu</label><input class="inp" type="password" id="lgPw2" autocomplete="new-password">
+      <div class="actions"><button type="button" class="btn primary" data-lg="pwset">Đặt mật khẩu và vào</button></div>`}`;setTimeout(()=>$('#lgPw')?.focus(),50);return}
+  if(st==='tkconf'){const l=tkConfs();b.innerHTML=`<div class="lg-top"><h2>🗂️ Hội nghị của thư ký</h2><button type="button" class="glink" data-lg="logout">Đăng xuất</button></div>
+    <p class="sub">Chọn hội nghị để nhập tiếp — không cần gõ mã.</p>
+    <div class="lg-list">${l.length?l.map(c=>`<div class="lg-conf${SY.on&&SY.event===c.code?' cur':''}"><button type="button" class="lg-pick" data-lg="pick" data-code="${esc(c.code)}">
+       <b>${esc(c.ten||'Chưa đặt tên')}</b><small>${esc([c.loai,c.ngay?'Ngày '+dmy(c.ngay):'',c.code].filter(Boolean).join(' · '))}</small>${SY.on&&SY.event===c.code?'<span class="chip solid">Đang mở</span>':''}</button>
+       <button type="button" class="lg-x" data-lg="forget" data-code="${esc(c.code)}" title="Bỏ khỏi danh sách trên máy này" aria-label="Bỏ khỏi danh sách">×</button></div>`).join('')
+      :'<p class="empty-note" style="margin:0">Máy này chưa có hội nghị nào. Bấm <b>Tạo hội nghị mới</b>, hoặc nhập mã hội nghị đã tạo ở máy khác.</p>'}</div>
+    <div class="actions"><button type="button" class="btn primary" data-lg="new">＋ Tạo hội nghị mới</button>${SY.on?'':'<button type="button" class="btn" data-lg="enter">Vào không chọn hội nghị</button>'}</div>
+    <details class="lg-more"><summary>Có mã hội nghị tạo ở máy khác?</summary><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn" data-lg="tkjoin">Vào</button></div></details>`;return}
+  if(st==='htcode'){b.innerHTML=`${back}<h2>🤝 Người hỗ trợ</h2>${SY.on?`<div class="jcode" style="margin-bottom:12px"><div><small>Đang ở hội nghị</small><b>${esc(S.event.tenHN||SY.event)}</b><small>${esc(SY.event)}</small></div><button type="button" class="btn primary" data-lg="enter">Tiếp tục</button></div><p class="sub">Hoặc nhập mã khác để chuyển hội nghị:</p>`:'<p class="sub">Nhập tên của bạn và <b>mã hội nghị</b> thư ký gửi để vào checkin.</p>'}
+    <label class="lbl" for="lgName">Tên người hỗ trợ</label><input class="inp" id="lgName" value="${esc(SY.name&&SY.name!=='Thư ký'?SY.name:'')}" placeholder="VD: Nguyễn Thị Hà" autocomplete="off" autocapitalize="words" style="margin-bottom:10px">
+    <label class="lbl" for="lgCode">Mã hội nghị</label><div class="joinrow"><input class="inp" id="lgCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn primary" data-lg="htjoin">Vào checkin</button></div>`;
+    autoCap($('#lgName'));setTimeout(()=>(SY.on?null:($('#lgName').value?$('#lgCode'):$('#lgName')))?.focus(),50)}}
+/* chuyển sang hội nghị code (rời hội nghị đang mở nếu khác) */
+async function gotoConf(code,q){if(SY.on&&SY.event===code)return true;
+  if(SY.on){savedAsked=false;if(!await leaveConf(q||'Rời hội nghị đang mở để chuyển sang <b>'+esc(code)+'</b>?'))return false}
+  await joinEvent(code);return SY.on&&SY.event===code}
+document.addEventListener('click',async e=>{const a=e.target.closest('[data-lg]');if(!a)return;e.preventDefault();const k=a.dataset.lg;
+  if(k==='role')return lgStep('role');
+  if(k==='tk')return lgStep('tkpw');
+  if(k==='ht'){setRole('ht');return lgStep('htcode')}
+  if(k==='pwset'){const p=$('#lgPw').value,p2=$('#lgPw2').value;if(p.length<4)return flash($('#lgPw'),'Mật khẩu cần từ 4 ký tự');if(p!==p2)return flash($('#lgPw2'),'Hai lần nhập chưa khớp');
+    lsSet(PW_KEY,await pwHash(p));setRole('tk');toast('Đã đặt mật khẩu thư ký trên máy này');return lgStep('tkconf')}
+  if(k==='pwok'){if(await pwHash($('#lgPw').value)!==lsGet(PW_KEY)){$('#lgPw').value='';return flash($('#lgPw'),'Sai mật khẩu')}setRole('tk');return lgStep('tkconf')}
+  if(k==='forgot'){if(!await okAsk('Quên mật khẩu',`Đặt lại mật khẩu thư ký trên máy này?<br>Danh sách hội nghị ghi nhớ trên máy sẽ được xoá. Dữ liệu các hội nghị <b>vẫn còn trên mạng</b> — nhập lại mã là vào được.`,'Đặt lại mật khẩu'))return;
+    lsSet(PW_KEY,null);lsSet(CONF_KEY,null);return lgStep('tkpw')}
+  if(k==='logout'){setRole('');return lgStep('role')}
+  if(k==='enter'){if(ROLE==='ht'&&!SY.on)return;return lgHide()}
+  if(k==='forget'){const c=a.dataset.code;if(!await okAsk('Bỏ khỏi danh sách',`Bỏ hội nghị <b>${esc(c)}</b> khỏi danh sách trên máy này? Dữ liệu hội nghị vẫn còn trên mạng.`,'Bỏ khỏi danh sách'))return;lsSet(CONF_KEY,JSON.stringify(tkConfs().filter(x=>x.code!==c)));return lgStep('tkconf')}
+  if(k==='pick'||k==='tkjoin'){const c=k==='pick'?a.dataset.code:normCode($('#lgCode').value);if(!c)return flash($('#lgCode'),'Mã có dạng HNKH-1511-QTTK7M');
+    if(!SY.name){SY.name='Thư ký';sySave()}a.disabled=true;const ok=await gotoConf(c);a.disabled=false;
+    if(ok){tkRemember();lgHide();setMode('dangky');toast('Đã mở hội nghị '+(S.event.tenHN||c))}else lgStep('tkconf');return}
+  if(k==='new'){lgHide();setMode('dangky');if(SY.on||S.guests.length){await newConference();if(SY.on)return}
+    if(!SY.name){SY.name='Thư ký';sySave()}await createFromReg();tkRemember();return}
+  if(k==='htjoin'){const nm=tc($('#lgName').value);if(nm.length<2)return flash($('#lgName'),'Nhập tên của bạn');const c=normCode($('#lgCode').value);if(!c)return flash($('#lgCode'),'Mã có dạng HNKH-1511-QTTK7M');
+    SY.name=nm;sySave();a.disabled=true;const ok=await gotoConf(c);a.disabled=false;if(ok){lgHide();setMode('checkin');toast('Đã vào hội nghị '+(S.event.tenHN||c))}else lgStep('htcode')}});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter'||$('#login').hidden)return;const id=e.target.id;
+  const m={lgPw:lsGet(PW_KEY)?'pwok':'pwset',lgPw2:'pwset',lgCode:ROLE==='ht'?'htjoin':'tkjoin',lgName:'htjoin'}[id];if(m){e.preventDefault();$(`#lgBody [data-lg="${m}"]`)?.click()}});
+$('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',`Đang đăng nhập với vai trò <b>thư ký</b>.`,[{v:'list',l:'🗂️ Danh sách hội nghị',primary:true},{v:'pw',l:'Đổi mật khẩu'},{v:'out',l:'Đăng xuất'},{v:'no',l:'Huỷ'}]);
+    if(v==='list')return lgShow('tkconf');if(v==='out'){setRole('');return lgShow('role')}
+    if(v==='pw'){const r=await ask('Đổi mật khẩu thư ký',`<label class="lbl">Mật khẩu hiện tại</label><input class="inp" type="password" id="askPw0" style="margin-bottom:10px"><label class="lbl">Mật khẩu mới (từ 4 ký tự)</label><input class="inp" type="password" id="askPw1">`,[{v:'ok',l:'Đổi mật khẩu',primary:true},{v:'no',l:'Huỷ'}]);
+      if(r!=='ok')return;const p0=document.getElementById('askPw0').value,p1=document.getElementById('askPw1').value;
+      if(await pwHash(p0)!==lsGet(PW_KEY))return toast('Mật khẩu hiện tại chưa đúng — chưa đổi');if(p1.length<4)return toast('Mật khẩu mới cần từ 4 ký tự — chưa đổi');lsSet(PW_KEY,await pwHash(p1));toast('Đã đổi mật khẩu thư ký')}return}
+  if(await okAsk('Người hỗ trợ',`Đổi vai trò? Bạn vẫn ở hội nghị đang mở cho tới khi bấm <b>Rời hội nghị</b>.`,'Đổi vai trò')){setRole('');lgShow('role')}};
+/* sau mỗi lần cập nhật đồng bộ: thư ký ghi nhớ hội nghị; người hỗ trợ mất mã (rời / bị xoá) thì phải nhập lại mã */
+const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk')tkRemember();
+  if(ROLE==='ht'&&SYNC_OK&&!SY.on&&$('#login').hidden)lgShow('htcode')};
+function roleInit(){applyRole();if(!ROLE)return lgShow('role');if(ROLE==='ht'&&SYNC_OK&&!SY.on)lgShow('htcode')}
 /* ============ khởi động ============ */
 const embNew=applyEmbedded(false);
 function renderAll(){renderHeader();if(view==='checkin')renderCheckin();if(view==='list')renderList();if(view==='stats')renderStats();if(view==='report')renderReport();if(view==='settings')renderSettings();if(view==='dangky')renderReg()}
@@ -1769,6 +1872,7 @@ window.addEventListener('storage',e=>{if(e.key===KEY){S=load();renderAll()}});
 (function(){let ok=true;try{localStorage.setItem('__t','1');localStorage.removeItem('__t')}catch(e){ok=false}$('#noStore').hidden=ok})();
 [F.name,$('#dName'),$('#nT'),F.tvv,F.group,$('#dTvv'),$('#dGroup')].forEach(autoCap);
 setMode(MODE);updateTvvUI();renderAll();initAuto();renderSync();if(SY.on&&SYNC_OK){snap=buildSnap();startStream()}
+roleInit();
 if(embNew)toast(`Đã nạp danh sách TVV mới: ${EMB.tvv.length} người`);
 </script>
 </body>
