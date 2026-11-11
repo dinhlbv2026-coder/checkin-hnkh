@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Checkin Khách Dự</title>
+<title>BVL DTH Checkin</title>
 <meta name="theme-color" content="#FFA883">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
@@ -1072,7 +1072,7 @@ function guestRow(g,full,i){const st=g.attended?`<button class="status ok" data-
 /* ============ render ============ */
 function renderHeader(){if(typeof renderOrg==='function')renderOrg();if(typeof renderFileBar==='function')renderFileBar();const E=EV();$('#evTitle').textContent='Checkin Khách Dự'+(E.hn?' · '+E.hn:'')+(E.date?' · '+dmy(E.date):'');
   $('#evSub').textContent=E.org?'Đơn vị tổ chức: '+E.org:'Hội nghị khách hàng';
-  document.title='Checkin Khách Dự '+dmy(E.date);$('#noTvv').hidden=S.tvv.length>0}
+  document.title='BVL DTH Checkin';$('#noTvv').hidden=S.tvv.length>0}
 function renderCheckin(){$('#kpis').innerHTML=kpiHTML();const q=norm($('#recentFilter').value);
   /* xếp theo thứ tự đến: khách đến trước ở trên, số 1 ở đầu */
   let list=S.guests.filter(g=>g.attended).sort((a,b)=>(a.at||'').localeCompare(b.at||''));
