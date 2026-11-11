@@ -1948,18 +1948,12 @@ function lgShow(step){$('#login').hidden=false;document.body.classList.add('lg-o
 function lgHide(){$('#login').hidden=true;document.body.classList.remove('lg-on');renderAll();renderSync()}
 function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-back" data-lg="role">← Chọn lại vai trò</button>';
   if(st==='role'){b.innerHTML=`<h2>Bạn vào với vai trò nào?</h2>
-    <div class="lg-roles"><button type="button" class="lg-role" data-lg="tk"><span class="lg-ic">🗂️</span><b>Thư ký</b><small>Tạo hội nghị, nhập danh sách khách từ file Excel, theo dõi đăng ký và báo cáo.</small><em>🔒 Cần mật khẩu</em></button>
+    <div class="lg-roles"><button type="button" class="lg-role" data-lg="tk"><span class="lg-ic">🗂️</span><b>Thư ký</b><small>Tạo hội nghị, nhập danh sách khách từ file Excel, theo dõi đăng ký và báo cáo.</small><em>🛡️ Đăng nhập tài khoản</em></button>
     <button type="button" class="lg-role" data-lg="ht"><span class="lg-ic">🤝</span><b>Người hỗ trợ</b><small>Checkin khách tại hội nghị cùng thư ký.</small><em>🔑 Cần mã hội nghị do thư ký gửi</em></button></div>`;return}
-  if(st==='tkpw'){const has=!!lsGet(PW_KEY);const accBox=`<details class="lg-more lg-acc"${has?'':' open'}><summary>🛡️ Đăng nhập bằng tài khoản</summary>
+  if(st==='tkpw'){b.innerHTML=`${back}<h2>🛡️ Thư ký · đăng nhập tài khoản</h2>
       <label class="lbl" for="lgUser">Tên đăng nhập</label><input class="inp" id="lgUser" autocomplete="username" autocapitalize="none" spellcheck="false" style="margin-bottom:10px">
       <label class="lbl" for="lgUPw">Mật khẩu</label><input class="inp" type="password" id="lgUPw" autocomplete="current-password">
-      <div class="actions"><button type="button" class="btn primary" data-lg="accok">Đăng nhập tài khoản</button></div></details>`;
-    b.innerHTML=`${back}<h2>🗂️ Thư ký</h2>${accBox}${has?`<label class="lbl" for="lgPw">Mật khẩu thư ký</label><input class="inp" type="password" id="lgPw" autocomplete="current-password">
-      <div class="actions"><button type="button" class="btn primary" data-lg="pwok">Đăng nhập</button><button type="button" class="glink" data-lg="forgot">Quên mật khẩu?</button></div>`
-     :`<p class="sub">Lần đầu dùng trên máy này — <b>đặt mật khẩu thư ký</b> (từ 4 ký tự). Lần sau chỉ cần nhập mật khẩu.</p>
-      <label class="lbl" for="lgPw">Mật khẩu mới</label><input class="inp" type="password" id="lgPw" autocomplete="new-password" style="margin-bottom:10px">
-      <label class="lbl" for="lgPw2">Nhập lại mật khẩu</label><input class="inp" type="password" id="lgPw2" autocomplete="new-password">
-      <div class="actions"><button type="button" class="btn primary" data-lg="pwset">Đặt mật khẩu và vào</button></div>`}`;setTimeout(()=>$('#lgPw')?.focus(),50);return}
+      <div class="actions"><button type="button" class="btn primary" data-lg="accok">Đăng nhập</button></div>`;setTimeout(()=>$('#lgUser')?.focus(),50);return}
   if(st==='tkconf'){const l=tkConfs();b.innerHTML=`<div class="lg-top"><h2>${isAdmin()?'🛡️ '+esc(ACCS[USER].ten||USER)+' · toàn quyền':'🗂️ Hội nghị của thư ký'}</h2><button type="button" class="glink" data-lg="logout">Đăng xuất</button></div>${isAdmin()?'<div style="margin:-4px 0 8px"><button type="button" class="glink" data-lg="chpw">🔑 Đổi mật khẩu</button></div>':''}
     <p class="sub">Chọn hội nghị để nhập tiếp — không cần gõ mã.</p>
     <div class="lg-list">${l.length?l.map(c=>`<div class="lg-conf${SY.on&&SY.event===c.code?' cur':''}"><button type="button" class="lg-pick" data-lg="pick" data-code="${esc(c.code)}">
@@ -2002,9 +1996,9 @@ document.addEventListener('click',async e=>{const a=e.target.closest('[data-lg]'
     SY.name=nm;sySave();a.disabled=true;const ok=await gotoConf(c);a.disabled=false;if(ok){lgHide();setMode('checkin');toast('Đã vào hội nghị '+(S.event.tenHN||c))}else lgStep('htcode')}});
 document.addEventListener('keydown',e=>{if(e.key!=='Enter'||$('#login').hidden)return;const id=e.target.id;
   const m={lgRegPw:'regopen',lgUser:'accok',lgUPw:'accok',lgPw:lsGet(PW_KEY)?'pwok':'pwset',lgPw2:'pwset',lgCode:ROLE==='ht'?'htjoin':'tkjoin',lgName:'htjoin'}[id];if(m){e.preventDefault();$(`#lgBody [data-lg="${m}"]`)?.click()}});
-$('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',isAdmin()?`Đang đăng nhập tài khoản <b>${esc(USER)}</b> · toàn quyền.`:`Đang đăng nhập với vai trò <b>thư ký</b>.`,[{v:'list',l:'🗂️ Danh sách hội nghị',primary:true},{v:'pw',l:'Đổi mật khẩu'},{v:'out',l:'Đăng xuất'},{v:'no',l:'Huỷ'}]);
+$('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',isAdmin()?`Đang đăng nhập tài khoản <b>${esc(USER)}</b> · toàn quyền.`:`Đang đăng nhập với vai trò <b>thư ký</b>.`,[{v:'list',l:'🗂️ Danh sách hội nghị',primary:true},{v:'pw',l:'🔑 Đổi mật khẩu'},{v:'out',l:'Đăng xuất'},{v:'no',l:'Huỷ'}]);
     if(v==='list')return lgShow('tkconf');if(v==='out'){setRole('');return lgShow('role')}
-    if(v==='pw'&&isAdmin())return accChangeUI();
+    if(v==='pw')return accChangeUI();
     if(v==='pw'){const r=await ask('Đổi mật khẩu thư ký',`<label class="lbl">Mật khẩu hiện tại</label><input class="inp" type="password" id="askPw0" style="margin-bottom:10px"><label class="lbl">Mật khẩu mới (từ 4 ký tự)</label><input class="inp" type="password" id="askPw1">`,[{v:'ok',l:'Đổi mật khẩu',primary:true},{v:'no',l:'Huỷ'}]);
       if(r!=='ok')return;const p0=document.getElementById('askPw0').value,p1=document.getElementById('askPw1').value;
       if(await pwHash(p0)!==lsGet(PW_KEY))return toast('Mật khẩu hiện tại chưa đúng — chưa đổi');if(p1.length<4)return toast('Mật khẩu mới cần từ 4 ký tự — chưa đổi');lsSet(PW_KEY,await pwHash(p1));toast('Đã đổi mật khẩu thư ký')}return}
@@ -2082,7 +2076,7 @@ const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk
 /* người hỗ trợ: phần Đăng ký chỉ xem tổng hợp, không sửa */
 const _renderReg0=renderReg;renderReg=function(){if(ROLE==='ht')dkTabN='1';_renderReg0();
   $$('#v-dangky input,#v-dangky select,#v-dangky textarea').forEach(el=>{if(el.id!=='dkQ'&&el.id!=='dkOnly')el.disabled=ROLE==='ht'})};
-function roleInit(){applyRole();if(!ROLE)return lgShow('role');if(ROLE==='ht'&&SYNC_OK&&!SY.on)lgShow('htcode')}
+function roleInit(){if(ROLE==='tk'&&!isAdmin())setRole('');applyRole();if(!ROLE)return lgShow('role');if(ROLE==='ht'&&SYNC_OK&&!SY.on)lgShow('htcode')}
 /* ----- xoá hội nghị (chỉ thư ký) ----- */
 var delBusy=false;
 function confRows(){const l=tkConfs().slice();if(SY.on&&SY.event&&!l.some(c=>c.code===SY.event))l.unshift({code:SY.event,ten:S.event.tenHN||'',loai:S.event.loaiHN||'',ngay:S.event.ngayHN||''});return l}
