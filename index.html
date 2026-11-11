@@ -601,7 +601,7 @@ dialog .foot .sp{flex:1}
       <h3>Thêm khách đăng ký</h3>
       <div class="dkgrid">
         <div class="field dktvv"><label class="lbl" for="dkTvv">TVV mời <span class="count">(giữ lại cho khách sau)</span></label><div class="tvv-in"><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><button type="button" class="clr" id="dkTvvClr" hidden title="Xoá TVV" aria-label="Xoá TVV">×</button></div><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
-        <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Nhóm của TVV"></div>
+        <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Gõ hoặc chọn nhóm…" autocomplete="off"><div class="pick" id="dkPG" hidden></div></div>
         <div class="field"><label class="lbl" for="dkName">Tên khách hàng</label><input class="inp" id="dkName" placeholder="Họ tên khách" autocomplete="off"></div>
         <div class="field"><label class="lbl" for="dkVe">Số lượng vé <span class="count">(khách + người đi kèm)</span></label><input class="inp num" id="dkVe" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
         <div class="field"><label class="lbl" for="dkThu">FYP dự kiến <span class="count">(triệu đồng)</span></label><input class="inp num" id="dkThu" inputmode="decimal" placeholder="VD: 25"></div>
@@ -1651,6 +1651,7 @@ document.addEventListener('change',e=>{const t=e.target;
 let dkT=null;
 picker($('#dkTvv'),$('#dkPick'),{source:q=>searchTvv(q),render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
 $('#dkTvv').addEventListener('input',()=>{dkT=null;dkHint()});
+picker($('#dkGroup'),$('#dkPG'),{autoHi:false,source:groupSource,render:groupRender,onPick:g=>{$('#dkGroup').value=g.name;$('#dkName').focus()}});
 $('#dkTvvClr').onclick=()=>{$('#dkTvv').value='';$('#dkGroup').value='';dkT=null;$('#dkPick').hidden=true;dkHint();$('#dkTvv').focus()};
 function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkT||matchTvvName(typed);$('#dkTvvClr').hidden=!$('#dkTvv').value;
   $('#dkTvvHint').innerHTML=m?`Nhóm: <b>${esc(m.group||'—')}</b> · Mã ${esc(m.code||'—')}`:'';$('#dkGroupWrap').hidden=!typed||!!m}
@@ -1660,7 +1661,8 @@ function dkAdd(){const name=tc($('#dkName').value);if(!name)return flash($('#dkN
   if(Object.values(S.reg.kh).some(c=>norm(c.name)===norm(name)&&norm(c.tvvName)===norm(t?t.name:typed)))return toast('Khách này đã có trong danh sách đăng ký');
   const ve=Math.max(1,Math.round(num($('#dkVe').value)||1));
   const thu=num($('#dkThu').value)||0;const dk=readComp('#dkComp').slice(0,ve-1);const id=uid();S.reg.kh[id]={id,name,ve,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
-  rememberGroup(group);regSnapshot();save();['#dkName','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkThu').value='';$('#dkInfo').checked=false;dkT=t||null;dkHint();renderReg();toast('✓ Đã thêm '+name+' — TVV '+(t?t.name:tc(typed))+' giữ nguyên để thêm tiếp');$('#dkName').focus()}
+  rememberGroup(group);if(!t&&typed&&!matchTvvName(typed,group)){const nt={name:tc(typed),group,code:'',tay:true};S.tvv.push(nt);dkT=nt;toast(`Đã ghi nhớ TVV mới ${nt.name} · nhóm ${group}`)}
+  regSnapshot();save();['#dkName','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkThu').value='';$('#dkInfo').checked=false;if(t)dkT=t;if(dkT)$('#dkTvv').value=dkT.name;dkHint();renderReg();toast('✓ Đã thêm '+name+' — TVV '+(dkT?dkT.name:tc(typed))+' giữ nguyên để thêm tiếp');$('#dkName').focus()}
 $('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
 [$('#dkName'),$('#dkTvv'),$('#dkGroup')].forEach(autoCap);
 /* đưa khách đăng ký sang danh sách Checkin */
