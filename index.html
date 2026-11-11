@@ -247,6 +247,9 @@ td.up{color:var(--ok);font-weight:700}
 .comprow .inp{padding:8px 10px}
 .complist{font-size:12.5px;color:var(--muted);margin-top:2px}
 #ask .comprow{grid-template-columns:20px minmax(0,1fr) 130px}
+.dkstart{border:2px solid var(--sky);background:linear-gradient(135deg,var(--surface),var(--info-soft));margin-bottom:18px}
+.dkstart-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.dkstart-row .inp{flex:1;min-width:180px;max-width:280px;padding:9px 12px}
+.dkconf{margin-bottom:18px}.dkconf-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.dkconf-main{flex:1;min-width:200px}.dkconf-main small{display:block;color:var(--muted);font-size:12.5px}.dkconf-main b{font-size:19px}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -537,6 +540,17 @@ dialog .foot .sp{flex:1}
     <div><h2>Theo dõi đăng ký</h2><p class="sub">Thư ký theo dõi vé đăng ký, mục tiêu doanh thu và thông tin khách của từng nhóm. Đồng bộ theo mã hội nghị.</p></div>
     <div class="seg" id="dkTab"><button data-t="2" class="on">① Khách hàng</button><button data-t="1">② Tổng hợp</button></div>
   </div>
+  <div class="card pad dkstart" id="dkStart" hidden>
+    <h3>Bước 1 — Tạo hội nghị để có mã</h3>
+    <p class="sub" style="margin:0 0 12px">Chọn loại hội nghị và đặt tên để nhận <b>mã hội nghị</b>. Mã này dùng chung cho phần <b>Đăng ký</b> và phần <b>Checkin</b> vào ngày hội nghị.</p>
+    <div class="dkstart-row">
+      <button type="button" class="btn primary" id="dkStartNew">＋ Tạo hội nghị mới</button>
+      <span class="count">hoặc đã có mã:</span>
+      <input class="inp" id="dkStartCode" placeholder="VD: HNKH-1511-QTTK7M" autocomplete="off" autocapitalize="characters">
+      <button type="button" class="btn" id="dkStartJoin">Tham gia</button>
+    </div>
+  </div>
+  <div class="card pad dkconf" id="dkConf" hidden></div>
   <div class="card pad dkbar">
     <label class="lbl" for="dkNgay" style="margin:0">Ngày hội nghị</label><input class="inp" type="date" id="dkNgay" style="max-width:170px;padding:7px 10px">
     <span id="dkLeft"></span><span class="count" id="dkSyncNote"></span><span style="flex:1"></span>
@@ -582,7 +596,7 @@ dialog .foot .sp{flex:1}
       <div class="list-h dk-tools"><h3>Khách đăng ký <span class="gcount" id="dk2Count"></span></h3>
         <select class="inp" id="dk2Group"></select>
         <input class="inp" id="dk2Q" placeholder="Tìm khách, TVV…">
-        <button type="button" class="btn sm" id="dkToCheckin" title="Chép khách vào danh sách chờ Checkin">Đưa vào danh sách Checkin</button></div>
+        <span class="count" title="Khách đăng ký tự có trong danh sách chờ Checkin">🔗 Tự liên kết sang Checkin</span><button type="button" id="dkToCheckin" hidden></button></div>
       <div class="scroll"><table class="t" id="dk2Table"></table></div>
     </div>
   </div>
@@ -767,7 +781,7 @@ function go(v){view=v;$$('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'
   renderAll();window.scrollTo({top:0});if(v==='checkin'&&FINE)setTimeout(()=>F.tvv.focus(),50)}
 $$('#tabs button,#bnav button').forEach(b=>b.onclick=()=>{if(b.dataset.dk)dkTabN=b.dataset.dk;go(b.dataset.v)});
 /* 2 mục lớn: CHECKIN / ĐĂNG KÝ */
-let MODE='checkin';try{MODE=localStorage.getItem('hnkh-mode')||'checkin'}catch(e){}
+let MODE='dangky';try{MODE=localStorage.getItem('hnkh-mode')||'dangky'}catch(e){}
 function updNav(){$$('#tabs button,#bnav button').forEach(b=>{const m=b.dataset.mode;b.hidden=!(m==='both'||m===MODE);
     b.classList.toggle('on',b.dataset.v===view&&(!b.dataset.dk||b.dataset.dk===dkTabN))});
   $$('#modebar button').forEach(b=>b.classList.toggle('on',b.dataset.mode===MODE));
@@ -1367,6 +1381,7 @@ function applyRemote(){if(!R)return;applying=true;
   S.guests=list;const inf=R.info||{};
   ['tenHN','phong','khuVuc','ngayHN','loaiHN'].forEach(f=>{if(!('info/'+f in pend)&&f in inf)S.event[f]=inf[f]});
   if(!('reg' in pend)){const rg=R.reg||{};S.reg={groups:rg.groups||{},kh:rg.kh||{},days:rg.days||{}}}
+  if(typeof syncRegToGuests==='function')syncRegToGuests();
   snap=buildSnap();save();applying=false;syState.last=new Date();if(syState.st!=='err')syState.st='ok';renderAll();renderSync()}
 /* máy bị máy 1 xoá khỏi hội nghị: tự rời ngay */
 var seenReq={};
@@ -1631,12 +1646,26 @@ async function editComp(id){const c=S.reg.kh[id];if(!c)return;const n=Math.max(1
   const v=await ask('Người đi kèm',`<b>${esc(c.name)}</b> · ${c.ve} vé — nhập họ tên và mối quan hệ của ${n} người đi kèm:<div id="askComp" style="margin-top:10px"></div>`,[{v:'ok',l:'Lưu',primary:true},{v:'no',l:'Huỷ'}],()=>compRows('#askComp',n,c.dk||[]));
   if(v!=='ok')return;c.dk=readComp('#askComp');save();renderReg();toast('Đã lưu người đi kèm của '+c.name)}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-khdk]');if(b){e.preventDefault();editComp(b.dataset.khdk)}});
+/* ----- liên kết Đăng ký → Checkin: mỗi khách đăng ký là 1 dòng chờ checkin (id cố định r_<id> để mọi máy trùng khớp) ----- */
+function syncRegToGuests(){const kh=(S.reg&&S.reg.kh)||{};let ch=false;
+  for(const c of Object.values(kh)){if(!c||!c.id)continue;
+    let g=S.guests.find(x=>x.regId===c.id)||S.guests.find(x=>x.id==='r_'+c.id)||S.guests.find(x=>!x.regId&&x.registered&&!x.attended&&norm(x.name)===norm(c.name)&&norm(x.tvvName)===norm(c.tvvName));
+    const note=[(+c.ve||1)>1?`Đi kèm ${(+c.ve)-1} người${compText(c)?': '+compText(c):''} (${c.ve} vé)`:'',c.note||''].filter(Boolean).join(' · ');
+    const want={name:c.name,tvvCode:c.tvvCode||'',tvvName:c.tvvName||'',group:c.group||'',note,ve:Math.max(1,+c.ve||1)};
+    if(!g){S.guests.push({id:'r_'+c.id,regId:c.id,...want,fee:null,gift:false,registered:true,attended:false,at:null});ch=true}
+    else{if(g.regId!==c.id){g.regId=c.id;ch=true}for(const k in want){if(k==='note'&&g.attended)continue;if(g[k]!==want[k]){g[k]=want[k];ch=true}}}}
+  const ids=new Set(Object.keys(kh)),n0=S.guests.length;S.guests=S.guests.filter(g=>!g.regId||ids.has(g.regId)||g.attended);if(S.guests.length!==n0)ch=true;
+  if(ch)ensureStt();return ch}
+$('#dkStartNew').onclick=()=>createFromReg();
+$('#dkStartJoin').onclick=async()=>{const c=normCode($('#dkStartCode').value);if(!c)return flash($('#dkStartCode'),'Mã có dạng HNKH-1511-QTTK7M');
+  if(!SY.name){SY.name='Thư ký';sySave()}await joinEvent(c);renderReg()};
+$('#dkStartCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#dkStartJoin').click()}});
 /* ----- theo dõi theo ngày & báo cáo lãnh đạo ----- */
 S.reg.days=S.reg.days||{};
 const ymd=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
 function dkTotals(rows){const act=rows.filter(r=>r.ve||r.dt||r.kh);const T={ve:0,dt:0,thu:0,info:0,kh:0,tick:0,n:act.length};act.forEach(r=>{T.ve+=r.ve;T.dt+=r.dt;T.thu+=r.thu||0;T.info+=r.info;T.kh+=r.kh;if(r.tick)T.tick++});return T}
 /* ghi lại số liệu của hôm nay (mỗi lần thư ký sửa) */
-function regSnapshot(){const rows=dkRows(),T=dkTotals(rows),g={};rows.forEach(r=>{if(r.ve||r.info||r.dt||r.thu)g[r.key]=[r.ve,r.info,r.dt,r.name,r.thu||0]});
+function regSnapshot(){syncRegToGuests();const rows=dkRows(),T=dkTotals(rows),g={};rows.forEach(r=>{if(r.ve||r.info||r.dt||r.thu)g[r.key]=[r.ve,r.info,r.dt,r.name,r.thu||0]});
   S.reg.days=S.reg.days||{};S.reg.days[today()]={ve:T.ve,dt:T.dt,thu:T.thu,info:T.info,kh:T.kh,tick:T.tick,g}}
 function daysLeft(){const d=S.event.ngayHN;if(!d)return null;return Math.round((new Date(d+'T00:00')-new Date(today()+'T00:00'))/864e5)}
 function prevDay(d){return Object.keys(S.reg.days||{}).filter(x=>x<d).sort().pop()||null}
@@ -1650,7 +1679,11 @@ function renderDays(){const box=$('#dkDays');if(!box)return;const days=Object.ke
   requestAnimationFrame(()=>requestAnimationFrame(()=>$$('#dkDays .b').forEach(b=>b.style.height=b.dataset.h+'%')))}
 function renderDkTop(){const dl=daysLeft();if(document.activeElement!==$('#dkNgay'))$('#dkNgay').value=S.event.ngayHN||'';
   $('#dkLeft').innerHTML=dl==null?'<span class="count">Chưa đặt ngày hội nghị</span>':dl>0?`<span class="chip solid">⏳ Còn <b>${dl}</b> ngày</span>`:dl===0?'<span class="chip solid">📅 Hôm nay là ngày hội nghị</span>':`<span class="chip">Đã qua ${-dl} ngày</span>`;
-  const btn=$('#dkCreate');if(btn)btn.hidden=!(typeof SYNC_OK!=='undefined'&&SYNC_OK&&!SY.on);
+  const btn=$('#dkCreate');if(btn)btn.hidden=true;
+  const ok=typeof SYNC_OK!=='undefined'&&SYNC_OK;$('#dkStart').hidden=!ok||SY.on;$('#dkConf').hidden=!ok||!SY.on;
+  if(ok&&SY.on){const n=S.guests.filter(g=>g.regId).length;$('#dkConf').innerHTML=`<div class="dkconf-row"><div class="dkconf-main"><small>${esc(S.event.loaiHN||'Hội nghị')}</small><b>${esc(S.event.tenHN||'Chưa đặt tên')}</b></div>
+    <div class="jcode"><div><small>Mã hội nghị</small><b>${esc(SY.event)}</b></div><button type="button" class="btn primary" data-sy="copy">📋 Copy mã</button></div></div>
+    <p class="hint" style="margin:8px 0 0">🔗 Đã liên kết với phần <b>Checkin</b>: ${n} khách đăng ký có sẵn trong danh sách chờ checkin. Ngày hội nghị, lễ tân nhập mã này ở phần Checkin.</p>`}
   $('#dkSyncNote').innerHTML=(S.event.loaiHN?`<span class="chip">🏷️ ${esc(S.event.loaiHN)}</span> `:'')+(typeof SYNC_OK!=='undefined'&&SYNC_OK?(SY.on?`☁️ Theo dõi chung — mã <b>${esc(SY.event)}</b>`:'Chưa có mã hội nghị — số liệu chỉ lưu trên máy này'):'')}
 $('#dkNgay').addEventListener('change',e=>{S.event.ngayHN=e.target.value;save();renderReg()});
 const LOAI_HN=['HNKH cấp Công ty','HNKH cấp Phòng PTKD','HNKH cấp Ban / VPKV','HNKH cấp nhóm','Hội thảo giới thiệu sản phẩm','Tri ân khách hàng'];
