@@ -629,7 +629,7 @@ dialog .foot .sp{flex:1}
       <div class="list-h dk-tools"><h3>Khách đăng ký <span class="gcount" id="dk2Count"></span></h3>
         <select class="inp" id="dk2Group"></select>
         <input class="inp" id="dk2Q" placeholder="Tìm khách, TVV…">
-        <span class="count" title="Khách đăng ký tự có trong danh sách chờ Checkin">🔗 Tự liên kết sang Checkin</span><button type="button" id="dkToCheckin" hidden></button></div>
+        <button type="button" class="btn sm" id="dk2Img" title="Xuất ảnh dọc danh sách đang hiển thị (theo bộ lọc)">🖼️ Xuất ảnh</button><span class="count" title="Khách đăng ký tự có trong danh sách chờ Checkin">🔗 Tự liên kết sang Checkin</span><button type="button" id="dkToCheckin" hidden></button></div>
       <div class="dkfilters" id="dk2F">
         <span class="lbl">Lọc:</span>
         <select class="inp" data-dkf="day"></select>
@@ -1710,13 +1710,66 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     if(dkF.paid)list=list.filter(c=>dkF.paid==='du'?pd0(c)>=vv0(c):dkF.paid==='mot'?pd0(c)>0&&pd0(c)<vv0(c):pd0(c)===0);
     if(dkF.name)list=list.filter(c=>dkF.name==='co'?!!c.name:dkF.name==='chua'?!c.name:!!c.name&&vv0(c)>1);
     $('#dk2Clr').hidden=!(dkF.day||dkF.tn||dkF.tvv||dkF.info||dkF.paid||dkF.name||cur||q);
-    const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);const th=list.reduce((x,c)=>x+(+c.thu||0),0),pd=list.reduce((x,c)=>x+Math.min(vv(c),+c.paid||0),0);$('#dk2Count').textContent=`${list.filter(c=>c.name).length} khách · ${tv} vé · ${pd} vé đã nộp tiền · ${inf} vé có thông tin · FYP dự kiến ${fmt(th)||0} tr.đ`;
+    dkLastList=list;const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);const th=list.reduce((x,c)=>x+(+c.thu||0),0),pd=list.reduce((x,c)=>x+Math.min(vv(c),+c.paid||0),0);$('#dk2Count').textContent=`${list.filter(c=>c.name).length} khách · ${tv} vé · ${pd} vé đã nộp tiền · ${inf} vé có thông tin · FYP dự kiến ${fmt(th)||0} tr.đ`;
     $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th class="n">Ngày giờ<br><small>nhập</small></th><th>Tên KH</th><th class="n">Số vé</th><th class="n">Đã nộp<br><small>tiền</small></th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
       <td class="n num">${i+1}</td><td class="n"><input class="inp cell atcell" type="datetime-local" step="60" data-khat="${esc(c.id)}" value="${c.at?atDay(c.at)+'T'+atHM(c.at):''}" title="Sửa ngày giờ nhập"></td><td>${c.name?`<b>${esc(c.name)}</b>`:`<input class="inp cell" data-khname="${esc(c.id)}" placeholder="Chưa có tên KH — nhập tên">`}${c.name&&(+c.ve||1)>1?`<div class="complist">${compText(c)||`+${(+c.ve)-1} người đi kèm`} <button type="button" class="glink" data-khdk="${esc(c.id)}">✎ Sửa người đi kèm</button></div>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td class="n"><input class="inp num cell ve" type="number" min="0" max="${Math.max(1,+c.ve||1)}" data-khpaid="${esc(c.id)}" value="${+c.paid||0}"></td><td class="n"><input class="inp num cell thu" inputmode="decimal" data-khthu="${esc(c.id)}" value="${c.thu||''}" placeholder="0"></td><td>${esc(c.tvvName||'—')}</td>
       <td><button type="button" class="glink" data-g1="${esc(gkey(c.group||'(Chưa rõ nhóm)'))}" title="Xem nhóm ở tab ①">${esc(c.group||'—')}</button>${tnOf(c.group)?`<div class="complist">TN: ${esc(tnOf(c.group))}</div>`:''}</td>
       <td><label class="tick"><input type="checkbox" data-kh="${esc(c.id)}" ${c.info?'checked':''}> <span>${c.info?'Có':'Chưa'}</span></label></td>
       <td><input class="inp cell note" data-khn="${esc(c.id)}" value="${esc(c.note||'')}" placeholder="—"></td>
       <td><button type="button" class="mini del" data-khdel="${esc(c.id)}" title="Xoá khách">${TRASH}</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="none">Chưa có khách. Thêm khách ở khung phía trên.</td></tr></tbody>'}}
+
+/* ============ ảnh dọc danh sách khách đăng ký (theo bộ lọc đang chọn) ============ */
+var dkLastList=dkLastList||[];
+function dkFilterText(){const o=[];const g=$('#dk2Group');if(g&&g.value)o.push('Nhóm '+g.options[g.selectedIndex].text.replace(/\s*\(\d+\)$/,''));
+  $$('[data-dkf]').forEach(el=>{if(el.value)o.push(el.options[el.selectedIndex].text.replace(/\s*\(\d+\)$/,''))});const q=$('#dk2Q').value.trim();if(q)o.push('Tìm “'+q+'”');return o}
+async function listImages(list){try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
+  const W=1080,P=56,F='"Be Vietnam Pro",-apple-system,"Segoe UI",Roboto,Arial,sans-serif',C={bg:'#FAF2E8',card:'#FFFFFF',ink:'#3A2A21',mu:'#8C7363',line:'#F1E0CE',br:'#D9663D',ok:'#1E8A62',cp:'#FDE3C8',alt:'#FFF8F1'},E=EV();
+  const vv=c=>Math.max(1,+c.ve||1),pd=c=>Math.min(vv(c),+c.paid||0);
+  const T={kh:list.filter(c=>c.name).length,ve:list.reduce((a,c)=>a+vv(c),0),pd:list.reduce((a,c)=>a+pd(c),0),inf:list.filter(c=>c.info).reduce((a,c)=>a+vv(c),0),thu:list.reduce((a,c)=>a+(+c.thu||0),0)};
+  const filt=dkFilterText(),PER=60,pages=Math.max(1,Math.ceil(list.length/PER)),[lb,l30]=await Promise.all([rptImg(RPT_LOGO.bvl),rptImg(RPT_LOGO.y30)]),out=[];
+  for(let pg=0;pg<pages;pg++){const part=list.slice(pg*PER,(pg+1)*PER);
+    const cv=document.createElement('canvas');cv.width=W;cv.height=Math.min(30000,900+part.length*130);const g=cv.getContext('2d');
+    const font=(w,sz)=>g.font=`${w} ${sz}px ${F}`,txt=(t,x,y,w,sz,col,al)=>{font(w,sz);g.fillStyle=col;g.textAlign=al||'left';g.fillText(t,x,y)};
+    const fit=(t,mw,w,sz)=>{t=String(t);font(w,sz);if(g.measureText(t).width<=mw)return t;while(t.length>1&&g.measureText(t+'…').width>mw)t=t.slice(0,-1);return t+'…'};
+    const wrap=(t,mw,w,sz)=>{font(w,sz);const r=[];let l='';for(const wd of String(t).split(' ')){const tt=l?l+' '+wd:wd;if(g.measureText(tt).width>mw&&l){r.push(l);l=wd}else l=tt}if(l)r.push(l);return r};
+    const rr=(x,y,w,h,r,col)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);g.fillStyle=col;g.fill()};
+    g.fillStyle=C.bg;g.fillRect(0,0,W,cv.height);
+    const LB=180;g.fillStyle='#FFFFFF';g.fillRect(0,0,W,LB);if(lb)g.drawImage(lb,P,(LB-100)/2,376,100);if(l30)g.drawImage(l30,W-P-169,(LB-130)/2,169,130);
+    let y=LB;const hd=wrap(E.hn||'Hội nghị khách hàng',W-2*P,700,44),HH=118+hd.length*54+(filt.length?44:0);
+    const grd=g.createLinearGradient(0,y,W,y+HH);grd.addColorStop(0,'#FFB896');grd.addColorStop(1,'#F28A5E');g.fillStyle=grd;g.fillRect(0,y,W,HH);
+    y+=54;txt('DANH SÁCH KHÁCH HÀNG ĐĂNG KÝ'+(pages>1?`  ·  Trang ${pg+1}/${pages}`:''),P,y,700,26,'rgba(59,34,22,.75)');y+=8;hd.forEach(l=>{y+=54;txt(l,P,y,700,44,'#3B2216')});
+    y+=44;txt(fit([S.event.loaiHN,S.event.ngayHN?'Ngày '+dmy(S.event.ngayHN):''].filter(Boolean).join(' · ')||' ',W-2*P,500,26),P,y,500,26,'#3B2216');
+    if(filt.length){y+=44;txt(fit('Lọc: '+filt.join(' · '),W-2*P,600,25),P,y,600,25,'#3B2216')}
+    y=LB+HH+30;
+    /* tổng */
+    const kp=[['Khách',T.kh],['Vé',T.ve],['Đã nộp tiền',T.pd],['Có thông tin',T.inf],['FYP (tr)',fmt(T.thu)||'0']],kw=(W-2*P-4*14)/5;
+    kp.forEach(([l,v],i)=>{const x=P+i*(kw+14);rr(x,y,kw,120,22,C.card);txt(String(v),x+kw/2,y+64,700,44,i===2||i===3?C.ok:C.ink,'center');txt(l,x+kw/2,y+100,500,22,C.mu,'center')});
+    y+=150;
+    /* danh sách */
+    rr(P,y,W-2*P,20,0,C.bg);const rows=part.map((c,i)=>{const ti=pg*PER+i+1,dk=c.name&&vv(c)>1?(compText(c)||`+${vv(c)-1} người đi kèm`):'';return{c,ti,dk,h:dk?118:88}});
+    const LH=rows.reduce((a,r)=>a+r.h,0)+16;rr(P,y,W-2*P,LH,26,C.card);let ry=y+8;
+    rows.forEach((r,i)=>{const c=r.c;if(i%2)rr(P+8,ry,W-2*P-16,r.h,14,C.alt);
+      const nm=c.name?tc(c.name):`(Chưa có tên KH — ${vv(c)} vé)`;txt(`${r.ti}.`,P+24,ry+40,700,26,C.mu);
+      txt(fit(nm,600,c.name?700:500,28),P+84,ry+40,c.name?700:500,28,c.name?C.ink:C.mu);
+      txt(`${vv(c)} vé`,W-P-24,ry+40,700,28,C.br,'right');
+      const meta=[c.at?atHM(c.at)+' '+dmy(atDay(c.at)).slice(0,5):'',c.tvvName?'TVV '+tc(c.tvvName):'',c.group||''].filter(Boolean).join(' · ');
+      txt(fit(meta,620,400,22),P+84,ry+72,400,22,C.mu);
+      const st=`${pd(c)>=vv(c)?'Đã nộp đủ':pd(c)?'Nộp '+pd(c)+'/'+vv(c):'Chưa nộp'} · ${c.info?'Có TT':'Chưa TT'}`;txt(st,W-P-24,ry+72,600,22,pd(c)>=vv(c)&&c.info?C.ok:C.mu,'right');
+      if(r.dk)txt(fit('Đi kèm: '+r.dk,W-2*P-110,400,22),P+84,ry+102,400,22,C.ink);
+      ry+=r.h});
+    if(!rows.length)txt('Không có khách nào theo bộ lọc này',W/2,y+60,500,26,C.mu,'center');
+    y+=Math.max(LH,100)+40;const now=new Date();txt(`BVL DTH Checkin · xuất lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} ${dmy(today())}`,W/2,y,500,22,C.mu,'center');y+=40;
+    const o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(cv,0,0);out.push(await new Promise(res=>o.toBlob(b=>res(b),'image/png')))}
+  return out}
+async function shareListImages(){renderReg();const list=dkLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');toast('Đang tạo ảnh danh sách…');
+  const blobs=await listImages(list),d=today(),files=blobs.map((b,i)=>new File([b],`Danh-sach-khach-${d}${blobs.length>1?'-trang'+(i+1):''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
+  const canShare=!!(navigator.canShare&&navigator.canShare({files}));
+  const v=await ask(`Ảnh danh sách khách (${list.length} lượt${blobs.length>1?' · '+blobs.length+' ảnh':''})`,`<div style="max-height:60vh;overflow:auto;display:grid;gap:8px">${urls.map(u=>`<img src="${u}" alt="Ảnh danh sách khách" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:#FAF2E8">`).join('')}</div>
+    <small class="count" style="display:block;margin-top:8px">Ảnh theo đúng bộ lọc đang chọn${blobs.length>1?'; danh sách dài được chia mỗi ảnh 60 lượt':''}. ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad có thể bấm giữ vào ảnh để lưu.</small>`,
+    [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
+  if(v==='share'){try{await navigator.share({files,title:'Danh sách khách đăng ký'})}catch(e){if(e&&e.name!=='AbortError')files.forEach(f=>download(f,f.name))}}
+  else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*400));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)}
+$('#dk2Img').onclick=shareListImages;
 /* lọc danh sách khách đăng ký */
 var dkF={day:'',tn:'',tvv:'',info:'',paid:'',name:''};
 document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.dkf;if(!k)return;dkF[k]=e.target.value;if(k==='tn')dkF.tvv='';renderReg()});
