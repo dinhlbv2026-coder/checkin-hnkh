@@ -220,7 +220,7 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .glink{border:0;background:transparent;color:var(--brand);font-weight:600;padding:0;text-align:left;cursor:pointer}.glink:hover{text-decoration:underline}
 .tick{display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-size:13.5px}.tick input{width:18px;height:18px;accent-color:var(--peach-2)}
 .mini-prog{display:inline-block;width:46px;height:6px;border-radius:6px;background:var(--surface-2);margin-right:8px;vertical-align:middle;overflow:hidden}.mini-prog i{display:block;height:100%;background:var(--peach)}
-.dkgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}.dkgrid .field{margin:0}.dkgrid .dkwide{grid-column:1/-1}
+.dkgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}.dkgrid .field{margin:0}.dkgrid .dkwide{grid-column:1/-1}.dkgrid .dktvv{grid-column:span 2}
 #dk2Table .cell.ve{width:64px;padding:6px 8px;text-align:right}
 #dk2Table .note{width:100%;min-width:140px;padding:6px 9px}
 @media (max-width:760px){.dkgrid{grid-template-columns:1fr 1fr}.hb{grid-template-columns:90px 1fr 46px}}
@@ -600,11 +600,11 @@ dialog .foot .sp{flex:1}
     <div class="card pad dkform">
       <h3>Thêm khách đăng ký</h3>
       <div class="dkgrid">
+        <div class="field dktvv"><label class="lbl" for="dkTvv">TVV mời <span class="count">(giữ lại cho khách sau)</span></label><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
+        <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Nhóm của TVV"></div>
         <div class="field"><label class="lbl" for="dkName">Tên khách hàng</label><input class="inp" id="dkName" placeholder="Họ tên khách" autocomplete="off"></div>
         <div class="field"><label class="lbl" for="dkVe">Số lượng vé <span class="count">(khách + người đi kèm)</span></label><input class="inp num" id="dkVe" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
         <div class="field"><label class="lbl" for="dkThu">FYP dự kiến <span class="count">(triệu đồng)</span></label><input class="inp num" id="dkThu" inputmode="decimal" placeholder="VD: 25"></div>
-        <div class="field"><label class="lbl" for="dkTvv">TVV mời</label><input class="inp" id="dkTvv" placeholder="Tên hoặc mã TVV" autocomplete="off"><div class="pick" id="dkPick" hidden></div><div class="hint" id="dkTvvHint"></div></div>
-        <div class="field" id="dkGroupWrap" hidden><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Nhóm của TVV"></div>
         <div class="field"><span class="lbl">KH có thông tin</span><label class="toggle"><input type="checkbox" id="dkInfo"> Đã có thông tin</label></div>
         <div class="field dkwide"><label class="lbl" for="dkNote">Ghi chú</label><input class="inp" id="dkNote" placeholder="Ghi chú"></div>
       </div>
@@ -1649,7 +1649,7 @@ document.addEventListener('change',e=>{const t=e.target;
   if(t.matches('[data-khn]')){const c=S.reg.kh[t.dataset.khn];if(c){c.note=t.value.trim();save()}}});
 /* tab 2: thêm khách */
 let dkT=null;
-picker($('#dkTvv'),$('#dkPick'),{source:q=>searchTvv(q),render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkInfo').focus()}});
+picker($('#dkTvv'),$('#dkPick'),{source:q=>searchTvv(q),render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
 $('#dkTvv').addEventListener('input',()=>{dkT=null;dkHint()});
 function dkHint(){const typed=$('#dkTvv').value.trim(),m=dkT||matchTvvName(typed);
   $('#dkTvvHint').innerHTML=m?`Nhóm: <b>${esc(m.group||'—')}</b> · Mã ${esc(m.code||'—')}`:'';$('#dkGroupWrap').hidden=!typed||!!m}
@@ -1659,7 +1659,7 @@ function dkAdd(){const name=tc($('#dkName').value);if(!name)return flash($('#dkN
   if(Object.values(S.reg.kh).some(c=>norm(c.name)===norm(name)&&norm(c.tvvName)===norm(t?t.name:typed)))return toast('Khách này đã có trong danh sách đăng ký');
   const ve=Math.max(1,Math.round(num($('#dkVe').value)||1));
   const thu=num($('#dkThu').value)||0;const dk=readComp('#dkComp').slice(0,ve-1);const id=uid();S.reg.kh[id]={id,name,ve,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
-  rememberGroup(group);regSnapshot();save();['#dkName','#dkTvv','#dkGroup','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkThu').value='';$('#dkInfo').checked=false;dkT=null;dkHint();renderReg();toast('✓ Đã thêm '+name);$('#dkName').focus()}
+  rememberGroup(group);regSnapshot();save();['#dkName','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkThu').value='';$('#dkInfo').checked=false;dkT=t||null;dkHint();renderReg();toast('✓ Đã thêm '+name+' — TVV '+(t?t.name:tc(typed))+' giữ nguyên để thêm tiếp');$('#dkName').focus()}
 $('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
 [$('#dkName'),$('#dkTvv'),$('#dkGroup')].forEach(autoCap);
 /* đưa khách đăng ký sang danh sách Checkin */
