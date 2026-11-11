@@ -690,6 +690,12 @@ dialog .foot .sp{flex:1}
           <button class="btn sm danger" id="clearGuests">Xoá khách của sự kiện</button>
         </div>
       </div>
+
+      <div class="card pad" id="confCard" hidden>
+        <h3>Xoá hội nghị</h3>
+        <p class="sub" style="margin-bottom:8px">Xoá hẳn hội nghị trên mạng: mọi máy đang dùng mã đó sẽ mất danh sách đăng ký và checkin. <b>Không khôi phục được</b> — nên xuất file Excel trước.</p>
+        <div id="confList"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -1238,7 +1244,7 @@ $('#dDel').onclick=()=>removeGuest(editId);
 
 /* ============ cài đặt ============ */
 $$('[data-ev]').forEach(el=>{el.addEventListener('input',()=>{S.event[el.dataset.ev]=el.dataset.type==='num'?(num(el.value)||0):el.value;save();renderHeader();if(view==='report')renderReport()})});
-function renderSettings(){$$('[data-ev]').forEach(el=>{if(document.activeElement!==el)el.value=S.event[el.dataset.ev]??''});
+function renderSettings(){renderConfCard();$$('[data-ev]').forEach(el=>{if(document.activeElement!==el)el.value=S.event[el.dataset.ev]??''});
   $('#embInfo').innerHTML=EMB?.tvv?.length?`<b>Danh sách gắn sẵn:</b> ${EMB.tvv.length} TVV · cập nhật ${esc(dmy((EMB.capNhat||'').slice(0,10)))} ${esc((EMB.capNhat||'').slice(11))}<br><small>Nguồn: ${esc(EMB.nguon||'')}. Cập nhật hằng tuần bằng <code>cap-nhat-tvv.py</code>.</small>`:'<b>Chưa gắn danh sách TVV</b> — chạy <code>cap-nhat-tvv.py</code> hoặc chọn file bên dưới.';
   $('#tvvCount').textContent=S.tvv.length?`· ${S.tvv.length} người, ${new Set(S.tvv.map(t=>t.group)).size} nhóm`:'· chưa có';
   const q=norm($('#tvvQ').value);const list=(q?searchTvv(q,60):S.tvv.slice(0,60));
@@ -1420,7 +1426,7 @@ window.addEventListener('online',()=>{if(SY.on){flush();startStream()}});
 /* nhận dữ liệu tức thời từ Firebase */
 function setAt(o,p,v){const ks=p.split('/').filter(Boolean);if(!ks.length)return v;let x=o;for(let i=0;i<ks.length-1;i++){if(typeof x[ks[i]]!=='object'||!x[ks[i]])x[ks[i]]={};x=x[ks[i]]}
   if(v===null)delete x[ks[ks.length-1]];else x[ks[ks.length-1]]=v;return o}
-function onRemote(path,data,isPatch){if(path==='/'&&!isPatch)R=data||{};else{R=R||{};
+function onRemote(path,data,isPatch){if(path==='/'&&!isPatch&&!data&&SY.on&&!delBusy){confGone();return}if(path==='/'&&!isPatch)R=data||{};else{R=R||{};
     if(isPatch&&data)for(const k in data)setAt(R,(path==='/'?'':path)+'/'+k,data[k]);else R=setAt(R,path,data)}
   clearTimeout(applyT);applyT=setTimeout(()=>{applyRemote();checkKicked()},80)}
 function applyRemote(){if(!R)return;applying=true;
@@ -1870,6 +1876,31 @@ $('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',`Đ
 const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk')tkRemember();
   if(ROLE==='ht'&&SYNC_OK&&!SY.on&&$('#login').hidden)lgShow('htcode')};
 function roleInit(){applyRole();if(!ROLE)return lgShow('role');if(ROLE==='ht'&&SYNC_OK&&!SY.on)lgShow('htcode')}
+/* ----- xoá hội nghị (chỉ thư ký) ----- */
+var delBusy=false;
+function confRows(){const l=tkConfs().slice();if(SY.on&&SY.event&&!l.some(c=>c.code===SY.event))l.unshift({code:SY.event,ten:S.event.tenHN||'',loai:S.event.loaiHN||'',ngay:S.event.ngayHN||''});return l}
+function renderConfCard(){const card=$('#confCard');if(!card)return;card.hidden=ROLE!=='tk'||!SYNC_OK;if(card.hidden)return;const l=confRows();
+  $('#confList').innerHTML=l.length?`<div class="lg-list" style="margin:0">${l.map(c=>{const cur=SY.on&&SY.event===c.code;return`<div class="lg-conf${cur?' cur':''}"><div class="lg-pick" style="cursor:default"><b>${esc(c.ten||'Chưa đặt tên')}</b><small>${esc([c.loai,c.ngay?'Ngày '+dmy(c.ngay):'',c.code].filter(Boolean).join(' · '))}</small>${cur?'<span class="chip solid">Đang mở</span>':''}</div>
+    <button type="button" class="btn sm danger" style="align-self:center;margin-right:10px" data-delconf="${esc(c.code)}">🗑 Xoá</button></div>`}).join('')}</div>`
+   :'<p class="count" style="margin:0">Máy này chưa có hội nghị nào.</p>'}
+function confClearLocal(){stopStream();Object.assign(SY,{on:false,event:'',pend:{},host:false});sySave();snap=null;R=null;setSy('off','');
+  S.guests=[];S.recent=[];S.guestFile=null;S.tomb={};S.reg={groups:{},kh:{},days:{}};Object.assign(S.event,{tenHN:'',phong:'',khuVuc:'',loaiHN:'',ngayHN:''});save();renderAll();renderSync()}
+function confGone(){const code=SY.event;
+  try{if(S.guests.length)localStorage.setItem('hnkh-ds-cu',JSON.stringify({at:new Date().toISOString(),guests:S.guests}))}catch(e){}
+  confClearLocal();lsSet(CONF_KEY,JSON.stringify(tkConfs().filter(c=>c.code!==code)));
+  ask('Hội nghị đã bị xoá',`Thư ký đã xoá hội nghị <b>${esc(code)}</b>. Máy này đã thoát khỏi hội nghị.`,[{v:'ok',l:'Đã hiểu',primary:true}])}
+async function deleteConf(code){if(ROLE!=='tk')return toast('Chỉ thư ký được xoá hội nghị');
+  const c=confRows().find(x=>x.code===code)||{code},cur=SY.on&&SY.event===code,nm=`<b>${esc(c.ten||'Chưa đặt tên')}</b> (${esc(code)})`;
+  const v=await ask('Xoá hội nghị',`Xoá hội nghị ${nm}?<br>Toàn bộ khách đăng ký, người đi kèm, số liệu theo ngày và danh sách checkin của hội nghị này sẽ bị <b>xoá vĩnh viễn trên mọi máy</b>.${cur?' Nên xuất file Excel trước khi xoá.':'<br><small class="count">Muốn lưu file trước: mở hội nghị này rồi bấm Xuất báo cáo.</small>'}`,
+    [...(cur?[{v:'export',l:'Xuất file Excel rồi xoá',primary:true}]:[]),{v:'del',l:'Xoá hội nghị',danger:true},{v:'no',l:'Huỷ',primary:!cur}]);
+  if(v!=='export'&&v!=='del')return;
+  if(v==='export'){try{await exportXlsx()}catch(e){return toast('Chưa xuất được file — chưa xoá hội nghị')}}
+  if(!await okAsk('Chắc chắn xoá?',`Bạn <b>chắc chắn</b> muốn xoá hội nghị ${nm}?<br>Việc này <b>không thể hoàn tác</b>.`,'Chắc chắn xoá'))return;
+  delBusy=true;if(cur)stopStream();
+  try{const r=await fetch(`${FB_URL}/events/${encodeURIComponent(code)}.json`,{method:'DELETE',cache:'no-store'});if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,100))}
+  catch(e){delBusy=false;if(cur)startStream();return toast('Không xoá được: '+(navigator.onLine?e.message:'mất mạng'))}
+  delBusy=false;if(cur)confClearLocal();lsSet(CONF_KEY,JSON.stringify(tkConfs().filter(x=>x.code!==code)));renderAll();toast('Đã xoá hội nghị '+(c.ten||code))}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-delconf]');if(b){e.preventDefault();deleteConf(b.dataset.delconf)}});
 /* ============ khởi động ============ */
 const embNew=applyEmbedded(false);
 function renderAll(){renderHeader();if(view==='checkin')renderCheckin();if(view==='list')renderList();if(view==='stats')renderStats();if(view==='report')renderReport();if(view==='settings')renderSettings();if(view==='dangky')renderReg()}
