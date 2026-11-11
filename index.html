@@ -1573,7 +1573,9 @@ function allGroups(){const m=new Map();const add=(g,n)=>{g=String(g||'').trim();
   return[...m.values()].sort((a,b)=>a.name.localeCompare(b.name,'vi'))}
 function rememberGroup(g){g=String(g||'').trim().replace(/\s+/g,' ');if(!g)return;S.groups=S.groups||[];
   if(!S.tvv.some(t=>norm(t.group)===norm(g))&&!S.groups.some(x=>norm(x)===norm(g)))S.groups.push(g)}
-function groupSource(q){const n=norm(q);return allGroups().filter(g=>!n||norm(g.name).includes(n)).slice(0,30)}
+function groupSource(q){const n=norm(q);if(!n)return allGroups().slice(0,30);
+  const sc=g=>{const x=norm(g.name),w=x.split(' ');return x.startsWith(n)?0:w.some(t=>t.startsWith(n))?1:w.map(t=>t[0]).join('').startsWith(n.replace(/ /g,''))?2:n.length>=3&&x.includes(n)?3:9};
+  return allGroups().map(g=>[sc(g),g]).filter(x=>x[0]<9).sort((a,b)=>a[0]-b[0]||a[1].name.localeCompare(b[1].name,'vi')).map(x=>x[1]).slice(0,30)}
 const groupRender=g=>`<span class="av">${esc(initials(g.name))}</span><span><b>${esc(g.name)}</b><small>${g.n?g.n+' TVV':'nhóm đã ghi nhớ'}</small></span>`;
 picker(F.group,$('#pGroup'),{autoHi:false,source:groupSource,render:groupRender,onPick:g=>{F.group.value=g.name;F.group.dispatchEvent(new Event('input'));F.name.focus()}});
 picker($('#dGroup'),$('#pDG'),{autoHi:false,source:groupSource,render:groupRender,onPick:g=>{$('#dGroup').value=g.name}});
