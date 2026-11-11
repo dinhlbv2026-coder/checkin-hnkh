@@ -278,6 +278,7 @@ body.role-ht [data-dk="2"],body.role-ht #dkTab,body.role-ht #dk2,body.role-ht #d
 .dkfilters .lbl{margin:0;font-size:13px}
 .dkfilters .inp{width:auto;max-width:210px;padding:6px 10px;font-size:13.5px}
 .dkfilters .inp.on,.dk-tools select.inp.on{border-color:var(--peach);background:var(--cream-peach);font-weight:600}
+.tvvdel{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;width:32px;height:32px;border-radius:10px;cursor:pointer}.tvvdel:hover,.tvvdel:focus-visible{background:var(--danger-soft,#FDE8E4);color:var(--danger,#C2412B)}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -686,7 +687,7 @@ dialog .foot .sp{flex:1}
         </details>
         <input class="inp" id="tvvQ" placeholder="Tìm trong danh sách…" style="margin-top:12px;padding:8px 12px">
         <div class="tvv-list" id="tvvList"></div>
-        <div class="actions"><button class="btn sm" id="reloadEmb">Nạp lại danh sách gắn sẵn</button><button class="btn sm danger" id="clearTvv">Xoá danh sách TVV</button></div>
+        <div class="actions"><button class="btn sm" id="reloadEmb">Nạp lại danh sách gắn sẵn</button><button class="btn sm" id="tvvRestore" hidden></button><button class="btn sm danger" id="clearTvv">Xoá danh sách TVV</button></div>
       </div>
 
       <div class="card pad" id="guestCard">
@@ -1266,7 +1267,7 @@ function renderSettings(){renderConfCard();$$('[data-ev]').forEach(el=>{if(docum
   $('#embInfo').innerHTML=EMB?.tvv?.length?`<b>Danh sách gắn sẵn:</b> ${EMB.tvv.length} TVV · cập nhật ${esc(dmy((EMB.capNhat||'').slice(0,10)))} ${esc((EMB.capNhat||'').slice(11))}<br><small>Nguồn: ${esc(EMB.nguon||'')}. Cập nhật hằng tuần bằng <code>cap-nhat-tvv.py</code>.</small>`:'<b>Chưa gắn danh sách TVV</b> — chạy <code>cap-nhat-tvv.py</code> hoặc chọn file bên dưới.';
   $('#tvvCount').textContent=S.tvv.length?`· ${S.tvv.length} người, ${new Set(S.tvv.map(t=>t.group)).size} nhóm`:'· chưa có';
   const q=norm($('#tvvQ').value);const list=(q?searchTvv(q,60):S.tvv.slice(0,60));
-  $('#tvvList').innerHTML=S.tvv.length?`<table class="t"><thead><tr><th>TVV</th><th>Nhóm</th><th>Mã số</th></tr></thead><tbody>${list.map(t=>`<tr><td>${esc(t.name)}</td><td>${esc(t.group)}</td><td class="num">${esc(t.code)}</td></tr>`).join('')}</tbody></table>${!q&&S.tvv.length>60?`<div class="none" style="padding:10px">… và ${S.tvv.length-60} người nữa — gõ để tìm</div>`:''}`:'<div class="none">Chưa có TVV</div>'}
+  $('#tvvList').innerHTML=S.tvv.length?`<table class="t"><thead><tr><th>TVV</th><th>Nhóm</th><th>Mã số</th><th style="width:44px"></th></tr></thead><tbody>${list.map(t=>`<tr><td>${esc(t.name)}${t.tay?' <span class="count">(thêm tay)</span>':''}</td><td>${esc(t.group)}</td><td class="num">${esc(t.code)}</td><td style="text-align:center;padding:4px"><button type="button" class="tvvdel" data-tvvdel="${esc(tvvKey(t))}" title="Xoá TVV này" aria-label="Xoá ${esc(t.name)}">×</button></td></tr>`).join('')}</tbody></table>${!q&&S.tvv.length>60?`<div class="none" style="padding:10px">… và ${S.tvv.length-60} người nữa — gõ để tìm</div>`:''}`:'<div class="none">Chưa có TVV</div>';renderTvvRestore()}
 $('#tvvQ').oninput=renderSettings;
 
 /* ----- nhập Excel ----- */
@@ -1331,6 +1332,15 @@ $('#pasteTvvBtn').onclick=()=>{const rows=$('#pasteTvv').value.split(/\r?\n/).fi
   const list=parseTvvRows(rows);if(!list.length)return toast('Không có dòng hợp lệ');mergeTvv(list);$('#pasteTvv').value=''};
 $('#nAdd').onclick=()=>{const name=$('#nT').value.trim();if(!name)return flash($('#nT'),'Nhập họ tên TVV');
   mergeTvv([{name:tc(name),group:$('#nG').value.trim(),code:$('#nC').value.trim()}]);['#nT','#nG','#nC'].forEach(s=>$(s).value='')};
+/* xoá từng TVV: nhớ trên máy để lần nạp lại danh sách gắn sẵn không đưa vào lại */
+function tvvKey(t){return t.code?'c:'+t.code:'n:'+norm(t.name)+'|'+norm(t.group)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-tvvdel]');if(!b)return;e.preventDefault();if(ROLE==='ht')return toast('Chỉ thư ký được xoá TVV');
+  const k=b.dataset.tvvdel,i=S.tvv.findIndex(t=>tvvKey(t)===k);if(i<0)return;const t=S.tvv[i],wasDk=dkT===t;
+  S.tvv.splice(i,1);S.tvvDel=[...new Set([...(S.tvvDel||[]),k])];if(wasDk)dkT=null;save();renderAll();renderSettings();
+  toast(`Đã xoá TVV ${t.name} · nhóm ${t.group}`,()=>{S.tvv.splice(Math.min(i,S.tvv.length),0,t);S.tvvDel=(S.tvvDel||[]).filter(x=>x!==k);setTimeout(renderSettings,0)})});
+function renderTvvRestore(){const b=$('#tvvRestore');if(!b)return;const n=(S.tvvDel||[]).length;b.hidden=!n;b.textContent=`Khôi phục ${n} TVV đã xoá`}
+$('#tvvRestore').onclick=async()=>{const n=(S.tvvDel||[]).length;if(!n)return;if(!await okAsk('Khôi phục TVV đã xoá',`Đưa lại ${n} TVV đã xoá từ danh sách gắn sẵn?`,'Khôi phục'))return;
+  S.tvvDel=[];applyEmbedded(true);save();renderAll();renderSettings();toast(`Đã khôi phục — danh sách có ${S.tvv.length} TVV`)};
 $('#clearTvv').onclick=async()=>{if(S.tvv.length&&await okAsk('Xoá danh sách TVV',`Xoá toàn bộ ${S.tvv.length} TVV khỏi máy này?`,'Xoá')){S.tvv=[];S.tvvVer='cleared';save();renderAll()}};
 
 /* ----- sao lưu ----- */
@@ -1600,9 +1610,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='sy_jo
 /* ============ danh sách TVV gắn sẵn ============ */
 const EMB=(()=>{try{return JSON.parse($('#tvvData').textContent)}catch(e){return null}})();
 function applyEmbedded(force){if(!EMB||!Array.isArray(EMB.tvv)||!EMB.tvv.length)return false;if(!force&&S.tvvVer===EMB.ver)return false;
-  const codes=new Set(EMB.tvv.map(t=>t.code).filter(Boolean));
+  const del=new Set(S.tvvDel||[]);const codes=new Set(EMB.tvv.map(t=>t.code).filter(Boolean));
   const manual=S.tvv.filter(t=>t.tay&&!(t.code&&codes.has(t.code))&&!EMB.tvv.some(e=>norm(e.name)===norm(t.name)&&e.group===t.group));
-  S.tvv=[...EMB.tvv.map(t=>({...t})),...manual].sort((a,b)=>a.group.localeCompare(b.group,'vi')||a.name.localeCompare(b.name,'vi'));
+  S.tvv=[...EMB.tvv.filter(t=>!del.has(tvvKey(t))).map(t=>({...t})),...manual].sort((a,b)=>a.group.localeCompare(b.group,'vi')||a.name.localeCompare(b.name,'vi'));
   S.tvvVer=EMB.ver;S.guests.forEach(g=>{if(!g.tvvCode){const m=matchTvvName(g.tvvName,g.group);if(m){g.tvvCode=m.code;g.group=g.group||m.group}}});
   save();return true}
 $('#reloadEmb').onclick=()=>{if(!EMB?.tvv?.length)return toast('File chưa gắn danh sách TVV');applyEmbedded(true);renderAll();toast(`Đã nạp lại ${EMB.tvv.length} TVV gắn sẵn`)};
