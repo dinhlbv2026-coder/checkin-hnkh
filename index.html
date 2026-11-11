@@ -850,7 +850,7 @@ function matchTvvName(name,group){const n=norm(name);let c=S.tvv.filter(t=>norm(
   if(c.length>1&&group){const f=c.filter(t=>norm(t.group)===norm(group));if(f.length)c=f}return c.length===1?c[0]:null}
 
 /* ============ bộ chọn gợi ý ============ */
-function picker(input,box,{source,render,onPick,autoHi=true}){let items=[],hi=-1;
+function picker(input,box,{source,render,onPick,autoHi=true,tabPick=true}){let items=[],hi=-1;
   function show(){items=source(input.value);hi=autoHi&&items.length?0:-1;
     if(!items.length||document.activeElement!==input){box.hidden=true;return}
     box.innerHTML=items.map((it,i)=>`<button type="button" class="opt${i===hi?' hi':''}${hi<0&&i===0?' tabhi':''}" data-i="${i}" tabindex="-1">${render(it)}</button>`).join('')+'<div class="pickhint">Tab: chọn người đầu (hoặc đang tô) · ↑↓: di chuyển</div>';box.hidden=false}
@@ -862,7 +862,7 @@ function picker(input,box,{source,render,onPick,autoHi=true}){let items=[],hi=-1
     if(e.key==='ArrowDown'){hi=(hi+1)%items.length;mark();e.preventDefault()}
     else if(e.key==='ArrowUp'){hi=(hi-1+items.length)%items.length;mark();e.preventDefault()}
     else if(e.key==='Enter'&&hi>=0){e.preventDefault();pick(hi)}
-    else if(e.key==='Tab'&&!e.shiftKey){e.preventDefault();pick(hi>=0?hi:0)}
+    else if(e.key==='Tab'&&!e.shiftKey&&(tabPick||hi>=0)){e.preventDefault();pick(hi>=0?hi:0)}
     else if(e.key==='Escape'){box.hidden=true}});
   box.addEventListener('mousedown',e=>e.preventDefault());
   box.addEventListener('click',e=>{const b=e.target.closest('.opt');if(b)pick(+b.dataset.i)});
@@ -1680,7 +1680,7 @@ document.addEventListener('change',e=>{const t=e.target;
   if(t.matches('[data-khn]')){const c=S.reg.kh[t.dataset.khn];if(c){c.note=t.value.trim();save()}}});
 /* tab 2: thêm khách */
 let dkT=null;
-picker($('#dkTvv'),$('#dkPick'),{source:q=>{const g=norm($('#dkGroup').value),l=searchTvv(q,40);return(g?[...l.filter(t=>norm(t.group)===g),...l.filter(t=>norm(t.group)!==g)]:l).slice(0,8)},render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
+picker($('#dkTvv'),$('#dkPick'),{autoHi:false,tabPick:false,source:q=>{const g=norm($('#dkGroup').value),l=searchTvv(q,40);return(g?[...l.filter(t=>norm(t.group)===g),...l.filter(t=>norm(t.group)!==g)]:l).slice(0,8)},render:tvvRender,onPick:t=>{dkT=t;$('#dkTvv').value=t.name;dkHint();$('#dkName').focus()}});
 $('#dkTvv').addEventListener('input',()=>{dkT=null;dkHint()});
 picker($('#dkGroup'),$('#dkPG'),{autoHi:false,source:groupSource,render:groupRender,onPick:g=>{$('#dkGroup').value=g.name;dkTnFill();dkTnMoiSync();(dkTnMoiOn()?$('#dkName'):$('#dkTvv')).focus()}});
 function dkTnMoiOn(){return!!($('#dkTnMoi')&&$('#dkTnMoi').checked)}
