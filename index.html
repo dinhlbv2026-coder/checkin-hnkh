@@ -1423,7 +1423,7 @@ async function offerAuto(){return;/* không hỏi tự lưu ra file nữa — d�
     [{v:'yes',l:'Chọn nơi lưu file',primary:true},{v:'no',l:'Để sau'}]);if(v==='yes')(fh?reconnect():linkFile())}
 
 /* máy 1 = máy tạo mã hội nghị */
-function isHost(){return !!SY.host||!!(typeof R!=='undefined'&&R&&R.info&&R.info.dev===SY.device)}
+function isHost(){return isAdmin()||!!SY.host||!!(typeof R!=='undefined'&&R&&R.info&&R.info.dev===SY.device)}
 /* ============ đồng bộ nhiều máy qua Firebase Realtime Database ============
    Cấu trúc: events/<MÃ HỘI NGHỊ>/info · /guests/<id> · /devices/<máy>.
    Không cần đăng nhập hay mã truy cập: chỉ ai biết đúng mã hội nghị mới đọc/ghi được
@@ -1925,6 +1925,14 @@ $('#dkReport').onclick=openDayReport;
 /* ============ đăng nhập: Thư ký (mật khẩu, danh sách hội nghị đã tạo trên máy) · Người hỗ trợ (nhập mã) ============ */
 var ROLE='';try{ROLE=sessionStorage.getItem('hnkh-role')||''}catch(e){}
 const PW_KEY='hnkh-tkpw',CONF_KEY='hnkh-tk-confs';
+/* tài khoản thư ký đăng nhập ở mọi máy; quyền admin = toàn quyền (như máy 1 ở mọi hội nghị). Trang chỉ giữ PBKDF2 của mật khẩu. */
+const ACCS={"huynhtram": {"ten": "Huỳnh Trâm", "quyen": "admin", "salt": "67dc55f6a1cfc507c7d741f46e6e40bf", "it": 210000, "h": "c8a4b373a1eb2d912c0f49b0a6ee7fa798e7a77dfc0d314d9d4d6b8cb518ebcb"}};
+var USER='';try{USER=sessionStorage.getItem('hnkh-user')||''}catch(e){}
+function isAdmin(){try{return ROLE==='tk'&&!!USER&&!!ACCS[USER]&&ACCS[USER].quyen==='admin'}catch(e){return false}}
+async function accCheck(u,p){const a=ACCS[u];if(!a)return false;try{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);
+  const b=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new Uint8Array(a.salt.match(/../g).map(x=>parseInt(x,16))),iterations:a.it},k,256);
+  return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')===a.h}catch(e){return false}}
+function setUser(u){USER=u||'';try{u?sessionStorage.setItem('hnkh-user',u):sessionStorage.removeItem('hnkh-user')}catch(e){}}
 async function pwHash(p){const t='hnkh-tk|'+p;try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
   catch(e){let h=5381;for(const c of t)h=((h*33)^c.charCodeAt(0))>>>0;return'x'+h.toString(16)}}
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
@@ -1932,22 +1940,26 @@ function tkConfs(){try{return JSON.parse(lsGet(CONF_KEY)||'[]')}catch(e){return[
 function tkRemember(){if(ROLE!=='tk'||!SY.on||!SY.event)return;const l=tkConfs(),i=l.findIndex(c=>c.code===SY.event),o=i>=0?l[i]:{};
   const c={code:SY.event,ten:S.event.tenHN||o.ten||'',loai:S.event.loaiHN||o.loai||'',ngay:S.event.ngayHN||o.ngay||'',at:o.at||Date.now()};
   if(i===0&&o.ten===c.ten&&o.loai===c.loai&&o.ngay===c.ngay)return;if(i>=0)l.splice(i,1);if(i!==0)c.at=Date.now();l.unshift(c);lsSet(CONF_KEY,JSON.stringify(l.slice(0,40)))}
-function setRole(r){ROLE=r;try{r?sessionStorage.setItem('hnkh-role',r):sessionStorage.removeItem('hnkh-role')}catch(e){}applyRole()}
+function setRole(r){ROLE=r;if(r!=='tk')setUser('');try{r?sessionStorage.setItem('hnkh-role',r):sessionStorage.removeItem('hnkh-role')}catch(e){}applyRole()}
 function applyRole(){document.body.classList.toggle('role-ht',ROLE==='ht');document.body.classList.toggle('role-tk',ROLE==='tk');
-  const b=$('#roleBtn');b.hidden=!ROLE;b.innerHTML=ROLE==='tk'?'🗂️ Thư ký':'🤝 Người hỗ trợ';if(ROLE==='ht')dkTabN='1';const ms=document.querySelector('#modebar [data-mode="dangky"] small');if(ms)ms.textContent=ROLE==='ht'?'Xem tổng hợp đăng ký':'Thư ký theo dõi trước hội nghị';updNav();if(view==='dangky')renderReg()}
+  const b=$('#roleBtn');b.hidden=!ROLE;b.innerHTML=ROLE==='tk'?(isAdmin()?'🛡️ '+esc(USER):'🗂️ Thư ký'):'🤝 Người hỗ trợ';document.body.classList.toggle('role-admin',isAdmin());if(ROLE==='ht')dkTabN='1';const ms=document.querySelector('#modebar [data-mode="dangky"] small');if(ms)ms.textContent=ROLE==='ht'?'Xem tổng hợp đăng ký':'Thư ký theo dõi trước hội nghị';updNav();if(view==='dangky')renderReg()}
 function lgShow(step){$('#login').hidden=false;document.body.classList.add('lg-on');lgStep(step||'role')}
 function lgHide(){$('#login').hidden=true;document.body.classList.remove('lg-on');renderAll();renderSync()}
 function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-back" data-lg="role">← Chọn lại vai trò</button>';
   if(st==='role'){b.innerHTML=`<h2>Bạn vào với vai trò nào?</h2>
     <div class="lg-roles"><button type="button" class="lg-role" data-lg="tk"><span class="lg-ic">🗂️</span><b>Thư ký</b><small>Tạo hội nghị, nhập danh sách khách từ file Excel, theo dõi đăng ký và báo cáo.</small><em>🔒 Cần mật khẩu</em></button>
     <button type="button" class="lg-role" data-lg="ht"><span class="lg-ic">🤝</span><b>Người hỗ trợ</b><small>Checkin khách tại hội nghị cùng thư ký.</small><em>🔑 Cần mã hội nghị do thư ký gửi</em></button></div>`;return}
-  if(st==='tkpw'){const has=!!lsGet(PW_KEY);b.innerHTML=`${back}<h2>🗂️ Thư ký</h2>${has?`<label class="lbl" for="lgPw">Mật khẩu thư ký</label><input class="inp" type="password" id="lgPw" autocomplete="current-password">
+  if(st==='tkpw'){const has=!!lsGet(PW_KEY);const accBox=`<details class="lg-more lg-acc"${has?'':' open'}><summary>🛡️ Đăng nhập bằng tài khoản</summary>
+      <label class="lbl" for="lgUser">Tên đăng nhập</label><input class="inp" id="lgUser" autocomplete="username" autocapitalize="none" spellcheck="false" style="margin-bottom:10px">
+      <label class="lbl" for="lgUPw">Mật khẩu</label><input class="inp" type="password" id="lgUPw" autocomplete="current-password">
+      <div class="actions"><button type="button" class="btn primary" data-lg="accok">Đăng nhập tài khoản</button></div></details>`;
+    b.innerHTML=`${back}<h2>🗂️ Thư ký</h2>${accBox}${has?`<label class="lbl" for="lgPw">Mật khẩu thư ký</label><input class="inp" type="password" id="lgPw" autocomplete="current-password">
       <div class="actions"><button type="button" class="btn primary" data-lg="pwok">Đăng nhập</button><button type="button" class="glink" data-lg="forgot">Quên mật khẩu?</button></div>`
      :`<p class="sub">Lần đầu dùng trên máy này — <b>đặt mật khẩu thư ký</b> (từ 4 ký tự). Lần sau chỉ cần nhập mật khẩu.</p>
       <label class="lbl" for="lgPw">Mật khẩu mới</label><input class="inp" type="password" id="lgPw" autocomplete="new-password" style="margin-bottom:10px">
       <label class="lbl" for="lgPw2">Nhập lại mật khẩu</label><input class="inp" type="password" id="lgPw2" autocomplete="new-password">
       <div class="actions"><button type="button" class="btn primary" data-lg="pwset">Đặt mật khẩu và vào</button></div>`}`;setTimeout(()=>$('#lgPw')?.focus(),50);return}
-  if(st==='tkconf'){const l=tkConfs();b.innerHTML=`<div class="lg-top"><h2>🗂️ Hội nghị của thư ký</h2><button type="button" class="glink" data-lg="logout">Đăng xuất</button></div>
+  if(st==='tkconf'){const l=tkConfs();b.innerHTML=`<div class="lg-top"><h2>${isAdmin()?'🛡️ '+esc(ACCS[USER].ten||USER)+' · toàn quyền':'🗂️ Hội nghị của thư ký'}</h2><button type="button" class="glink" data-lg="logout">Đăng xuất</button></div>
     <p class="sub">Chọn hội nghị để nhập tiếp — không cần gõ mã.</p>
     <div class="lg-list">${l.length?l.map(c=>`<div class="lg-conf${SY.on&&SY.event===c.code?' cur':''}"><button type="button" class="lg-pick" data-lg="pick" data-code="${esc(c.code)}">
        <b>${esc(c.ten||'Chưa đặt tên')}</b><small>${esc([c.loai,c.ngay?'Ngày '+dmy(c.ngay):'',c.code].filter(Boolean).join(' · '))}</small>${SY.on&&SY.event===c.code?'<span class="chip solid">Đang mở</span>':''}</button>
@@ -1969,6 +1981,9 @@ document.addEventListener('click',async e=>{const a=e.target.closest('[data-lg]'
   if(k==='ht'){setRole('ht');return lgStep('htcode')}
   if(k==='pwset'){const p=$('#lgPw').value,p2=$('#lgPw2').value;if(p.length<4)return flash($('#lgPw'),'Mật khẩu cần từ 4 ký tự');if(p!==p2)return flash($('#lgPw2'),'Hai lần nhập chưa khớp');
     lsSet(PW_KEY,await pwHash(p));setRole('tk');toast('Đã đặt mật khẩu thư ký trên máy này');return lgStep('tkconf')}
+  if(k==='accok'){const u=$('#lgUser').value.trim().toLowerCase(),p=$('#lgUPw').value;if(!u)return flash($('#lgUser'),'Nhập tên đăng nhập');
+    if(!await accCheck(u,p)){$('#lgUPw').value='';return flash($('#lgUPw'),'Sai tên đăng nhập hoặc mật khẩu')}
+    setRole('tk');setUser(u);applyRole();toast('Đã đăng nhập: '+(ACCS[u].ten||u)+(ACCS[u].quyen==='admin'?' · toàn quyền':''));return lgStep('tkconf')}
   if(k==='pwok'){if(await pwHash($('#lgPw').value)!==lsGet(PW_KEY)){$('#lgPw').value='';return flash($('#lgPw'),'Sai mật khẩu')}setRole('tk');return lgStep('tkconf')}
   if(k==='forgot'){if(!await okAsk('Quên mật khẩu',`Đặt lại mật khẩu thư ký trên máy này?<br>Danh sách hội nghị ghi nhớ trên máy sẽ được xoá. Dữ liệu các hội nghị <b>vẫn còn trên mạng</b> — nhập lại mã là vào được.`,'Đặt lại mật khẩu'))return;
     lsSet(PW_KEY,null);lsSet(CONF_KEY,null);return lgStep('tkpw')}
@@ -1983,7 +1998,7 @@ document.addEventListener('click',async e=>{const a=e.target.closest('[data-lg]'
   if(k==='htjoin'){const nm=tc($('#lgName').value);if(nm.length<2)return flash($('#lgName'),'Nhập tên của bạn');const c=normCode($('#lgCode').value);if(!c)return flash($('#lgCode'),'Mã có dạng HNKH-1511-QTTK7M');
     SY.name=nm;sySave();a.disabled=true;const ok=await gotoConf(c);a.disabled=false;if(ok){lgHide();setMode('checkin');toast('Đã vào hội nghị '+(S.event.tenHN||c))}else lgStep('htcode')}});
 document.addEventListener('keydown',e=>{if(e.key!=='Enter'||$('#login').hidden)return;const id=e.target.id;
-  const m={lgPw:lsGet(PW_KEY)?'pwok':'pwset',lgPw2:'pwset',lgCode:ROLE==='ht'?'htjoin':'tkjoin',lgName:'htjoin'}[id];if(m){e.preventDefault();$(`#lgBody [data-lg="${m}"]`)?.click()}});
+  const m={lgUser:'accok',lgUPw:'accok',lgPw:lsGet(PW_KEY)?'pwok':'pwset',lgPw2:'pwset',lgCode:ROLE==='ht'?'htjoin':'tkjoin',lgName:'htjoin'}[id];if(m){e.preventDefault();$(`#lgBody [data-lg="${m}"]`)?.click()}});
 $('#roleBtn').onclick=async()=>{if(ROLE==='tk'){const v=await ask('Thư ký',`Đang đăng nhập với vai trò <b>thư ký</b>.`,[{v:'list',l:'🗂️ Danh sách hội nghị',primary:true},{v:'pw',l:'Đổi mật khẩu'},{v:'out',l:'Đăng xuất'},{v:'no',l:'Huỷ'}]);
     if(v==='list')return lgShow('tkconf');if(v==='out'){setRole('');return lgShow('role')}
     if(v==='pw'){const r=await ask('Đổi mật khẩu thư ký',`<label class="lbl">Mật khẩu hiện tại</label><input class="inp" type="password" id="askPw0" style="margin-bottom:10px"><label class="lbl">Mật khẩu mới (từ 4 ký tự)</label><input class="inp" type="password" id="askPw1">`,[{v:'ok',l:'Đổi mật khẩu',primary:true},{v:'no',l:'Huỷ'}]);
