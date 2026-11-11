@@ -631,6 +631,7 @@ dialog .foot .sp{flex:1}
         <span class="count" title="Khách đăng ký tự có trong danh sách chờ Checkin">🔗 Tự liên kết sang Checkin</span><button type="button" id="dkToCheckin" hidden></button></div>
       <div class="dkfilters" id="dk2F">
         <span class="lbl">Lọc:</span>
+        <select class="inp" data-dkf="day"></select>
         <select class="inp" data-dkf="tn"></select>
         <select class="inp" data-dkf="tvv"></select>
         <select class="inp" data-dkf="info"><option value="">Thông tin KH: tất cả</option><option value="co">Đã có thông tin</option><option value="chua">Chưa có thông tin</option></select>
@@ -1358,36 +1359,43 @@ $('#clearGuests').onclick=async()=>{if(!S.guests.length)return;if(!await okAsk('
 /* định dạng số: số nguyên không có dấu chấm thừa (100 chứ không phải 100.) */
 function NF(v){return Number.isInteger(+v)?'#,##0':'#,##0.0#'}
 function fixNum(col){col.eachCell({includeEmpty:false},c=>{const v=c.value&&typeof c.value==='object'&&'result' in c.value?c.value.result:c.value;if(typeof v==='number')c.numFmt=NF(v)})}
-function addRegSheet(wb,sheetName){
+/* ngày giờ nhập của một lượt đăng ký */
+function atDay(ts){if(!ts)return'';const t=new Date(ts);return t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate())}
+function atHM(ts){if(!ts)return'';const t=new Date(ts);return pad2(t.getHours())+':'+pad2(t.getMinutes())}
+/* sheet khách đăng ký: sắp theo NGÀY GIỜ NHẬP (cũ ở trên, mới ở dưới); mỗi người một dòng (khách + người đi kèm);
+   vé chưa có thông tin KH ghi 1 dòng số vé; hiDay: tô màu các lượt nhập trong ngày báo cáo. Nội dung không in đậm. */
+function addRegSheet(wb,sheetName,hiDay){
   const list=Object.values((S.reg&&S.reg.kh)||{}).map(c=>({c,tn:tnOf(c.group),tv:tc(c.tvvName||'')}))
-    .sort((a,b)=>(a.c.group||'').localeCompare(b.c.group||'','vi')||a.tn.localeCompare(b.tn,'vi')||a.tv.localeCompare(b.tv,'vi')||(a.c.name?0:1)-(b.c.name?0:1)||(a.c.at||0)-(b.c.at||0));
+    .sort((a,b)=>(a.c.at||9e15)-(b.c.at||9e15)||(a.c.group||'').localeCompare(b.c.group||'','vi'));
   if(!list.length)return;
-  const th={style:'thin'},BD={top:th,left:th,bottom:th,right:th},FN={name:'Times New Roman',size:12},E=EV();
+  const th={style:'thin'},BD={top:th,left:th,bottom:th,right:th},FN={name:'Times New Roman',size:12},E=EV(),HI={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF1DC'}};
   const ws=wb.addWorksheet(sheetName||'Khach hang dang ky',{views:[{state:'frozen',ySplit:3}]});
-  const H=['TT','Tên khách hàng','Quan hệ / vai trò','Số vé','Nhóm','Trưởng nhóm','TVV mời','Thông tin KH','Đã checkin','Vé đã nộp tiền','FYP dự kiến (triệu đ)','Ghi chú'];
-  const C={tt:1,name:2,qh:3,ve:4,grp:5,tn:6,tvv:7,info:8,ci:9,paid:10,thu:11,note:12};
-  ws.columns=[6,30,26,8,16,22,24,12,16,12,14,26].map(width=>({width}));
+  const H=['TT','Ngày nhập','Giờ nhập','Tên khách hàng','Quan hệ / vai trò','Số vé','Nhóm','Trưởng nhóm','TVV mời','Thông tin KH','Đã checkin','Vé đã nộp tiền','FYP dự kiến (triệu đ)','Ghi chú'];
+  const C={tt:1,day:2,hm:3,name:4,qh:5,ve:6,grp:7,tn:8,tvv:9,info:10,ci:11,paid:12,thu:13,note:14};
+  ws.columns=[6,12,9,30,26,8,16,22,24,12,16,12,14,26].map(width=>({width}));
   ws.mergeCells(1,1,1,H.length);const t=ws.getCell(1,1);t.value=`DANH SÁCH KHÁCH HÀNG ĐĂNG KÝ ${E.hnUp}${S.event.ngayHN?' — NGÀY '+dmy(S.event.ngayHN):''}`;t.font={...FN,bold:true,size:14};t.alignment={horizontal:'center'};
-  ws.addRow([]);
+  const nw=hiDay?list.filter(x=>atDay(x.c.at)===hiDay):[];
+  ws.mergeCells(2,1,2,H.length);const t2=ws.getCell(2,1);t2.value=hiDay?`Sắp xếp theo ngày giờ nhập · Nhập mới ngày ${dmy(hiDay)}: ${nw.length} lượt, ${nw.reduce((a,x)=>a+Math.max(1,+x.c.ve||1),0)} vé (dòng tô màu)`:'Sắp xếp theo ngày giờ nhập';t2.font={...FN,italic:true};t2.alignment={horizontal:'center'};
   ws.addRow(H).eachCell(c=>{c.font={...FN,bold:true};c.border=BD;c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDE3C8'}}});
   let tt=0,ve=0,thu=0,nkh=0,ndk=0,nvt=0,co=0,den=0,paid=0;const meta=[];
-  const row=(vals,main,blk,key)=>{const r=ws.addRow(vals);r.eachCell({includeEmpty:true},x=>{x.font=main?{...FN,bold:true}:FN;x.border=BD;x.alignment={vertical:'middle',wrapText:true}});meta.push({r:r.number,blk,key});return r};
+  const row=(vals,blk,key,hi)=>{const r=ws.addRow(vals);r.eachCell({includeEmpty:true},x=>{x.font=FN;x.border=BD;x.alignment={vertical:'middle',wrapText:true};if(hi)x.fill=HI});meta.push({r:r.number,blk,key});return r};
   list.forEach(({c,tn,tv},bi)=>{const g=c.name&&S.guests.find(x=>x.regId===c.id),v=Math.max(1,+c.ve||1),checked=g&&g.attended?'Có — '+hm(g.at):'Chưa',info=c.info?'Có':'Không',pd=Math.min(v,+c.paid||0);
-    const key=[c.group||'',tn,tv];thu+=+c.thu||0;paid+=pd;ve+=v;if(c.info)co+=v;if(g&&g.attended)den+=v;
-    if(!c.name){nvt+=v;row([++tt,`(Chưa có thông tin KH — ${v} vé)`,`Vé do TVV ${tv} báo`,v,c.group||'',tn,tv,info,'',pd,+c.thu||null,c.note||''],false,bi,key).getCell(C.name).font={...FN,italic:true};return}
-    nkh++;row([++tt,tc(c.name),v>1?`Khách đăng ký (${v} vé)`:'Khách đăng ký',1,c.group||'',tn,tv,info,checked,pd,+c.thu||null,c.note||''],true,bi,key);
+    const key=[c.group||'',tn,tv],dd=c.at?dmy(atDay(c.at)):'',hh=atHM(c.at),hi=!!hiDay&&atDay(c.at)===hiDay;thu+=+c.thu||0;paid+=pd;ve+=v;if(c.info)co+=v;if(g&&g.attended)den+=v;
+    if(!c.name){nvt+=v;row([++tt,dd,hh,`(Chưa có thông tin KH — ${v} vé)`,`Vé do TVV ${tv} báo`,v,c.group||'',tn,tv,info,'',pd,+c.thu||null,c.note||''],bi,key,hi).getCell(C.name).font={...FN,italic:true};return}
+    nkh++;row([++tt,dd,hh,tc(c.name),v>1?`Khách đăng ký (${v} vé)`:'Khách đăng ký',1,c.group||'',tn,tv,info,checked,pd,+c.thu||null,c.note||''],bi,key,hi);
     for(let i=0;i<v-1;i++){const d=(c.dk||[])[i]||{};ndk++;
-      row([++tt,d.name?tc(d.name):`(Người đi kèm ${i+1} của ${tc(c.name)} — chưa có tên)`,`Đi kèm của ${tc(c.name)}${d.qh?' — '+d.qh:''}`,1,c.group||'',tn,tv,info,checked,'','',''],false,bi,key)}});
-  /* gộp ô trùng liền nhau */
+      row([++tt,dd,hh,d.name?tc(d.name):`(Người đi kèm ${i+1} của ${tc(c.name)} — chưa có tên)`,`Đi kèm của ${tc(c.name)}${d.qh?' — '+d.qh:''}`,1,c.group||'',tn,tv,info,checked,'','',''],bi,key,hi)}});
+  /* gộp ô: các ô chung của một lượt đăng ký; nhóm / trưởng nhóm / TVV khi trùng liền nhau */
   const merge=(col,same)=>{let i=0;while(i<meta.length){let j=i;while(j+1<meta.length&&same(meta[i],meta[j+1]))j++;
-      if(j>i){ws.mergeCells(meta[i].r,col,meta[j].r,col);ws.getCell(meta[i].r,col).alignment={vertical:'middle',horizontal:col===C.info||col===C.ci||col===C.paid?'center':undefined,wrapText:true}}i=j+1}};
+      if(j>i){ws.mergeCells(meta[i].r,col,meta[j].r,col);ws.getCell(meta[i].r,col).alignment={vertical:'middle',horizontal:[C.day,C.hm,C.info,C.ci,C.paid].includes(col)?'center':undefined,wrapText:true}}i=j+1}};
   merge(C.grp,(a,b)=>a.key[0]===b.key[0]);
   merge(C.tn,(a,b)=>a.key[0]===b.key[0]&&a.key[1]===b.key[1]);
   merge(C.tvv,(a,b)=>a.key[0]===b.key[0]&&a.key[2]===b.key[2]);
-  [C.info,C.ci,C.paid,C.thu,C.note].forEach(col=>merge(col,(a,b)=>a.blk===b.blk));
-  const tr=ws.addRow(['',`Tổng cộng: ${ve} khách`,`${nkh} khách đăng ký + ${ndk} người đi kèm${nvt?' + '+nvt+' vé chưa có thông tin':''}`,ve,'','','',`${co} có thông tin`,`${den} đã đến`,paid,thu,'']);
+  [C.day,C.hm,C.info,C.ci,C.paid,C.thu,C.note].forEach(col=>merge(col,(a,b)=>a.blk===b.blk));
+  const tr=ws.addRow(['','','',`Tổng cộng: ${ve} khách`,`${nkh} khách đăng ký + ${ndk} người đi kèm${nvt?' + '+nvt+' vé chưa có thông tin':''}`,ve,'','','',`${co} có thông tin`,`${den} đã đến`,paid,thu,'']);
   tr.eachCell({includeEmpty:true},x=>{x.font={...FN,bold:true};x.border=BD;x.alignment={vertical:'middle',wrapText:true}});
-  fixNum(ws.getColumn(C.thu));[C.tt,C.ve,C.info,C.ci,C.paid].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'})}
+  fixNum(ws.getColumn(C.thu));[C.tt,C.day,C.hm,C.ve,C.info,C.ci,C.paid].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'})}
+
 function addDataSheet(wb){const thin={style:'thin'},BD={top:thin,left:thin,bottom:thin,right:thin},FN={name:'Times New Roman',size:12};
   const ws=wb.addWorksheet('Du lieu KH',{views:[{state:'frozen',ySplit:1}]});
   const H=['TT','Họ tên khách hàng','Tên TVV','Mã TVV','Nhóm','Khu vực','Phí đăng ký tại HNKH','Quà tặng','Ghi chú','Trạng thái','Giờ đến','Nguồn','Lễ tân checkin'];
@@ -1689,6 +1697,8 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     const base=list,opt=(sel,l,all)=>{const el=document.querySelector(`[data-dkf="${sel}"]`);const cur=dkF[sel];if(cur&&!l.some(x=>x[0]===cur))l.unshift([cur,cur,0]);
       el.innerHTML=`<option value="">${all}</option>`+l.map(([v,t,n])=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(t)}${n?' ('+n+')':''}</option>`).join('');el.classList.toggle('on',!!cur)};
     const cnt=f=>{const m=new Map();base.forEach(c=>{const k=f(c);if(k)m.set(k,(m.get(k)||0)+1)});return[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'vi')).map(([k,n])=>[k,k,n])};
+    {const m=new Map();base.forEach(c=>{const k=atDay(c.at);if(k)m.set(k,(m.get(k)||0)+1)});opt('day',[...m.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([k,n])=>[k,'Nhập ngày '+dmy(k)+(k===today()?' (hôm nay)':''),n]),'Ngày nhập: tất cả')}
+    if(dkF.day)list=list.filter(c=>atDay(c.at)===dkF.day);
     opt('tn',cnt(c=>tnOf(c.group)),'Trưởng nhóm: tất cả');
     opt('tvv',cnt(c=>dkF.tn&&tnOf(c.group)!==dkF.tn?'':tc(c.tvvName||'')),'TVV mời: tất cả');
     ['info','paid','name'].forEach(k=>{const el=document.querySelector(`[data-dkf="${k}"]`);el.value=dkF[k]||'';el.classList.toggle('on',!!dkF[k])});
@@ -1698,18 +1708,18 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     if(dkF.info)list=list.filter(c=>dkF.info==='co'?c.info:!c.info);
     if(dkF.paid)list=list.filter(c=>dkF.paid==='du'?pd0(c)>=vv0(c):dkF.paid==='mot'?pd0(c)>0&&pd0(c)<vv0(c):pd0(c)===0);
     if(dkF.name)list=list.filter(c=>dkF.name==='co'?!!c.name:dkF.name==='chua'?!c.name:!!c.name&&vv0(c)>1);
-    $('#dk2Clr').hidden=!(dkF.tn||dkF.tvv||dkF.info||dkF.paid||dkF.name||cur||q);
+    $('#dk2Clr').hidden=!(dkF.day||dkF.tn||dkF.tvv||dkF.info||dkF.paid||dkF.name||cur||q);
     const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);const th=list.reduce((x,c)=>x+(+c.thu||0),0),pd=list.reduce((x,c)=>x+Math.min(vv(c),+c.paid||0),0);$('#dk2Count').textContent=`${list.filter(c=>c.name).length} khách · ${tv} vé · ${pd} vé đã nộp tiền · ${inf} vé có thông tin · FYP dự kiến ${fmt(th)||0} tr.đ`;
-    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th>Tên KH</th><th class="n">Số vé</th><th class="n">Đã nộp<br><small>tiền</small></th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
-      <td class="n num">${i+1}</td><td>${c.name?`<b>${esc(c.name)}</b>`:`<input class="inp cell" data-khname="${esc(c.id)}" placeholder="Chưa có tên KH — nhập tên">`}${c.name&&(+c.ve||1)>1?`<div class="complist">${compText(c)||`+${(+c.ve)-1} người đi kèm`} <button type="button" class="glink" data-khdk="${esc(c.id)}">✎ Sửa người đi kèm</button></div>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td class="n"><input class="inp num cell ve" type="number" min="0" max="${Math.max(1,+c.ve||1)}" data-khpaid="${esc(c.id)}" value="${+c.paid||0}"></td><td class="n"><input class="inp num cell thu" inputmode="decimal" data-khthu="${esc(c.id)}" value="${c.thu||''}" placeholder="0"></td><td>${esc(c.tvvName||'—')}</td>
+    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th class="n">Ngày giờ<br><small>nhập</small></th><th>Tên KH</th><th class="n">Số vé</th><th class="n">Đã nộp<br><small>tiền</small></th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
+      <td class="n num">${i+1}</td><td class="n" style="white-space:nowrap;font-size:13px">${c.at?`${atHM(c.at)}<div class="complist">${dmy(atDay(c.at)).slice(0,5)}</div>`:'—'}</td><td>${c.name?`<b>${esc(c.name)}</b>`:`<input class="inp cell" data-khname="${esc(c.id)}" placeholder="Chưa có tên KH — nhập tên">`}${c.name&&(+c.ve||1)>1?`<div class="complist">${compText(c)||`+${(+c.ve)-1} người đi kèm`} <button type="button" class="glink" data-khdk="${esc(c.id)}">✎ Sửa người đi kèm</button></div>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td class="n"><input class="inp num cell ve" type="number" min="0" max="${Math.max(1,+c.ve||1)}" data-khpaid="${esc(c.id)}" value="${+c.paid||0}"></td><td class="n"><input class="inp num cell thu" inputmode="decimal" data-khthu="${esc(c.id)}" value="${c.thu||''}" placeholder="0"></td><td>${esc(c.tvvName||'—')}</td>
       <td><button type="button" class="glink" data-g1="${esc(gkey(c.group||'(Chưa rõ nhóm)'))}" title="Xem nhóm ở tab ①">${esc(c.group||'—')}</button>${tnOf(c.group)?`<div class="complist">TN: ${esc(tnOf(c.group))}</div>`:''}</td>
       <td><label class="tick"><input type="checkbox" data-kh="${esc(c.id)}" ${c.info?'checked':''}> <span>${c.info?'Có':'Chưa'}</span></label></td>
       <td><input class="inp cell note" data-khn="${esc(c.id)}" value="${esc(c.note||'')}" placeholder="—"></td>
       <td><button type="button" class="mini del" data-khdel="${esc(c.id)}" title="Xoá khách">${TRASH}</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="none">Chưa có khách. Thêm khách ở khung phía trên.</td></tr></tbody>'}}
 /* lọc danh sách khách đăng ký */
-var dkF={tn:'',tvv:'',info:'',paid:'',name:''};
+var dkF={day:'',tn:'',tvv:'',info:'',paid:'',name:''};
 document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.dkf;if(!k)return;dkF[k]=e.target.value;if(k==='tn')dkF.tvv='';renderReg()});
-$('#dk2Clr').onclick=()=>{dkF={tn:'',tvv:'',info:'',paid:'',name:''};dkFilter='';$('#dk2Q').value='';renderReg()};
+$('#dk2Clr').onclick=()=>{dkF={day:'',tn:'',tvv:'',info:'',paid:'',name:''};dkFilter='';$('#dk2Q').value='';renderReg()};
 /* chuyển tab, liên kết 2 tab */
 $$('#dkTab button').forEach(b=>b.onclick=()=>{dkTabN=b.dataset.t;renderReg();updNav()});
 $('#dkQ').oninput=renderReg;$('#dkOnly').onchange=renderReg;$('#dk2Q').oninput=renderReg;$('#dk2Group').onchange=e=>{dkFilter=e.target.value;renderReg()};
@@ -2004,7 +2014,7 @@ async function exportDayReport(d){if(!window.ExcelJS)return toast('Chưa tải �
   gs.forEach((g,i)=>w.addRow([i+1,g.name,tnOf(g.name),g.ve,p?g.ve-g.pve:'',g.paid,g.info,g.ve?g.info/g.ve:'',g.thu]).eachCell({includeEmpty:true},c=>{c.font=FN;c.border=BD}));
   const tr=w.addRow(['','Tổng cộng','',x.ve,p?x.ve-p.ve:'',x.paid||0,x.info,x.ve?x.info/x.ve:'',x.thu||0]);tr.eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
   w.getColumn(8).numFmt='0%';fixNum(w.getColumn(9));
-  addCountSheet(wb);addRegSheet(wb,'Thong tin khach hang');const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bao cao dang ky ${dmy(d).replace(/\//g,'.')}.xlsx`);toast('Đã xuất báo cáo ngày '+dmy(d))}
+  addCountSheet(wb);addRegSheet(wb,'Thong tin khach hang',d);const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bao cao dang ky ${dmy(d).replace(/\//g,'.')}.xlsx`);toast('Đã xuất báo cáo ngày '+dmy(d))}
 /* số lượng khách hàng theo nhóm (mỗi vé = 1 người: khách đăng ký + người đi kèm; vé TN/TVV báo chưa có tên vẫn tính) */
 function khCount(){const by={},T={kh:0,dk:0,vt:0,tong:0,info:0,den:0,thu:0,paid:0};
   for(const c of Object.values((S.reg&&S.reg.kh)||{})){const v=Math.max(1,+c.ve||1),k=c.group||'(Chưa có nhóm)',g=by[k]=by[k]||{name:k,kh:0,dk:0,vt:0,tong:0,info:0,den:0,thu:0,paid:0,tvv:new Set()};
