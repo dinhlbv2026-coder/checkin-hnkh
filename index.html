@@ -280,6 +280,51 @@ body.role-ht [data-dk="2"],body.role-ht #dkTab,body.role-ht #dk2,body.role-ht #d
 .dkfilters .inp.on,.dk-tools select.inp.on{border-color:var(--peach);background:var(--cream-peach);font-weight:600}
 .tvvdel{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;width:32px;height:32px;border-radius:10px;cursor:pointer}.tvvdel:hover,.tvvdel:focus-visible{background:var(--danger-soft,#FDE8E4);color:var(--danger,#C2412B)}
 .atcell{width:172px;min-width:150px;padding:6px 8px;font-size:13px}
+
+/* ===== pop-up pha lê (crystal) ===== */
+.dklaunch{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.dklaunch h3{margin:0 0 4px}
+.crys-ov{position:fixed;inset:0;z-index:55;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px 24px;overflow:auto;
+  background:radial-gradient(1200px 600px at 20% 0%,rgba(255,168,131,.28),transparent 60%),radial-gradient(900px 500px at 100% 100%,rgba(111,199,225,.25),transparent 60%),rgba(40,26,18,.30);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .18s ease}
+.crys-ov.on{opacity:1}
+.crys{position:relative;width:min(900px,100%);border-radius:28px;padding:20px 22px 18px;
+  background:linear-gradient(140deg,rgba(255,255,255,.86) 0%,rgba(255,248,241,.70) 45%,rgba(253,227,200,.55) 100%);
+  -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);
+  border:1px solid rgba(255,255,255,.85);box-shadow:0 30px 80px rgba(90,45,20,.28),0 2px 0 rgba(255,255,255,.9) inset,0 -1px 0 rgba(217,102,61,.12) inset;
+  transform:translateY(14px) scale(.985);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.crys-ov.on .crys{transform:none}
+.crys::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.65) 0%,rgba(255,255,255,0) 32%),radial-gradient(400px 160px at 85% -10%,rgba(111,199,225,.30),transparent 70%)}
+.crys>*{position:relative}
+.crys-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.crys-h h3{margin:0;font-size:19px}
+.crys-x{width:40px;height:40px;border-radius:14px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.55);color:var(--ink);font-size:24px;line-height:1;cursor:pointer}
+.crys-x:hover,.crys-x:focus-visible{background:rgba(255,255,255,.9)}
+.crys .inp{background:rgba(255,255,255,.72);border-color:rgba(217,102,61,.18)}
+.crys .inp:focus{background:#fff}
+.crys .compbox{background:rgba(255,255,255,.45)}
+.crys-f{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;position:sticky;bottom:-18px;padding:10px 0 2px}
+.dkfab{position:fixed;right:18px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:50;width:60px;height:60px;border-radius:20px;border:1px solid rgba(255,255,255,.8);
+  background:linear-gradient(140deg,#FFB896,#F28A5E);color:#3B2216;font-size:32px;line-height:1;box-shadow:0 14px 34px rgba(217,102,61,.40),0 1px 0 rgba(255,255,255,.7) inset;cursor:pointer;display:none}
+body.pop-on{overflow:hidden}
+body.pop-on .dkfab{display:none!important}
+@media (max-width:760px){
+  .dkfab{display:grid;place-items:center}
+  .crys-ov{align-items:flex-end;padding:0}
+  .crys{width:100%;border-radius:26px 26px 0 0;max-height:94vh;overflow:auto;padding:16px 16px calc(14px + env(safe-area-inset-bottom));transform:translateY(40px)}
+  .crys-f{bottom:calc(-14px - env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(255,244,234,.95),rgba(255,244,234,0))}
+  .crys-f .btn{flex:1}
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .crys{background:linear-gradient(140deg,rgba(58,42,33,.86),rgba(38,30,25,.78) 50%,rgba(74,48,36,.70));border-color:rgba(255,255,255,.14);box-shadow:0 30px 80px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.12) inset}
+  :root:not([data-theme="light"]) .crys::before{background:linear-gradient(115deg,rgba(255,255,255,.10),rgba(255,255,255,0) 35%)}
+  :root:not([data-theme="light"]) .crys .inp,:root:not([data-theme="light"]) .crys-x{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+  :root:not([data-theme="light"]) .crys-f{background:none}}
+:root[data-theme="dark"] .crys{background:linear-gradient(140deg,rgba(58,42,33,.86),rgba(38,30,25,.78) 50%,rgba(74,48,36,.70));border-color:rgba(255,255,255,.14);box-shadow:0 30px 80px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.12) inset}
+:root[data-theme="dark"] .crys::before{background:linear-gradient(115deg,rgba(255,255,255,.10),rgba(255,255,255,0) 35%)}
+:root[data-theme="dark"] .crys .inp,:root[data-theme="dark"] .crys-x{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+:root[data-theme="dark"] .crys-f{background:none}
+@media (prefers-reduced-motion:reduce){.crys-ov,.crys{transition:none}}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -606,8 +651,14 @@ dialog .foot .sp{flex:1}
     </div>
   </div>
   <div id="dk2" hidden>
-    <div class="card pad dkform">
-      <h3>Thêm khách đăng ký</h3>
+    <div class="card pad dklaunch">
+      <div><h3>Thêm khách đăng ký</h3><p class="sub" style="margin:0">Mở khung nhập nhanh — nhập liên tục nhiều khách, TVV được giữ lại cho khách sau.</p></div>
+      <button type="button" class="btn primary" id="dkOpen">＋ Nhập khách mới</button>
+    </div>
+    <button type="button" class="dkfab" id="dkFab" title="Nhập khách mới" aria-label="Nhập khách mới">＋</button>
+    <div class="crys-ov" id="dkPop" hidden>
+    <div class="dkform crys" role="dialog" aria-modal="true" aria-labelledby="dkPopT">
+      <div class="crys-h"><h3 id="dkPopT">✨ Nhập khách đăng ký <span class="count" id="dkPopN"></span></h3><button type="button" class="crys-x" id="dkClose" title="Đóng (Esc)" aria-label="Đóng">×</button></div>
       <div class="dkgrid">
         <div class="field"><label class="lbl" for="dkTn">Trưởng nhóm</label><input class="inp" id="dkTn" placeholder="Gõ tên trưởng nhóm…" autocomplete="off"><div class="pick" id="dkPT" hidden></div><div class="hint" id="dkTnHint"></div><label class="tnmoi"><input type="checkbox" id="dkTnMoi"> Trưởng nhóm mời khách</label></div>
         <div class="field" id="dkGroupWrap"><label class="lbl" for="dkGroup">Nhóm</label><input class="inp" id="dkGroup" placeholder="Gõ nhóm hoặc tự điền theo TN" autocomplete="off"><div class="pick" id="dkPG" hidden></div></div>
@@ -623,7 +674,8 @@ dialog .foot .sp{flex:1}
         <div class="field"><span class="lbl">KH có thông tin</span><label class="toggle"><input type="checkbox" id="dkInfo"> Đã có thông tin</label></div>
         <div class="field dkwide"><label class="lbl" for="dkNote">Ghi chú</label><input class="inp" id="dkNote" placeholder="Ghi chú"></div>
       </div>
-      <button type="button" class="btn primary" id="dkAdd">＋ Thêm khách</button>
+      <div class="crys-f"><button type="button" class="btn" id="dkDone">Xong</button><button type="button" class="btn primary" id="dkAdd">＋ Thêm khách</button></div>
+    </div>
     </div>
     <div class="card" style="margin-top:18px">
       <div class="list-h dk-tools"><h3>Khách đăng ký <span class="gcount" id="dk2Count"></span></h3>
@@ -1845,8 +1897,17 @@ async function dkAdd(){const name=tc($('#dkName').value);
   if(tn!==tnOf(group)){const k=gkey(group),gg=S.reg.groups[k]||{name:group,ve:0,dt:0,tick:false};gg.name=gg.name||group;gg.tn=tn;S.reg.groups[k]=gg}
   const thu=num($('#dkThu').value)||0;const dk0=readComp('#dkComp').slice(0,ve-1);if(!name&&dk0.some(x=>x.name))return flash($('#dkName'),'Đã nhập người đi kèm — nhập tên khách hàng');const dk=name?dk0:[];const id=uid();S.reg.kh[id]={id,name,ve,paid,thu,dk,tvvCode:t?.code||'',tvvName:t?t.name:tc(typed),group,tn,info:$('#dkInfo').checked,note:$('#dkNote').value.trim(),at:Date.now()};
   rememberGroup(group);if(!t&&typed){const nt={name:tc(typed),group,code:'',tay:true};S.tvv.push(nt);dkT=nt;toast(`Đã ghi nhớ TVV mới ${nt.name} · nhóm ${group}`)}
-  regSnapshot();save();['#dkName','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkPaid').value=0;$('#dkThu').value='';$('#dkInfo').checked=false;if(t)dkT=t;if(dkT)$('#dkTvv').value=dkT.name;dkHint();renderReg();toast('✓ Đã thêm '+(name||ve+' vé (chưa có tên KH)')+' — TVV '+(dkT?dkT.name:tc(typed))+' giữ nguyên để thêm tiếp');$('#dkName').focus()}
-$('#dkAdd').onclick=dkAdd;['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
+  regSnapshot();save();['#dkName','#dkNote'].forEach(s=>$(s).value='');$('#dkComp').innerHTML='';$('#dkCompWrap').hidden=true;$('#dkVe').value=1;$('#dkPaid').value=0;$('#dkThu').value='';$('#dkInfo').checked=false;if(t)dkT=t;if(dkT)$('#dkTvv').value=dkT.name;dkHint();renderReg();dkPopCount++;$('#dkPopN').textContent=`· đã thêm ${dkPopCount}`;toast('✓ Đã thêm '+(name||ve+' vé (chưa có tên KH)')+' — TVV '+(dkT?dkT.name:tc(typed))+' giữ nguyên để thêm tiếp');$('#dkName').focus()}
+$('#dkAdd').onclick=dkAdd;
+/* pop-up pha lê nhập khách mới */
+var dkPopCount=0;
+function dkPopOpen(){if(ROLE==='ht')return;const o=$('#dkPop');if(!o.hidden)return;dkPopCount=0;$('#dkPopN').textContent='';o.hidden=false;document.body.classList.add('pop-on');
+  requestAnimationFrame(()=>o.classList.add('on'));setTimeout(()=>(!$('#dkTn').value.trim()&&!$('#dkTvv').value.trim()?$('#dkTn'):$('#dkName')).focus(),120)}
+function dkPopClose(){const o=$('#dkPop');if(o.hidden)return;o.classList.remove('on');document.body.classList.remove('pop-on');$$('#dkPop .pick').forEach(p=>p.hidden=true);setTimeout(()=>{o.hidden=true},180);
+  if(dkPopCount)toast(`Đã nhập ${dkPopCount} lượt khách`)}
+$('#dkOpen').onclick=dkPopOpen;$('#dkFab').onclick=dkPopOpen;$('#dkClose').onclick=dkPopClose;$('#dkDone').onclick=dkPopClose;
+$('#dkPop').addEventListener('mousedown',e=>{if(e.target.id==='dkPop')dkPopClose()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#dkPop').hidden&&!$('#ask').open){if($$('#dkPop .pick').some(p=>!p.hidden))return;e.preventDefault();dkPopClose()}});['#dkName','#dkNote','#dkGroup','#dkVe'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();dkAdd()}}));
 [$('#dkName'),$('#dkTvv'),$('#dkGroup'),$('#dkTn')].forEach(autoCap);
 /* đưa khách đăng ký sang danh sách Checkin */
 $('#dkToCheckin').onclick=async()=>{const list=dkKhList();if(!list.length)return toast('Chưa có khách đăng ký');
