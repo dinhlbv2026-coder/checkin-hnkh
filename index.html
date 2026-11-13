@@ -389,6 +389,8 @@ body.info-locked #dkOpen,body.info-locked #dkFab,body.info-locked #dk2Table .min
 .gbar .track i{display:block;height:100%;background:linear-gradient(90deg,var(--sky),var(--sky-2));border-radius:7px;min-width:3px;transition:width .4s}
 .gbar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th .hfil{display:block;margin-top:5px;width:100%;min-width:120px;max-width:200px;padding:4px 8px;font-size:12.5px;text-transform:none;letter-spacing:0;font-weight:500}
+table.t th .hfil.on{border-color:var(--peach);background:var(--cream-peach);font-weight:600}
 table.t th{text-align:left;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface-2)}
 table.t td{padding:9px 10px;border-bottom:1px solid var(--line)}
 table.t td.n,table.t th.n{text-align:right}
@@ -1788,7 +1790,9 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     {const m=new Map();base.forEach(c=>{const k=atDay(c.at);if(k)m.set(k,(m.get(k)||0)+1)});opt('day',[...m.entries()].sort((a,b)=>b[0].localeCompare(a[0])).map(([k,n])=>[k,'Nhập ngày '+dmy(k)+(k===today()?' (hôm nay)':''),n]),'Ngày nhập: tất cả')}
     if(dkF.day)list=list.filter(c=>atDay(c.at)===dkF.day);
     opt('tn',cnt(c=>tnOf(c.group)),'Trưởng nhóm: tất cả');
-    opt('tvv',cnt(c=>dkF.tn&&tnOf(c.group)!==dkF.tn?'':tc(c.tvvName||'')),'TVV mời: tất cả');
+    const tvvOpts=cnt(c=>dkF.tn&&tnOf(c.group)!==dkF.tn?'':tc(c.tvvName||''));opt('tvv',tvvOpts.map(x=>[...x]),'TVV mời: tất cả');
+    const hSel=(k,l,cv,all)=>{if(cv&&!l.some(x=>x[0]===cv))l=[[cv,cv,0],...l];return`<select class="inp hfil${cv?' on':''}" data-dkh="${k}" title="Lọc theo ${all}"><option value="">▾ Tất cả</option>${l.map(([v,t,n])=>`<option value="${esc(v)}"${v===cv?' selected':''}>${esc(t)}${n?' ('+n+')':''}</option>`).join('')}</select>`};
+    const grpOpts=rows.filter(r=>r.kh||r.ve).map(r=>[r.key,r.name,r.kh]);
     ['info','paid','name'].forEach(k=>{const el=document.querySelector(`[data-dkf="${k}"]`);el.value=dkF[k]||'';el.classList.toggle('on',!!dkF[k])});
     const vv0=c=>Math.max(1,+c.ve||1),pd0=c=>Math.min(vv0(c),+c.paid||0);
     if(dkF.tn)list=list.filter(c=>tnOf(c.group)===dkF.tn);
@@ -1798,7 +1802,7 @@ function renderReg(){if(view!=='dangky')return;renderDkTop();if(dkTabN==='1')ren
     if(dkF.name)list=list.filter(c=>dkF.name==='co'?!!c.name:dkF.name==='chua'?!c.name:!!c.name&&vv0(c)>1);
     $('#dk2Clr').hidden=!(dkF.day||dkF.tn||dkF.tvv||dkF.info||dkF.paid||dkF.name||cur||q);
     dkLastList=list;const vv=c=>Math.max(1,+c.ve||1),tv=list.reduce((x,c)=>x+vv(c),0),inf=list.filter(c=>c.info).reduce((x,c)=>x+vv(c),0);const th=list.reduce((x,c)=>x+(+c.thu||0),0),pd=list.reduce((x,c)=>x+Math.min(vv(c),+c.paid||0),0);$('#dk2Count').textContent=`${list.filter(c=>c.name).length} khách · ${tv} vé · ${pd} vé đã nộp tiền · ${inf} vé có thông tin · FYP dự kiến ${fmt(th)||0} tr.đ`;
-    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th class="n">Ngày giờ<br><small>nhập</small></th><th>Tên KH</th><th class="n">Số vé</th><th class="n">Đã nộp<br><small>tiền</small></th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th>TVV mời</th><th>Nhóm</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
+    $('#dk2Table').innerHTML=list.length?`<thead><tr><th class="n">TT</th><th class="n">Ngày giờ<br><small>nhập</small></th><th>Tên KH</th><th class="n">Số vé</th><th class="n">Đã nộp<br><small>tiền</small></th><th class="n">FYP dự kiến<br><small>(triệu đ)</small></th><th>TVV mời${hSel('tvv',tvvOpts,dkF.tvv,'TVV mời')}</th><th>Nhóm${hSel('grp',grpOpts,cur,'nhóm')}</th><th>KH có thông tin</th><th>Ghi chú</th><th></th></tr></thead><tbody>${list.map((c,i)=>`<tr>
       <td class="n num">${i+1}</td><td class="n"><span class="dpick"><input class="inp cell atcell" inputmode="numeric" data-khat="${esc(c.id)}" value="${c.at?dmy(atDay(c.at))+' '+atHM(c.at):''}" placeholder="dd/mm/yyyy hh:mm" title="Sửa ngày giờ nhập (dd/mm/yyyy hh:mm)"><span class="dpbtn sm" title="Chọn trên lịch">📅<input type="datetime-local" class="dpnative" tabindex="-1" data-khatn="${esc(c.id)}" value="${c.at?atDay(c.at)+'T'+atHM(c.at):''}" aria-label="Chọn ngày giờ nhập trên lịch"></span></span></td><td>${c.name?`<b>${esc(c.name)}</b>`:`<input class="inp cell" data-khname="${esc(c.id)}" placeholder="Chưa có tên KH — nhập tên">`}${c.name&&(+c.ve||1)>1?`<div class="complist">${compText(c)||`+${(+c.ve)-1} người đi kèm`} <button type="button" class="glink" data-khdk="${esc(c.id)}">✎ Sửa người đi kèm</button></div>`:''}</td><td class="n"><input class="inp num cell ve" type="number" min="1" data-khv="${esc(c.id)}" value="${Math.max(1,+c.ve||1)}"></td><td class="n"><input class="inp num cell ve" type="number" min="0" max="${Math.max(1,+c.ve||1)}" data-khpaid="${esc(c.id)}" value="${+c.paid||0}"></td><td class="n"><input class="inp num cell thu" inputmode="decimal" data-khthu="${esc(c.id)}" value="${c.thu||''}" placeholder="0"></td><td>${esc(c.tvvName||'—')}</td>
       <td><button type="button" class="glink" data-g1="${esc(gkey(c.group||'(Chưa rõ nhóm)'))}" title="Xem nhóm ở tab ①">${esc(c.group||'—')}</button>${tnOf(c.group)?`<div class="complist">TN: ${esc(tnOf(c.group))}</div>`:''}</td>
       <td><label class="tick"><input type="checkbox" data-kh="${esc(c.id)}" ${c.info?'checked':''}> <span>${c.info?'Có':'Chưa'}</span></label></td>
@@ -1861,6 +1865,7 @@ async function shareListImages(lst){if(!Array.isArray(lst)){renderReg();lst=null
 $('#dk2Img').onclick=()=>shareListImages();
 /* lọc danh sách khách đăng ký */
 var dkF={day:'',tn:'',tvv:'',info:'',paid:'',name:''};
+document.addEventListener('change',e=>{const h=e.target.dataset&&e.target.dataset.dkh;if(h){if(h==='grp')dkFilter=e.target.value;else dkF.tvv=e.target.value;renderReg();return}});
 document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.dkf;if(!k)return;dkF[k]=e.target.value;if(k==='tn')dkF.tvv='';renderReg()});
 $('#dk2Clr').onclick=()=>{dkF={day:'',tn:'',tvv:'',info:'',paid:'',name:''};dkFilter='';$('#dk2Q').value='';renderReg()};
 /* chuyển tab, liên kết 2 tab */
@@ -2368,7 +2373,7 @@ const _renderSync0=renderSync;renderSync=function(){_renderSync0();if(ROLE==='tk
   if(ROLE==='ht'&&SYNC_OK&&!SY.on&&$('#login').hidden)lgShow('htcode')};
 /* người hỗ trợ: phần Đăng ký chỉ xem tổng hợp, không sửa */
 const _renderReg0=renderReg;renderReg=function(){if(ROLE==='ht')dkTabN='1';_renderReg0();
-  const LK=infoLocked();$$('#v-dangky input,#v-dangky select,#v-dangky textarea').forEach(el=>{if(el.id==='dkQ'||el.id==='dkOnly'||el.id==='dk2Q'||el.dataset.dkf!=null||el.id==='dk2Group')return;el.disabled=ROLE==='ht'||(LK&&!!el.closest('#dk2Table,#dkPop'))})};
+  const LK=infoLocked();$$('#v-dangky input,#v-dangky select,#v-dangky textarea').forEach(el=>{if(el.id==='dkQ'||el.id==='dkOnly'||el.id==='dk2Q'||el.dataset.dkf!=null||el.dataset.dkh!=null||el.id==='dk2Group')return;el.disabled=ROLE==='ht'||(LK&&!!el.closest('#dk2Table,#dkPop'))})};
 function roleInit(){if(ROLE==='tk'&&!isAdmin())setRole('');applyRole();if(!ROLE)return lgShow('role');if(ROLE==='ht'&&SYNC_OK&&!SY.on)lgShow('htcode')}
 /* ----- xoá hội nghị (chỉ thư ký) ----- */
 var delBusy=false;
