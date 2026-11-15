@@ -372,6 +372,7 @@ body.ci-full #recentRows{max-height:calc(100vh - 380px);overflow:auto}
   #ciFullExit{position:absolute;top:8px;right:10px;padding:6px 10px;font-size:13px}
   .cfb-ev{padding-right:92px}
 }
+body.role-ht #rcXlsx{display:none!important}
 .cifilters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px}
 .cifilters .lbl{margin:0;font-size:13px}.cifilters .sp{flex:1}
 .cifilters .inp{width:auto;max-width:220px;padding:6px 10px;font-size:13.5px}
@@ -641,6 +642,8 @@ dialog .foot .sp{flex:1}
         <div class="list-h">
           <h3>Vừa checkin</h3>
           <input class="inp" id="recentFilter" placeholder="Lọc nhanh…">
+          <button type="button" class="btn sm" id="rcImg" title="Xuất ảnh khách đã đến dự (theo bộ lọc Nhóm/TVV/Thông tin và ô lọc nhanh)">🖼️ Xuất ảnh</button>
+          <button type="button" class="btn sm" id="rcXlsx" title="Xuất Excel khách đã đến dự (theo bộ lọc)">📄 Excel</button>
         </div>
         <div class="rows" id="recentRows"></div>
       </div>
@@ -1145,7 +1148,8 @@ var ciF={tvv:'',info:''},ciLastList=[];
 function gInfo(g){const c=g.regId&&S.reg&&S.reg.kh&&S.reg.kh[g.regId];return c?!!c.info:!!g.info}
 $('#regTvvF').onchange=e=>{ciF.tvv=e.target.value;renderRegList()};$('#regInfoF').onchange=e=>{ciF.info=e.target.value;renderRegList()};
 $('#regClrF').onclick=()=>{ciF={tvv:'',info:''};regMode='all';renderRegList()};
-function ciFilterText(){const o=[];const g=$('#regGroup');if(g.value&&g.value!=='all')o.push(g.options[g.selectedIndex].text);if(ciF.tvv)o.push('TVV '+ciF.tvv);if(ciF.info)o.push(ciF.info==='co'?'Có thông tin':'Chưa có thông tin');return o}
+var ciExtra=[];
+function ciFilterText(){const o=[...ciExtra];const g=$('#regGroup');if(g.value&&g.value!=='all')o.push(g.options[g.selectedIndex].text);if(ciF.tvv)o.push('TVV '+ciF.tvv);if(ciF.info)o.push(ciF.info==='co'?'Có thông tin':'Chưa có thông tin');return o}
 async function ciListImages(list){try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
   const W=1080,P=56,F='"Be Vietnam Pro",-apple-system,"Segoe UI",Roboto,Arial,sans-serif',C={bg:'#FAF2E8',card:'#FFFFFF',ink:'#3A2A21',mu:'#8C7363',br:'#D9663D',ok:'#1E8A62',alt:'#FFF8F1'},E=EV();
   const T={n:list.length,den:list.filter(g=>g.attended).length,moi:list.filter(g=>!g.registered).length,inf:list.filter(gInfo).length};
@@ -1211,7 +1215,7 @@ async function ciSummaryImage(list){try{await document.fonts.ready;await documen
   y+=rows.length*rh+10;if(!rows.length){txt('Không có khách theo bộ lọc này',W/2,y+10,500,26,C.mu,'center');y+=40}
   y+=50;const now=VN();txt(`BVL DTH Checkin · xuất lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} ${dmy(today())} · không ghi tên khách`,W/2,y,500,22,C.mu,'center');y+=40;
   const o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(cv,0,0);return new Promise(res=>o.toBlob(b=>res(b),'image/png'))}
-$('#regImg').onclick=async()=>{renderRegList();const list=ciLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');
+async function ciExportImg(list){if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');
   const kind=await ask('Xuất ảnh',`Theo bộ lọc đang chọn (${list.length} khách). Chọn loại ảnh:`,[{v:'sum',l:'📊 Ảnh tổng hợp số lượng (không ghi tên)',primary:true},{v:'list',l:'🧾 Ảnh danh sách khách (tên chỉ ghi họ)'},{v:'no',l:'Đóng'}]);
   if(kind!=='sum'&&kind!=='list')return;toast('Đang tạo ảnh…');
   const blobs=kind==='sum'?[await ciSummaryImage(list)]:await ciListImages(list),d=today(),pw=String(blobs.length).length,files=blobs.map((b,i)=>new File([b],`${kind==='sum'?'Tong-hop-checkin':'Checkin'}-${d}${blobs.length>1?'-anh'+String(i+1).padStart(Math.max(2,pw),'0')+'-cua-'+blobs.length:''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
@@ -1221,8 +1225,8 @@ $('#regImg').onclick=async()=>{renderRegList();const list=ciLastList||[];if(!lis
     [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
   if(v==='share'){try{await navigator.share({files,title:'Danh sách checkin'})}catch(e){if(e&&e.name!=='AbortError')files.forEach(f=>download(f,f.name))}}
   else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*700));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)};
-$('#regXlsx').onclick=async()=>{if(ROLE==='ht')return toast('Người hỗ trợ chỉ xuất báo cáo bằng ảnh');if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');
-  renderRegList();const list=ciLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');
+async function ciExportXlsx(list){if(ROLE==='ht')return toast('Người hỗ trợ chỉ xuất báo cáo bằng ảnh');if(!window.ExcelJS)return toast('Chưa tải được thư viện Excel — kiểm tra mạng');
+  if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');
   const wb=new ExcelJS.Workbook(),FN={name:'Times New Roman',size:12},th={style:'thin'},BD={top:th,left:th,bottom:th,right:th},E=EV(),filt=ciFilterText();
   const ws=wb.addWorksheet('Danh sach checkin',{views:[{state:'frozen',ySplit:4}]});const H=['TT','Họ tên khách hàng','Tên TVV','Mã đại lý','Nhóm','Thông tin KH','Trạng thái','Giờ đến','Khách mới','Ghi chú'];
   ws.columns=[6,28,24,14,16,12,12,18,10,30].map(width=>({width}));
@@ -1233,6 +1237,15 @@ $('#regXlsx').onclick=async()=>{if(ROLE==='ht')return toast('Người hỗ trợ
   const den=list.filter(g=>g.attended).length;ws.addRow(['','Tổng cộng: '+list.length+' khách','','','',list.filter(gInfo).length+' có TT',den+' đã đến','',list.filter(g=>!g.registered).length,'']).eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
   [1,6,7,8,9].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'});
   const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Danh sach checkin ${dmy(today()).replace(/\//g,'.')}${filt.length?' (loc)':''}.xlsx`);toast(`Đã xuất ${list.length} khách ra Excel`)};
+$('#regImg').onclick=()=>{ciExtra=[];renderRegList();ciExportImg(ciLastList||[])};
+$('#regXlsx').onclick=()=>{ciExtra=[];renderRegList();ciExportXlsx(ciLastList||[])};
+/* khung Vừa checkin: chỉ khách đã đến dự — theo bộ lọc Nhóm / TVV / Thông tin KH và ô lọc nhanh; xếp theo giờ đến */
+function rcList(){const q=norm(($('#recentFilter')||{}).value||'');let l=S.guests.filter(g=>g.attended);
+  if(regMode.startsWith('g:'))l=l.filter(g=>g.group===regMode.slice(2));if(ciF.tvv)l=l.filter(g=>tc(g.tvvName||'')===ciF.tvv);if(ciF.info)l=l.filter(g=>ciF.info==='co'?gInfo(g):!gInfo(g));
+  if(q)l=l.filter(g=>(norm(g.name)+' '+norm(g.tvvName)+' '+norm(g.group)).includes(q));return l.sort((a,b)=>(a.at||'').localeCompare(b.at||''))}
+function rcExtra(){const q=($('#recentFilter')||{}).value||'';return['Khách đã đến dự',...(q.trim()?['Lọc nhanh “'+q.trim()+'”']:[])]}
+$('#rcImg').onclick=async()=>{renderRegList();ciExtra=rcExtra();try{await ciExportImg(rcList())}finally{ciExtra=[]}};
+$('#rcXlsx').onclick=async()=>{renderRegList();ciExtra=rcExtra();try{await ciExportXlsx(rcList())}finally{ciExtra=[]}};
 /* ===== phóng to toàn màn hình phần Checkin: thêm khách + danh sách khách + số lượng ===== */
 function ciFullRender(){if(!document.body.classList.contains('ci-full'))return;const T=totals(),E=EV(),d=VN();
   $('#cfbTitle').textContent=E.hn||'Checkin Khách Dự';$('#cfbSub').textContent=[S.event.loaiHN,S.event.ngayHN?'Ngày '+dmy(S.event.ngayHN):''].filter(Boolean).join(' · ');
