@@ -337,6 +337,41 @@ body.pop-on .dkfab{display:none!important}
 .atcell{width:150px!important;min-width:140px}
 body.info-locked #dkOpen,body.info-locked #dkFab,body.info-locked #dk2Table .mini.del,body.info-locked #dk2Table [data-khdk]{display:none!important}
 .lockchip{background:var(--danger-soft);color:var(--danger);border-color:transparent;font-weight:700}
+
+/* ===== Checkin phóng to toàn màn hình ===== */
+.cifull-open{display:flex;justify-content:flex-end;margin:-4px 0 10px}
+.cifull-bar{display:none}
+body.ci-full{overflow:hidden}
+body.ci-full header.top,body.ci-full #modebar,body.ci-full #bnav,body.ci-full .cifull-open,body.ci-full #dkFab,
+body.ci-full #syncBox,body.ci-full #autoBar,body.ci-full #fileBar,body.ci-full #orgBox,body.ci-full #noStore,body.ci-full #noTvv{display:none!important}
+body.ci-full #v-checkin{display:block!important;position:fixed;inset:0;z-index:45;overflow:auto;background:var(--bg);padding:12px 18px calc(18px + env(safe-area-inset-bottom));animation:none}
+body.ci-full .cifull-bar{display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:sticky;top:-12px;z-index:5;margin:-12px -18px 14px;padding:12px 18px;
+  background:var(--hdr,linear-gradient(115deg,#FFB896,#F28A5E));color:var(--hdr-ink,#3B2216);box-shadow:0 6px 20px rgba(120,60,30,.18)}
+.cfb-ev{flex:1 1 260px;min-width:0}.cfb-ev b{display:block;font-size:22px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cfb-ev small{opacity:.8;font-size:14px}
+.cfb-count{display:flex;gap:10px;flex-wrap:wrap}
+.cfb-count span{display:flex;flex-direction:column;align-items:center;min-width:96px;padding:6px 14px;border-radius:16px;background:rgba(255,255,255,.55)}
+.cfb-count b{font-size:34px;line-height:1.05}.cfb-count em{font-style:normal;font-size:16px;font-weight:600;opacity:.75;margin-left:4px}.cfb-count b+em{display:inline}
+.cfb-count span:first-child{flex-direction:row;flex-wrap:wrap;justify-content:center;column-gap:2px}.cfb-count span:first-child small{flex-basis:100%;text-align:center}
+.cfb-count small,.cfb-clock small{font-size:12.5px;font-weight:600;opacity:.8}
+.cfb-clock{display:flex;flex-direction:column;align-items:center}.cfb-clock b{font-size:26px;line-height:1.1}
+body.ci-full .ci{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px}
+body.ci-full .ci-form{padding:22px}
+body.ci-full .inp.xl,body.ci-full #fTvv{font-size:22px;padding:14px 16px}
+body.ci-full .btn.go{font-size:20px;padding:16px}
+body.ci-full #regToggle{display:none}
+body.ci-full #regRows{max-height:none;font-size:16px}
+body.ci-full .side{position:sticky;top:96px;align-self:start;display:flex;flex-direction:column;gap:14px}
+body.ci-full #kpis{grid-template-columns:repeat(2,1fr)}
+body.ci-full #kpis .kpi b{font-size:30px}
+body.ci-full #recentRows{max-height:calc(100vh - 380px);overflow:auto}
+@media (max-width:760px){
+  body.ci-full #v-checkin{padding:10px 12px calc(14px + env(safe-area-inset-bottom))}
+  body.ci-full .cifull-bar{margin:-10px -12px 12px;padding:10px 12px;gap:10px}
+  .cfb-ev b{font-size:18px}.cfb-count span{min-width:72px;padding:4px 10px}.cfb-count b{font-size:26px}.cfb-clock{display:none}
+  body.ci-full .ci{grid-template-columns:1fr}body.ci-full .side{position:static}
+  #ciFullExit{position:absolute;top:8px;right:10px;padding:6px 10px;font-size:13px}
+  .cfb-ev{padding-right:92px}
+}
 .empty-note{background:var(--accent-soft);color:var(--warn);border-radius:11px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
 .empty-note a{color:inherit;font-weight:700}
 
@@ -506,6 +541,13 @@ dialog .foot .sp{flex:1}
 <main>
 <!-- ================= CHECK-IN ================= -->
 <section class="view on" id="v-checkin">
+  <div class="cifull-open"><button type="button" class="btn sm" id="ciFullBtn" title="Phóng to toàn màn hình: thêm khách, danh sách khách, số lượng">⛶ Phóng to</button></div>
+  <div class="cifull-bar" id="ciFullBar">
+    <div class="cfb-ev"><b id="cfbTitle">Checkin Khách Dự</b><small id="cfbSub"></small></div>
+    <div class="cfb-count" id="cfbCount"></div>
+    <div class="cfb-clock" id="cfbClock"></div>
+    <button type="button" class="btn" id="ciFullExit" title="Thu nhỏ (Esc)">✕ Thu nhỏ</button>
+  </div>
   <div class="ci">
     <form class="card ci-form" id="ciForm" autocomplete="off" onsubmit="return false">
       <details class="orgbox" id="syncBox" hidden>
@@ -1065,7 +1107,7 @@ function renderRegList(){const card=$('#regCard');if(!card)return;
   /* Thu gọn = ẩn toàn bộ danh sách; Hiện = hiện đủ tất cả khách */
   /* khách đã checkin không hiện nữa — chỉ còn khách chưa đến, có số thứ tự */
   const wait=list.filter(g=>!g.attended);
-  const open=!S.listCollapsed,show=open?wait:[];
+  const open=!S.listCollapsed||document.body.classList.contains('ci-full'),show=open?wait:[];
   $('#regToggle').textContent=open?'Thu gọn ▴':`Hiện ${wait.length} khách ▾`;$('#regToggle').hidden=false;$('#regRows').hidden=!open;
   $('#regRows').className='reg'+(open?' open':'');
   $('#regRows').innerHTML=wait.length?`<div class="rr head"><div class="c0">TT</div><div>Tên khách hàng</div><div>Tên TVV</div><div>Nhóm</div><div></div></div>`+show.map((g,i)=>
@@ -1077,6 +1119,20 @@ function renderRegList(){const card=$('#regCard');if(!card)return;
     :`<div class="none">${list.length?'✓ Tất cả khách trong phần này đã checkin.':regMode==='tvv'?'TVV này chưa có khách trong danh sách — nhập tên khách mới ở ô bên dưới.':'Chưa có khách.'}</div>`}
 $('#regGroup').onchange=e=>{regMode=e.target.value;renderRegList()};
 $('#regToggle').onclick=()=>{S.listCollapsed=!S.listCollapsed;save();renderRegList()};
+/* ===== phóng to toàn màn hình phần Checkin: thêm khách + danh sách khách + số lượng ===== */
+function ciFullRender(){if(!document.body.classList.contains('ci-full'))return;const T=totals(),E=EV(),d=VN();
+  $('#cfbTitle').textContent=E.hn||'Checkin Khách Dự';$('#cfbSub').textContent=[S.event.loaiHN,S.event.ngayHN?'Ngày '+dmy(S.event.ngayHN):''].filter(Boolean).join(' · ');
+  const nm=S.guests.filter(g=>g.attended&&!g.registered).length;
+  $('#cfbCount').innerHTML=`<span><b class="num">${T.n}</b>${T.reg?`<em>/ ${T.reg}</em>`:''}<small>Khách đã đến</small></span>${T.reg?`<span><b class="num">${Math.max(0,T.reg-T.regIn)}</b><small>Chưa đến</small></span>`:''}<span><b class="num">${nm}</b><small>Khách mới</small></span>`;
+  $('#cfbClock').innerHTML=`<b class="num">${pad2(d.getHours())}:${pad2(d.getMinutes())}</b><small>${dmy(today())}</small>`}
+async function ciFullOn(){document.body.classList.add('ci-full');if(view!=='checkin'&&typeof go==='function')try{go('checkin')}catch(e){}
+  try{if(document.documentElement.requestFullscreen&&!document.fullscreenElement)await document.documentElement.requestFullscreen({navigationUI:'hide'})}catch(e){}
+  renderAll();ciFullRender();window.scrollTo(0,0);$('#v-checkin').scrollTop=0;setTimeout(()=>$('#fTvv').value?$('#fName').focus():$('#fTvv').focus(),80)}
+function ciFullOff(){document.body.classList.remove('ci-full');try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen()}catch(e){}renderAll()}
+$('#ciFullBtn').onclick=ciFullOn;$('#ciFullExit').onclick=ciFullOff;
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('ci-full'))ciFullOff()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('ci-full')&&!document.fullscreenElement&&!$('#ask').open&&!$$('#v-checkin .pick').some(p=>!p.hidden)){e.preventDefault();ciFullOff()}});
+setInterval(ciFullRender,15000);
 function flash(el,msg){el.classList.remove('bad');void el.offsetWidth;el.classList.add('bad');el.focus();toast(msg)}
 function pushRecent(tv){S.recent=[tv,...S.recent.filter(r=>keyTvv(r)!==keyTvv(tv))].slice(0,8)}
 function extras(){return{fee:num(F.fee.value),gift:F.gift.checked,note:F.note.value.trim()}}
@@ -1188,7 +1244,7 @@ function guestRow(g,full,i){const st=g.attended?`<button class="status ok" data-
 function renderHeader(){if(typeof renderOrg==='function')renderOrg();if(typeof renderFileBar==='function')renderFileBar();const E=EV();$('#evTitle').textContent='Checkin Khách Dự'+(E.hn?' · '+E.hn:'')+(E.date?' · '+dmy(E.date):'');
   $('#evSub').textContent=E.org?'Đơn vị tổ chức: '+E.org:'Hội nghị khách hàng';
   document.title='BVL DTH Checkin';$('#noTvv').hidden=S.tvv.length>0}
-function renderCheckin(){$('#kpis').innerHTML=kpiHTML();const q=norm($('#recentFilter').value);
+function renderCheckin(){try{ciFullRender()}catch(e){}$('#kpis').innerHTML=kpiHTML();const q=norm($('#recentFilter').value);
   /* xếp theo thứ tự đến: khách đến trước ở trên, số 1 ở đầu */
   let list=S.guests.filter(g=>g.attended).sort((a,b)=>(a.at||'').localeCompare(b.at||''));
   const ord=new Map(list.map((g,i)=>[g.id,i+1]));
