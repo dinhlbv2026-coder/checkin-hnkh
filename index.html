@@ -1150,7 +1150,7 @@ $('#regTvvF').onchange=e=>{ciF.tvv=e.target.value;renderRegList()};$('#regInfoF'
 $('#regClrF').onclick=()=>{ciF={tvv:'',info:''};regMode='all';renderRegList()};
 var ciExtra=[];
 function ciFilterText(){const o=[...ciExtra];const g=$('#regGroup');if(g.value&&g.value!=='all')o.push(g.options[g.selectedIndex].text);if(ciF.tvv)o.push('TVV '+ciF.tvv);if(ciF.info)o.push(ciF.info==='co'?'Có thông tin':'Chưa có thông tin');return o}
-async function ciListImages(list){try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
+async function ciListImages(list,full){try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
   const W=1080,P=56,F='"Be Vietnam Pro",-apple-system,"Segoe UI",Roboto,Arial,sans-serif',C={bg:'#FAF2E8',card:'#FFFFFF',ink:'#3A2A21',mu:'#8C7363',br:'#D9663D',ok:'#1E8A62',alt:'#FFF8F1'},E=EV();
   const T={n:list.length,den:list.filter(g=>g.attended).length,moi:list.filter(g=>!g.registered).length,inf:list.filter(gInfo).length};
   const filt=ciFilterText(),PER=20,pages=Math.max(1,Math.ceil(list.length/PER)),[lb,l30]=await Promise.all([rptImg(RPT_LOGO.bvl),rptImg(RPT_LOGO.y30)]),out=[];
@@ -1172,7 +1172,7 @@ async function ciListImages(list){try{await document.fonts.ready;await document.
     kp.forEach(([l,v],i)=>{const x=P+i*(kw+14);rr(x,y,kw,120,22,C.card);txt(String(v),x+kw/2,y+64,700,44,i===1?C.ok:i===2?C.br:C.ink,'center');txt(l,x+kw/2,y+100,500,22,C.mu,'center')});
     y+=150;const LH=part.length*88+16;rr(P,y,W-2*P,Math.max(LH,100),26,C.card);let ry=y+8;
     part.forEach((r,i)=>{if(i%2)rr(P+8,ry,W-2*P-16,88,14,C.alt);
-      txt(`${pg*PER+i+1}.`,P+24,ry+40,700,26,C.mu);txt(fit(maskName(r.name)+(r.registered?'':'  (khách mới)'),600,700,28),P+84,ry+40,700,28,C.ink);
+      txt(`${pg*PER+i+1}.`,P+24,ry+40,700,26,C.mu);txt(fit((full?tc(r.name):maskName(r.name))+(r.registered?'':'  (khách mới)'),600,700,28),P+84,ry+40,700,28,C.ink);
       txt(r.attended?'Đã đến'+(r.at?' '+hm(r.at):''):'Chưa đến',W-P-24,ry+40,700,26,r.attended?C.ok:C.br,'right');
       txt(fit([r.tvvName?'TVV '+tc(r.tvvName):'',r.group||''].filter(Boolean).join(' · '),640,400,22),P+84,ry+72,400,22,C.mu);
       txt(gInfo(r)?'Có thông tin':'Chưa có TT',W-P-24,ry+72,600,22,gInfo(r)?C.ok:C.mu,'right');ry+=88});
@@ -1216,12 +1216,13 @@ async function ciSummaryImage(list){try{await document.fonts.ready;await documen
   y+=50;const now=VN();txt(`BVL DTH Checkin · xuất lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} ${dmy(today())} · không ghi tên khách`,W/2,y,500,22,C.mu,'center');y+=40;
   const o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(cv,0,0);return new Promise(res=>o.toBlob(b=>res(b),'image/png'))}
 async function ciExportImg(list){if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');
-  const kind=await ask('Xuất ảnh',`Theo bộ lọc đang chọn (${list.length} khách). Chọn loại ảnh:`,[{v:'sum',l:'📊 Ảnh tổng hợp số lượng (không ghi tên)',primary:true},{v:'list',l:'🧾 Ảnh danh sách khách (tên chỉ ghi họ)'},{v:'no',l:'Đóng'}]);
-  if(kind!=='sum'&&kind!=='list')return;toast('Đang tạo ảnh…');
-  const blobs=kind==='sum'?[await ciSummaryImage(list)]:await ciListImages(list),d=today(),pw=String(blobs.length).length,files=blobs.map((b,i)=>new File([b],`${kind==='sum'?'Tong-hop-checkin':'Checkin'}-${d}${blobs.length>1?'-anh'+String(i+1).padStart(Math.max(2,pw),'0')+'-cua-'+blobs.length:''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
+  const kind=await ask('Xuất danh sách',`Theo bộ lọc đang chọn (${list.length} khách). Chọn cách xuất:`,[{v:'sum',l:'📊 Ảnh tổng hợp số lượng (không ghi tên)',primary:true},{v:'full',l:'🧾 Ảnh danh sách — đầy đủ họ tên'},{v:'list',l:'🔒 Ảnh danh sách — tên chỉ ghi họ'},...(ROLE==='ht'?[]:[{v:'xlsx',l:'📄 File Excel — đầy đủ họ tên'}]),{v:'no',l:'Đóng'}]);
+  if(kind==='xlsx')return ciExportXlsx(list);
+  if(kind!=='sum'&&kind!=='list'&&kind!=='full')return;toast('Đang tạo ảnh…');
+  const blobs=kind==='sum'?[await ciSummaryImage(list)]:await ciListImages(list,kind==='full'),d=today(),pw=String(blobs.length).length,files=blobs.map((b,i)=>new File([b],`${kind==='sum'?'Tong-hop-checkin':'Checkin'}-${d}${blobs.length>1?'-anh'+String(i+1).padStart(Math.max(2,pw),'0')+'-cua-'+blobs.length:''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
   const canShare=!!(navigator.canShare&&navigator.canShare({files}));
   const v=await ask(kind==='sum'?`Ảnh tổng hợp checkin (${list.length} khách)`:`Ảnh danh sách checkin (${list.length} khách${blobs.length>1?' · '+blobs.length+' ảnh':''})`,`<div style="max-height:60vh;overflow:auto;display:grid;gap:8px">${urls.map((u,i)=>`${urls.length>1?`<small class="count">Ảnh ${i+1}/${urls.length}</small>`:''}<img src="${u}" alt="Ảnh danh sách checkin" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:#FAF2E8">`).join('')}</div>
-    <small class="count" style="display:block;margin-top:8px">${kind==='sum'?'Theo đúng bộ lọc đang chọn; chỉ có số lượng, không có tên khách.':'Theo đúng bộ lọc đang chọn; tên khách chỉ ghi họ (bảo mật); mỗi ảnh 20 khách, số thứ tự nối tiếp.'} ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'}</small>`,
+    <small class="count" style="display:block;margin-top:8px">${kind==='sum'?'Theo đúng bộ lọc đang chọn; chỉ có số lượng, không có tên khách.':kind==='full'?'Theo đúng bộ lọc đang chọn; <b>có đầy đủ họ tên khách</b> — chỉ gửi nhóm nội bộ; mỗi ảnh 20 khách, số thứ tự nối tiếp.':'Theo đúng bộ lọc đang chọn; tên khách chỉ ghi họ (bảo mật); mỗi ảnh 20 khách, số thứ tự nối tiếp.'} ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'}</small>`,
     [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
   if(v==='share'){try{await navigator.share({files,title:'Danh sách checkin'})}catch(e){if(e&&e.name!=='AbortError')files.forEach(f=>download(f,f.name))}}
   else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*700));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)};
@@ -2000,7 +2001,7 @@ var dkLastList=dkLastList||[];
 function maskName(n){const w=tc(n||'').trim().split(/\s+/).filter(Boolean);if(!w.length)return'';return w.length>1?w[0]+' …':w[0].charAt(0)+'…'}
 function dkFilterText(){const o=[];if(ROLE==='ht')return o;const g=$('#dk2Group');if(g&&g.value)o.push('Nhóm '+g.options[g.selectedIndex].text.replace(/\s*\(\d+\)$/,''));
   $$('[data-dkf]').forEach(el=>{if(el.value)o.push(el.options[el.selectedIndex].text.replace(/\s*\(\d+\)$/,''))});const q=$('#dk2Q').value.trim();if(q)o.push('Tìm “'+q+'”');return o}
-async function listImages(list){try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
+async function listImages(list,full){const MN=n=>full?tc(n):maskName(n);try{await document.fonts.ready;await document.fonts.load('700 30px "Be Vietnam Pro"');await document.fonts.load('400 30px "Be Vietnam Pro"')}catch(e){}
   const W=1080,P=56,F='"Be Vietnam Pro",-apple-system,"Segoe UI",Roboto,Arial,sans-serif',C={bg:'#FAF2E8',card:'#FFFFFF',ink:'#3A2A21',mu:'#8C7363',line:'#F1E0CE',br:'#D9663D',ok:'#1E8A62',cp:'#FDE3C8',alt:'#FFF8F1'},E=EV();
   const vv=c=>Math.max(1,+c.ve||1),pd=c=>Math.min(vv(c),+c.paid||0);
   const T={kh:list.filter(c=>c.name).length,ve:list.reduce((a,c)=>a+vv(c),0),pd:list.reduce((a,c)=>a+pd(c),0),inf:list.filter(c=>c.info).reduce((a,c)=>a+vv(c),0),thu:list.reduce((a,c)=>a+(+c.thu||0),0)};
@@ -2024,10 +2025,10 @@ async function listImages(list){try{await document.fonts.ready;await document.fo
     kp.forEach(([l,v],i)=>{const x=P+i*(kw+14);rr(x,y,kw,120,22,C.card);txt(String(v),x+kw/2,y+64,700,44,i===2||i===3?C.ok:C.ink,'center');txt(l,x+kw/2,y+100,500,22,C.mu,'center')});
     y+=150;
     /* danh sách */
-    rr(P,y,W-2*P,20,0,C.bg);const rows=part.map((c,i)=>{const ti=pg*PER+i+1,dkn=(c.dk||[]).filter(x=>x&&x.name).map(x=>maskName(x.name)+(x.qh?' ('+x.qh+')':'')).join(', '),dk=c.name&&vv(c)>1?(dkn||`+${vv(c)-1} người đi kèm`):'';return{c,ti,dk,h:dk?118:88}});
+    rr(P,y,W-2*P,20,0,C.bg);const rows=part.map((c,i)=>{const ti=pg*PER+i+1,dkn=(c.dk||[]).filter(x=>x&&x.name).map(x=>MN(x.name)+(x.qh?' ('+x.qh+')':'')).join(', '),dk=c.name&&vv(c)>1?(dkn||`+${vv(c)-1} người đi kèm`):'';return{c,ti,dk,h:dk?118:88}});
     const LH=rows.reduce((a,r)=>a+r.h,0)+16;rr(P,y,W-2*P,LH,26,C.card);let ry=y+8;
     rows.forEach((r,i)=>{const c=r.c;if(i%2)rr(P+8,ry,W-2*P-16,r.h,14,C.alt);
-      const nm=c.name?maskName(c.name):`(Chưa có tên KH — ${vv(c)} vé)`;txt(`${r.ti}.`,P+24,ry+40,700,26,C.mu);
+      const nm=c.name?MN(c.name):`(Chưa có tên KH — ${vv(c)} vé)`;txt(`${r.ti}.`,P+24,ry+40,700,26,C.mu);
       txt(fit(nm,600,c.name?700:500,28),P+84,ry+40,c.name?700:500,28,c.name?C.ink:C.mu);
       txt(`${vv(c)} vé`,W-P-24,ry+40,700,28,C.br,'right');
       const meta=[c.at?atHM(c.at)+' '+dmy(atDay(c.at)).slice(0,5):'',c.tvvName?'TVV '+tc(c.tvvName):'',c.group||''].filter(Boolean).join(' · ');
@@ -2039,11 +2040,12 @@ async function listImages(list){try{await document.fonts.ready;await document.fo
     y+=Math.max(LH,100)+40;const now=VN();txt(`BVL DTH Checkin · xuất lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} ${dmy(today())}`,W/2,y,500,22,C.mu,'center');y+=40;
     const o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(cv,0,0);out.push(await new Promise(res=>o.toBlob(b=>res(b),'image/png')))}
   return out}
-async function shareListImages(lst){if(!Array.isArray(lst)){renderReg();lst=null}const list=lst||dkLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');toast('Đang tạo ảnh danh sách…');
-  const blobs=await listImages(list),d=today(),pw=String(blobs.length).length,files=blobs.map((b,i)=>new File([b],`Danh-sach-khach-${d}${blobs.length>1?'-anh'+String(i+1).padStart(Math.max(2,pw),'0')+'-cua-'+blobs.length:''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
+async function shareListImages(lst){if(!Array.isArray(lst)){renderReg();lst=null}const list=lst||dkLastList||[];if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');
+  const kind=await ask('Xuất ảnh danh sách',`${list.length} lượt đăng ký. Chọn cách ghi tên khách:`,[{v:'full',l:'🧾 Đầy đủ họ tên',primary:true},{v:'mask',l:'🔒 Chỉ ghi họ (bảo mật)'},{v:'no',l:'Đóng'}]);if(kind!=='full'&&kind!=='mask')return;toast('Đang tạo ảnh danh sách…');
+  const blobs=await listImages(list,kind==='full'),d=today(),pw=String(blobs.length).length,files=blobs.map((b,i)=>new File([b],`Danh-sach-khach-${d}${blobs.length>1?'-anh'+String(i+1).padStart(Math.max(2,pw),'0')+'-cua-'+blobs.length:''}.png`,{type:'image/png'})),urls=blobs.map(b=>URL.createObjectURL(b));
   const canShare=!!(navigator.canShare&&navigator.canShare({files}));
   const v=await ask(`Ảnh danh sách khách (${list.length} lượt${blobs.length>1?' · '+blobs.length+' ảnh':''})`,`<div style="max-height:60vh;overflow:auto;display:grid;gap:8px">${urls.map((u,i)=>`${urls.length>1?`<small class="count">Ảnh ${i+1}/${urls.length}</small>`:''}<img src="${u}" alt="Ảnh danh sách khách" style="width:100%;border-radius:12px;border:1px solid var(--line);display:block;background:#FAF2E8">`).join('')}</div>
-    <small class="count" style="display:block;margin-top:8px">Ảnh theo đúng bộ lọc đang chọn; tên khách chỉ ghi họ (bảo mật)${blobs.length>1?'; danh sách được chia mỗi ảnh 20 khách, số thứ tự nối tiếp; ảnh lưu theo thứ tự 01, 02, 03':''}. ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad có thể bấm giữ vào ảnh để lưu.</small>`,
+    <small class="count" style="display:block;margin-top:8px">Ảnh theo đúng bộ lọc đang chọn; ${kind==='full'?'<b>có đầy đủ họ tên khách</b> — chỉ gửi nhóm nội bộ':'tên khách chỉ ghi họ (bảo mật)'}${blobs.length>1?'; danh sách được chia mỗi ảnh 20 khách, số thứ tự nối tiếp; ảnh lưu theo thứ tự 01, 02, 03':''}. ${canShare?'Bấm Chia sẻ để gửi Zalo hoặc Lưu ảnh.':'Bấm Tải ảnh để lưu.'} Trên iPhone/iPad có thể bấm giữ vào ảnh để lưu.</small>`,
     [...(canShare?[{v:'share',l:'📤 Chia sẻ / Lưu ảnh',primary:true}]:[]),{v:'dl',l:'⬇️ Tải ảnh',primary:!canShare},{v:'no',l:'Đóng'}]);
   if(v==='share'){try{await navigator.share({files,title:'Danh sách khách đăng ký'})}catch(e){if(e&&e.name!=='AbortError')files.forEach(f=>download(f,f.name))}}
   else if(v==='dl')files.forEach((f,i)=>setTimeout(()=>download(f,f.name),i*700));setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),60000)}
