@@ -628,8 +628,8 @@ dialog .foot .sp{flex:1}
           <select class="inp" id="regInfoF" aria-label="Lọc theo thông tin khách"><option value="">Thông tin KH: tất cả</option><option value="co">Có thông tin</option><option value="chua">Chưa có thông tin</option></select>
           <button type="button" class="btn sm" id="regClrF" hidden>✕ Xoá lọc</button>
           <span class="sp"></span>
-          <button type="button" class="btn sm" id="regImg" title="Xuất ảnh danh sách theo bộ lọc (tên khách chỉ ghi họ)">🖼️ Xuất ảnh</button>
-          <button type="button" class="btn sm" id="regXlsx" title="Xuất file Excel danh sách theo bộ lọc">📄 Xuất Excel</button>
+          <button type="button" class="btn sm" id="regImg" title="Xuất khách CHƯA checkin theo bộ lọc (khách đã đến xuất ở khung Vừa checkin)">🖼️ Xuất ảnh</button>
+          <button type="button" class="btn sm" id="regXlsx" title="Xuất Excel khách CHƯA checkin theo bộ lọc">📄 Xuất Excel</button>
         </div>
         <div id="regRows"></div>
       </div>
@@ -1215,7 +1215,7 @@ async function ciSummaryImage(list){try{await document.fonts.ready;await documen
   y+=rows.length*rh+10;if(!rows.length){txt('Không có khách theo bộ lọc này',W/2,y+10,500,26,C.mu,'center');y+=40}
   y+=50;const now=VN();txt(`BVL DTH Checkin · xuất lúc ${pad2(now.getHours())}:${pad2(now.getMinutes())} ${dmy(today())} · không ghi tên khách`,W/2,y,500,22,C.mu,'center');y+=40;
   const o=document.createElement('canvas');o.width=W;o.height=y;o.getContext('2d').drawImage(cv,0,0);return new Promise(res=>o.toBlob(b=>res(b),'image/png'))}
-async function ciExportImg(list){if(!list.length)return toast('Danh sách đang trống — không có gì để xuất');
+async function ciExportImg(list){if(!list.length)return toast(ciExtra.includes('Khách chưa checkin')?'Không còn khách chưa checkin theo bộ lọc này':'Danh sách đang trống — không có gì để xuất');
   const kind=await ask('Xuất danh sách',`Theo bộ lọc đang chọn (${list.length} khách). Chọn cách xuất:`,[{v:'sum',l:'📊 Ảnh tổng hợp số lượng (không ghi tên)',primary:true},{v:'full',l:'🧾 Ảnh danh sách — đầy đủ họ tên'},{v:'list',l:'🔒 Ảnh danh sách — tên chỉ ghi họ'},...(ROLE==='ht'?[]:[{v:'xlsx',l:'📄 File Excel — đầy đủ họ tên'}]),{v:'no',l:'Đóng'}]);
   if(kind==='xlsx')return ciExportXlsx(list);
   if(kind!=='sum'&&kind!=='list'&&kind!=='full')return;toast('Đang tạo ảnh…');
@@ -1238,8 +1238,8 @@ async function ciExportXlsx(list){if(ROLE==='ht')return toast('Người hỗ tr�
   const den=list.filter(g=>g.attended).length;ws.addRow(['','Tổng cộng: '+list.length+' khách','','','',list.filter(gInfo).length+' có TT',den+' đã đến','',list.filter(g=>!g.registered).length,'']).eachCell({includeEmpty:true},c=>{c.font={...FN,bold:true};c.border=BD});
   [1,6,7,8,9].forEach(n=>ws.getColumn(n).alignment={horizontal:'center',vertical:'middle'});
   const buf=await wb.xlsx.writeBuffer();download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Danh sach checkin ${dmy(today()).replace(/\//g,'.')}${filt.length?' (loc)':''}.xlsx`);toast(`Đã xuất ${list.length} khách ra Excel`)};
-$('#regImg').onclick=()=>{ciExtra=[];renderRegList();ciExportImg(ciLastList||[])};
-$('#regXlsx').onclick=()=>{ciExtra=[];renderRegList();ciExportXlsx(ciLastList||[])};
+$('#regImg').onclick=async()=>{renderRegList();ciExtra=['Khách chưa checkin'];try{await ciExportImg((ciLastList||[]).filter(g=>!g.attended))}finally{ciExtra=[]}};
+$('#regXlsx').onclick=async()=>{renderRegList();ciExtra=['Khách chưa checkin'];try{await ciExportXlsx((ciLastList||[]).filter(g=>!g.attended))}finally{ciExtra=[]}};
 /* khung Vừa checkin: chỉ khách đã đến dự — theo bộ lọc Nhóm / TVV / Thông tin KH và ô lọc nhanh; xếp theo giờ đến */
 function rcList(){const q=norm(($('#recentFilter')||{}).value||'');let l=S.guests.filter(g=>g.attended);
   if(regMode.startsWith('g:'))l=l.filter(g=>g.group===regMode.slice(2));if(ciF.tvv)l=l.filter(g=>tc(g.tvvName||'')===ciF.tvv);if(ciF.info)l=l.filter(g=>ciF.info==='co'?gInfo(g):!gInfo(g));
