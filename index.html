@@ -516,6 +516,64 @@ dialog .foot .sp{flex:1}
   .gbar{grid-template-columns:96px 1fr 32px}
   .list-h .inp{max-width:130px}
 }
+
+#v-checkin [hidden]{display:none!important}
+/* ===== Checkin gọn (2026-11-17): tiến độ lớn · thiết lập 1 hàng · bảng Chờ đến / Đã đến ===== */
+.ci-top{display:flex;gap:12px;align-items:stretch;margin:0 0 12px}
+.ci-top #ciFullBtn{flex:none;align-self:center}
+.ci-prog{flex:1;min-width:0;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--hero);color:var(--hero-ink);border-radius:var(--r);padding:12px 18px;box-shadow:0 8px 24px rgba(80,170,200,.22)}
+.pg-main small{display:block;font-size:12.5px;font-weight:600;opacity:.85}
+.pg-main b{font-size:40px;line-height:1;letter-spacing:-.02em}.pg-main em{font-style:normal;font-size:20px;font-weight:600;opacity:.75}
+.pg-bar{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.pg-track{height:12px;border-radius:9px;background:rgba(255,255,255,.35);overflow:hidden}
+.pg-track i{display:block;height:100%;background:#fff;border-radius:9px;transition:width .5s}
+.pg-last{opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-chips{display:flex;gap:8px;flex-wrap:wrap}
+.pg-c{display:flex;flex-direction:column;align-items:center;min-width:78px;padding:6px 10px;border-radius:14px;background:rgba(255,255,255,.4)}
+.pg-c b{font-size:24px;line-height:1.05}.pg-c small{font-size:11.5px;font-weight:600;opacity:.85;white-space:nowrap}
+.pg-c.wait{background:rgba(255,255,255,.75);color:#9A3B16}
+.ci-setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:14px}
+.ci-setup:not(:has(>:not([hidden]))){display:none}
+.ci-setup>*{margin:0!important;min-width:0}
+.ci-setup>.autobar,.ci-setup>.empty-note,.ci-setup>#syncBox[open],.ci-setup>#orgBox[open]{grid-column:1/-1}
+.ci-setup .filebar{padding:9px 12px}
+.stepnote{text-transform:none;letter-spacing:0;font-weight:500;color:var(--muted)}
+.ci-form .btn.go{width:100%}
+.board{overflow:hidden;display:flex;flex-direction:column}
+.btabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.btabs button{border:0;background:transparent;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 10px;font-weight:700;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.btabs button b{font-size:22px;line-height:1}
+.btabs button.on{color:var(--ink);background:var(--surface);border-bottom-color:var(--peach)}
+.btabs button[data-bt="wait"].on b{color:var(--brand)}.btabs button[data-bt="done"].on b{color:var(--ok)}
+.bempty{padding:36px 18px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.board .regbox{border:0;border-radius:0;margin:0}
+.board .regbox .list-h{flex-wrap:nowrap;gap:8px}
+.board #regQ{flex:1;max-width:none;min-width:0}
+.board #regGroup{max-width:180px;flex:0 1 180px}
+#regMoreBtn{flex:none}#regMoreBtn.on{border-color:var(--peach);background:var(--cream-peach);color:var(--on-brand)}
+.regsub{display:flex;align-items:center;gap:8px;padding:6px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.regsub #regTitle{font-weight:600}
+.board .cifilters{padding:8px 12px;margin:0;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.board #regRows,.board #recentRows{max-height:calc(100vh - 300px);min-height:260px;overflow:auto}
+.board .rr{grid-template-columns:30px minmax(0,1fr) auto;padding:11px 14px}
+.board .rr .c2,.board .rr .c3,.board .rr.head{display:none}
+.board .rr .c1 b{font-size:16px}.board .rr .c1 small{display:block}
+.board .rr .cta{font-size:14px;padding:8px 14px}
+.board .bpane .list-h{padding:10px 12px}
+.board #recentFilter{flex:1;max-width:none;min-width:0}
+body.ci-full .ci-top #ciFullBtn,body.ci-full .ci-setup,body.ci-full #cfbCount{display:none!important}
+body.ci-full .ci-top{margin-bottom:14px}
+body.ci-full .side{top:84px}
+body.ci-full .board #regRows,body.ci-full .board #recentRows{max-height:calc(100vh - 330px)}
+body.ci-full .board .rr .c1 b{font-size:18px}
+@media (max-width:900px){
+  .ci .side{display:block}
+  .ci-prog{padding:10px 12px;gap:10px}.pg-main b{font-size:30px}.pg-main em{font-size:16px}.pg-c{min-width:64px;padding:4px 8px}.pg-c b{font-size:19px}
+  .board #regRows,.board #recentRows{max-height:65vh;min-height:160px}
+  .ci-top #ciFullBtn{display:none}
+}
+@media (max-width:560px){.board #regGroup{display:none}.pg-bar{flex-basis:100%;order:3}.pg-last{display:none}.ci-prog{gap:8px}.pg-main b{font-size:28px}}
+@media (max-width:900px){#v-checkin.on.ci-ready{display:flex;flex-direction:column}#v-checkin.ci-ready>.ci-setup{order:9;margin:14px 0 0}#v-checkin.ci-ready>.ci{order:2}#v-checkin.ci-ready>.ci-top{order:1}#v-checkin.ci-ready>.cifull-bar{order:0}.ci-setup{gap:8px}.stepnote{display:none}}
 @media (max-width:420px){.kpi b{font-size:22px}.inp.big{font-size:18px}}
 </style>
 </head>
@@ -548,15 +606,17 @@ dialog .foot .sp{flex:1}
 <main>
 <!-- ================= CHECK-IN ================= -->
 <section class="view on" id="v-checkin">
-  <div class="cifull-open"><button type="button" class="btn sm" id="ciFullBtn" title="Phóng to toàn màn hình: thêm khách, danh sách khách, số lượng">⛶ Phóng to</button></div>
   <div class="cifull-bar" id="ciFullBar">
     <div class="cfb-ev"><b id="cfbTitle">Checkin Khách Dự</b><small id="cfbSub"></small></div>
     <div class="cfb-count" id="cfbCount"></div>
     <div class="cfb-clock" id="cfbClock"></div>
     <button type="button" class="btn" id="ciFullExit" title="Thu nhỏ (Esc)">✕ Thu nhỏ</button>
   </div>
-  <div class="ci">
-    <form class="card ci-form" id="ciForm" autocomplete="off" onsubmit="return false">
+  <div class="ci-top">
+    <div class="ci-prog" id="ciProg"></div>
+    <button type="button" class="btn sm" id="ciFullBtn" title="Phóng to toàn màn hình khi đón khách (Esc để thu nhỏ)">⛶ Toàn màn hình</button>
+  </div>
+  <div class="ci-setup">
       <details class="orgbox" id="syncBox" hidden>
         <summary><span id="sySum"></span></summary>
         <div class="orgin" id="syBody"></div>
@@ -564,7 +624,6 @@ dialog .foot .sp{flex:1}
       <div class="autobar" id="autoBar" hidden></div>
       <div class="empty-note" id="noStore" hidden><b>⚠ Trình duyệt này không lưu được dữ liệu</b> — tải lại trang là mất danh sách checkin. Hãy mở file bằng Chrome hoặc Safari (không dùng chế độ ẩn danh / khung xem trước).</div>
       <div class="empty-note" id="noTvv" hidden>Chưa có danh sách TVV. Vẫn checkin được bằng cách gõ tên TVV, hoặc <a href="#" data-goto="settings">nhập danh sách TVV</a>.</div>
-
       <label class="filebar" id="fileBar">
         <input type="file" accept=".xls,.xlsx,.csv" id="fileGuest2" hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6m-3 3 3-3 3 3"/></svg>
@@ -581,6 +640,9 @@ dialog .foot .sp{flex:1}
           <div class="hint" id="orgHint"></div>
         </div>
       </details>
+  </div>
+  <div class="ci">
+    <form class="card ci-form" id="ciForm" autocomplete="off" onsubmit="return false">
       <p class="step"><i>1</i>Tư vấn viên mời khách</p>
       <div class="field">
         <div class="tvv-in">
@@ -597,33 +659,44 @@ dialog .foot .sp{flex:1}
         <input class="inp" id="fGroup" placeholder="Gõ hoặc chọn nhóm…">
         <div class="pick" id="pGroup" hidden></div>
       </div>
-
-      <p class="step"><i>2</i>Tên khách hàng</p>
+      <p class="step"><i>2</i>Tên khách hàng <span class="stepnote">· gõ tên, danh sách bên cạnh tự lọc theo</span></p>
       <div class="field">
         <input class="inp xl" id="fName" placeholder="Gõ tên khách hàng…" autocapitalize="words" autocomplete="off">
         <div class="pick" id="pName" hidden></div>
         <div class="hint" id="nameHint"></div>
       </div>
-      <div class="field">
-        <label class="lbl" for="fFee">Phí đăng ký tại HNKH <span class="count">(không bắt buộc)</span></label>
-        <input class="inp num" id="fFee" inputmode="decimal" placeholder="VD: 21">
-      </div>
       <details class="more" id="more">
-        <summary>Quà tặng · Ghi chú <span class="count">(không bắt buộc)</span></summary>
-        <label class="toggle" style="margin:10px 0 12px"><input type="checkbox" id="fGift"> Đã nhận quà</label>
+        <summary>Phí đăng ký · Quà tặng · Ghi chú <span class="count">(không bắt buộc)</span></summary>
+        <div class="field" style="margin:10px 0">
+          <label class="lbl" for="fFee">Phí đăng ký tại HNKH</label>
+          <input class="inp num" id="fFee" inputmode="decimal" placeholder="VD: 21">
+        </div>
+        <label class="toggle" style="margin:0 0 10px"><input type="checkbox" id="fGift"> Đã nhận quà</label>
         <input class="inp" id="fNote" placeholder="Ghi chú">
       </details>
       <button type="button" class="btn primary go" id="goBtn">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         <span id="goText">Checkin Khách Dự</span>
       </button>
-      <div class="regbox" id="regCard" hidden>
-        <div class="list-h">
-          <h3 id="regTitle">Danh sách khách <span class="gcount" id="regCount"></span></h3>
-          <select class="inp" id="regGroup"></select>
-          <button type="button" class="btn sm" id="regToggle">Hiện đủ</button>
+    </form>
+
+    <div class="side">
+      <div class="kpis" id="kpis" hidden></div>
+      <div class="card board" id="ciBoard">
+        <div class="btabs" role="tablist" aria-label="Danh sách khách">
+          <button type="button" role="tab" data-bt="wait" class="on"><span>⏳ Chờ đến</span><b class="num" id="btWait">0</b></button>
+          <button type="button" role="tab" data-bt="done"><span>✓ Đã đến</span><b class="num" id="btDone">0</b></button>
         </div>
-        <div class="cifilters">
+        <div class="bpane" id="bpWait">
+          <div class="bempty" id="regEmpty">Chưa có danh sách khách đăng ký.<br>Chọn file Excel ở khung phía trên, hoặc gõ tên khách mới ở ô bên trái.</div>
+          <div class="regbox" id="regCard" hidden>
+            <div class="list-h">
+              <input class="inp" id="regQ" type="search" placeholder="🔍 Tìm tên khách / TVV…" aria-label="Tìm trong danh sách chờ">
+              <select class="inp" id="regGroup" aria-label="Phạm vi danh sách"></select>
+              <button type="button" class="btn sm" id="regMoreBtn" aria-expanded="false" title="Lọc theo phòng, TVV, thông tin khách · xuất ảnh / Excel">⚙ Lọc · Xuất</button>
+            </div>
+            <div class="regsub"><span id="regTitle">Danh sách khách <span class="gcount" id="regCount"></span></span><button type="button" class="btn sm" id="regToggle" hidden>Hiện đủ</button></div>
+            <div class="cifilters" id="regFilters" hidden>
           <span class="lbl">Lọc:</span>
           <select class="inp" id="regPhongF" aria-label="Lọc theo phòng"></select>
           <select class="inp" id="regTvvF" aria-label="Lọc theo TVV"></select>
@@ -633,21 +706,17 @@ dialog .foot .sp{flex:1}
           <button type="button" class="btn sm" id="regImg" title="Xuất khách CHƯA checkin theo bộ lọc (khách đã đến xuất ở khung Vừa checkin)">🖼️ Xuất ảnh</button>
           <button type="button" class="btn sm" id="regXlsx" title="Xuất Excel khách CHƯA checkin theo bộ lọc">📄 Xuất Excel</button>
         </div>
-        <div id="regRows"></div>
-      </div>
-
-    </form>
-
-    <div class="side">
-      <div class="kpis" id="kpis"></div>
-      <div class="card">
-        <div class="list-h">
-          <h3>Vừa checkin</h3>
-          <input class="inp" id="recentFilter" placeholder="Lọc nhanh…">
-          <button type="button" class="btn sm" id="rcImg" title="Xuất ảnh khách đã đến dự (theo bộ lọc Nhóm/TVV/Thông tin và ô lọc nhanh)">🖼️ Xuất ảnh</button>
-          <button type="button" class="btn sm" id="rcXlsx" title="Xuất Excel khách đã đến dự (theo bộ lọc)">📄 Excel</button>
+            <div id="regRows"></div>
+          </div>
         </div>
-        <div class="rows" id="recentRows"></div>
+        <div class="bpane" id="bpDone" hidden>
+          <div class="list-h">
+            <input class="inp" id="recentFilter" type="search" placeholder="🔍 Lọc nhanh khách đã đến…">
+            <button type="button" class="btn sm" id="rcImg" title="Xuất ảnh khách đã đến dự (theo bộ lọc Nhóm/TVV/Thông tin và ô lọc nhanh)">🖼️ Ảnh</button>
+            <button type="button" class="btn sm" id="rcXlsx" title="Xuất Excel khách đã đến dự (theo bộ lọc)">📄 Excel</button>
+          </div>
+          <div class="rows" id="recentRows"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1096,6 +1165,7 @@ function nameHint(){const h=$('#nameHint'),tv=curTvv();
   if(!tv){const regs=dupInfo(F.name.value,null).reg;
     if(regs.length){h.innerHTML=`<span class="hok">✓ Có trong danh sách (TVV ${regs.map(g=>esc(g.tvvName)).join(', ')}) — bấm Checkin, không cần chọn TVV</span>`;$('#goText').textContent='Xác nhận đến dự';return}
     const att=dupInfo(F.name.value,null).att;if(att.length){h.innerHTML=`<span class="hw">⚠ “${esc(att[0].name)}” đã checkin lúc ${hm(att[0].at)}</span>`;$('#goText').textContent='Checkin Khách Dự';return}
+    {const qt=norm(F.name.value).split(' ').filter(Boolean),pm=S.guests.filter(g=>!g.attended&&qt.every(k=>(norm(g.name)+' '+norm(g.tvvName)).includes(k))).length;if(pm){h.innerHTML=`<span class="hok">👉 ${pm} khách chờ khớp — bấm <b>Đến dự</b> ở danh sách bên cạnh</span>`;$('#goText').textContent='Checkin Khách Dự';return}}
     h.innerHTML='<span class="hw">Khách không có trong danh sách — chọn TVV mời khách ở bước 1 để thêm khách mới</span>';$('#goText').textContent='Chọn TVV trước';return}
   const d=dupInfo(F.name.value,tv),L=[];let btn='Thêm khách mới · đến dự';
   d.att.forEach(g=>L.push(`<span class="hw">⚠ Trùng: “${esc(g.name)}” đã checkin lúc ${hm(g.at)} · TVV ${esc(g.tvvName)} ${tv?(d.mine(g)?'<b>(cùng TVV)</b>':'<b>(khác TVV)</b>'):''}</span>`));
@@ -1113,6 +1183,7 @@ function renderTvvGuests(){const tv=curTvv();const k=tv?keyTvv(tv):'';
 /* số thứ tự cố định theo thứ tự nhập file; khách mới nối tiếp */
 function ensureStt(){let mx=S.guests.reduce((m,g)=>Math.max(m,g.stt||0),0);S.guests.forEach(g=>{if(!g.stt)g.stt=++mx})}
 function renderRegList(){const card=$('#regCard');if(!card)return;
+  $('#btWait').textContent=S.guests.filter(g=>!g.attended).length;$('#regEmpty').hidden=!!S.guests.length;
   if(!S.guests.length){card.hidden=true;return}card.hidden=false;
   const tv=curTvv(),mine=g=>tv?sameTvv(g,tv):false;
   if(regMode==='tvv'&&!tv)regMode='all';
@@ -1134,12 +1205,15 @@ function renderRegList(){const card=$('#regCard');if(!card)return;
   ensureStt();list.sort((a,b)=>(mine(b)-mine(a))||(a.stt-b.stt));ciLastList=list;
   const n=list.filter(g=>g.attended).length;
   $('#regTitle').firstChild.textContent=regMode==='tvv'?'Khách TVV mời ':'Danh sách khách ';
-  $('#regCount').textContent=`đã đến ${n}/${list.length}`;
+  $('#regCount').textContent=`· đã đến ${n}/${list.length}`;
   /* Thu gọn = ẩn toàn bộ danh sách; Hiện = hiện đủ tất cả khách */
   /* khách đã checkin không hiện nữa — chỉ còn khách chưa đến, có số thứ tự */
-  const wait=list.filter(g=>!g.attended);
-  const open=!S.listCollapsed||document.body.classList.contains('ci-full'),show=open?wait:[];
-  $('#regToggle').textContent=open?'Thu gọn ▴':`Hiện ${wait.length} khách ▾`;$('#regToggle').hidden=false;$('#regRows').hidden=!open;
+  /* tìm nhanh: ô tìm trong bảng + tên đang gõ ở ô Tên khách hàng */
+  const qq=(norm($('#regQ').value)+' '+norm(F.name.value)).trim(),qt=qq?qq.split(' ').filter(Boolean):[];
+  let wait=list.filter(g=>!g.attended);const waitAll=wait.length;
+  if(qt.length)wait=wait.filter(g=>{const h=norm(g.name)+' '+norm(g.tvvName)+' '+norm(g.group);return qt.every(k=>h.includes(k))});
+  const open=true,show=wait;
+  $('#regToggle').textContent=open?'Thu gọn ▴':`Hiện ${wait.length} khách ▾`;$('#regToggle').hidden=true;$('#regRows').hidden=!open;
   $('#regRows').className='reg'+(open?' open':'');
   $('#regRows').innerHTML=wait.length?`<div class="rr head"><div class="c0">TT</div><div>Tên khách hàng</div><div>Tên TVV</div><div>Nhóm</div><div></div></div>`+show.map((g,i)=>
     `<div class="rr${g.attended?' in':''}${mine(g)&&regMode!=='tvv'?' me':''}${g.id===lastId?' new':''}"${g.attended?'':` data-ci="${g.id}" role="button" tabindex="0"`}>
@@ -1147,8 +1221,23 @@ function renderRegList(){const card=$('#regCard');if(!card)return;
       <div class="c2">${esc(g.tvvName||'—')}</div><div class="c3">${esc(g.group||'')}</div>
       <div class="c4">${g.attended?`<span class="tag ok">✓ ${hm(g.at)}</span><button type="button" class="mini" title="Sửa" data-ed="${g.id}">${PEN}</button>`:'<span class="cta">Đến dự</span>'}<button type="button" class="mini del" title="Xoá / huỷ checkin" data-del="${g.id}">${TRASH}</button></div></div>`).join('')+
     ''
-    :`<div class="none">${list.length?'✓ Tất cả khách trong phần này đã checkin.':(ciF.tvv||ciF.info)?'Không có khách theo bộ lọc này.':regMode==='tvv'?'TVV này chưa có khách trong danh sách — nhập tên khách mới ở ô bên dưới.':'Chưa có khách.'}</div>`}
+    :`<div class="none">${qt.length&&waitAll?`Không có khách chờ nào khớp “<b>${esc(($('#regQ').value+' '+F.name.value).trim())}</b>”.<br>Khách mới: chọn TVV rồi bấm <b>Checkin</b> để thêm.`:list.length?'✓ Tất cả khách trong phần này đã checkin.':(ciF.tvv||ciF.info)?'Không có khách theo bộ lọc này.':regMode==='tvv'?'TVV này chưa có khách trong danh sách — nhập tên khách mới ở ô bên dưới.':'Chưa có khách.'}</div>`}
 $('#regGroup').onchange=e=>{regMode=e.target.value;renderRegList()};
+/* ===== thanh tiến độ lớn + bảng Chờ đến / Đã đến ===== */
+function progHTML(){const T=totals(),wait=Math.max(0,T.reg-T.regIn),nm=T.att.filter(g=>!g.registered).length,pct=T.reg?Math.min(100,Math.round(T.regIn/T.reg*100)):0;
+  const last=[...T.att].sort((a,b)=>(b.at||'').localeCompare(a.at||''))[0];
+  return `<div class="pg-main"><small>Khách đã đến</small><b class="num">${T.n}${T.reg?`<em> / ${T.reg}</em>`:''}</b></div>
+  <div class="pg-bar">${T.reg?`<div class="pg-track"><i style="width:${pct}%"></i></div><span><b class="num">${pct}%</b> khách đăng ký đã đến</span>`:'<span>Chưa có danh sách đăng ký — khách gõ vào đều tính là đến dự</span>'}${last?`<span class="pg-last">Vừa đến: <b>${esc(last.name)}</b> · ${hm(last.at)}</span>`:''}</div>
+  <div class="pg-chips">${T.reg?`<span class="pg-c wait"><b class="num">${wait}</b><small>Chờ đến</small></span>`:''}<span class="pg-c"><b class="num">${nm}</b><small>Khách mới</small></span><span class="pg-c"><b class="num">${T.tvv}</b><small>TVV có khách</small></span>${T.fee?`<span class="pg-c"><b class="num">${fmt(T.fee)}</b><small>Phí ĐK</small></span>`:''}</div>`}
+let ciTab='wait';
+function setCiTab(t){ciTab=t;$$('#ciBoard .btabs button').forEach(b=>{const on=b.dataset.bt===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
+  $('#bpWait').hidden=t!=='wait';$('#bpDone').hidden=t!=='done';
+  if(t==='done'){const rr=$('#recentRows');if(rr&&!$('#recentFilter').value)rr.scrollTop=rr.scrollHeight}}
+$$('#ciBoard .btabs button').forEach(b=>b.onclick=()=>setCiTab(b.dataset.bt));
+$('#regQ').addEventListener('input',()=>renderRegList());
+$('#fName').addEventListener('input',()=>{if(ciTab!=='wait'&&F.name.value.trim())setCiTab('wait');renderRegList()});
+$('#regMoreBtn').onclick=()=>{const f=$('#regFilters'),o=f.hidden;f.hidden=!o;$('#regMoreBtn').setAttribute('aria-expanded',o);$('#regMoreBtn').classList.toggle('on',o)};
+
 $('#regToggle').onclick=()=>{S.listCollapsed=!S.listCollapsed;save();renderRegList()};
 /* ===== lọc + xuất danh sách khách bên Checkin ===== */
 var ciF={phong:'',tvv:'',info:''},ciLastList=[];
@@ -1335,7 +1424,8 @@ function clearNew(){[F.name,F.fee,F.note].forEach(el=>{el.value='';el.classList.
 function resetForm(){clearNew();selTvv=null;F.tvv.value='';F.group.value='';updateTvvUI()}
 document.addEventListener('click',e=>{const u=e.target.closest('[data-unci]');if(u){e.stopPropagation();uncheckGuest(u.dataset.unci);return}
   const d=e.target.closest('[data-del]');if(d){e.stopPropagation();removeGuest(d.dataset.del);return}
-  const c=e.target.closest('[data-ci]');if(c)checkinGuest(c.dataset.ci)},true);
+  const c=e.target.closest('[data-ci]');if(c){const g=S.guests.find(x=>x.id===c.dataset.ci);if(!g)return;
+    if(F.name.value.trim())pickRegistered(g);else checkinGuest(g.id);if($('#regQ').value){$('#regQ').value='';renderRegList()}}},true);
 /* xoá ở mục Vừa checkin = huỷ checkin, khách trở lại danh sách chờ */
 async function uncheckGuest(id){const g=S.guests.find(x=>x.id===id);if(!g||!g.attended)return;
   if(!await okAsk('Huỷ checkin',`Huỷ checkin <b>${esc(g.name)}</b> (TVV ${esc(g.tvvName||'—')}, đến lúc ${hm(g.at)})?<br>Khách sẽ trở lại danh sách chờ${g.stt?` ở số thứ tự <b>${g.stt}</b>`:''}.`,'Huỷ checkin, trả về danh sách'))return;
@@ -1379,7 +1469,7 @@ function guestRow(g,full,i){const st=g.attended?`<button class="status ok" data-
 function renderHeader(){if(typeof renderOrg==='function')renderOrg();if(typeof renderFileBar==='function')renderFileBar();const E=EV();$('#evTitle').textContent='Checkin Khách Dự'+(E.hn?' · '+E.hn:'')+(E.date?' · '+dmy(E.date):'');
   $('#evSub').textContent=E.org?'Đơn vị tổ chức: '+E.org:'Hội nghị khách hàng';
   document.title='BVL DTH Checkin';$('#noTvv').hidden=S.tvv.length>0}
-function renderCheckin(){try{ciFullRender()}catch(e){}$('#kpis').innerHTML=kpiHTML();const q=norm($('#recentFilter').value);
+function renderCheckin(){try{ciFullRender()}catch(e){}$('#ciProg').innerHTML=progHTML();$('#v-checkin').classList.toggle('ci-ready',S.guests.length>0&&!!S.event.phong);$('#btDone').textContent=S.guests.filter(g=>g.attended).length;const q=norm($('#recentFilter').value);
   /* xếp theo thứ tự đến: khách đến trước ở trên, số 1 ở đầu */
   let list=S.guests.filter(g=>g.attended).sort((a,b)=>(a.at||'').localeCompare(b.at||''));
   const ord=new Map(list.map((g,i)=>[g.id,i+1]));
