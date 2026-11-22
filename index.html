@@ -180,7 +180,7 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .orgbox summary{cursor:pointer;padding:10px 14px;display:flex;gap:10px;align-items:center;font-size:14px;list-style:none}
 .orgbox summary>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .orgbox summary::-webkit-details-marker{display:none}
-.orgbox summary .count{margin-left:auto;font-size:12.5px}
+.orgbox summary .count{margin-left:auto;font-size:12.5px;white-space:nowrap}
 .orgbox[open] summary .count{display:none}
 .orgin{padding:4px 14px 14px}
 .paper .plogo{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px}.paper .plogo img{height:42px;width:auto}
@@ -659,7 +659,7 @@ body.ci-full .board .rr .c1 b{font-size:18px}
         <input class="inp" id="fGroup" placeholder="Gõ hoặc chọn nhóm…">
         <div class="pick" id="pGroup" hidden></div>
       </div>
-      <p class="step"><i>2</i>Tên khách hàng <span class="stepnote">· gõ tên, danh sách bên cạnh tự lọc theo</span></p>
+      <p class="step"><i>2</i>Tên khách hàng</p>
       <div class="field">
         <input class="inp xl" id="fName" placeholder="Gõ tên khách hàng…" autocapitalize="words" autocomplete="off">
         <div class="pick" id="pName" hidden></div>
@@ -684,16 +684,16 @@ body.ci-full .board .rr .c1 b{font-size:18px}
       <div class="kpis" id="kpis" hidden></div>
       <div class="card board" id="ciBoard">
         <div class="btabs" role="tablist" aria-label="Danh sách khách">
-          <button type="button" role="tab" data-bt="wait" class="on"><span>⏳ Chờ đến</span><b class="num" id="btWait">0</b></button>
-          <button type="button" role="tab" data-bt="done"><span>✓ Đã đến</span><b class="num" id="btDone">0</b></button>
+          <button type="button" role="tab" data-bt="wait" class="on"><span>Chờ đến</span><b class="num" id="btWait">0</b></button>
+          <button type="button" role="tab" data-bt="done"><span>Đã đến</span><b class="num" id="btDone">0</b></button>
         </div>
         <div class="bpane" id="bpWait">
           <div class="bempty" id="regEmpty">Chưa có danh sách khách đăng ký.<br>Chọn file Excel ở khung phía trên, hoặc gõ tên khách mới ở ô bên trái.</div>
           <div class="regbox" id="regCard" hidden>
             <div class="list-h">
-              <input class="inp" id="regQ" type="search" placeholder="🔍 Tìm tên khách / TVV…" aria-label="Tìm trong danh sách chờ">
+              <input class="inp" id="regQ" type="search" placeholder="Tìm tên khách hoặc TVV…" aria-label="Tìm trong danh sách chờ">
               <select class="inp" id="regGroup" aria-label="Phạm vi danh sách"></select>
-              <button type="button" class="btn sm" id="regMoreBtn" aria-expanded="false" title="Lọc theo phòng, TVV, thông tin khách · xuất ảnh / Excel">⚙ Lọc · Xuất</button>
+              <button type="button" class="btn sm" id="regMoreBtn" aria-expanded="false" title="Lọc theo phòng, TVV, thông tin khách · xuất ảnh / Excel">Lọc · Xuất</button>
             </div>
             <div class="regsub"><span id="regTitle">Danh sách khách <span class="gcount" id="regCount"></span></span><button type="button" class="btn sm" id="regToggle" hidden>Hiện đủ</button></div>
             <div class="cifilters" id="regFilters" hidden>
@@ -711,7 +711,7 @@ body.ci-full .board .rr .c1 b{font-size:18px}
         </div>
         <div class="bpane" id="bpDone" hidden>
           <div class="list-h">
-            <input class="inp" id="recentFilter" type="search" placeholder="🔍 Lọc nhanh khách đã đến…">
+            <input class="inp" id="recentFilter" type="search" placeholder="Tìm khách đã đến…">
             <button type="button" class="btn sm" id="rcImg" title="Xuất ảnh khách đã đến dự (theo bộ lọc Nhóm/TVV/Thông tin và ô lọc nhanh)">🖼️ Ảnh</button>
             <button type="button" class="btn sm" id="rcXlsx" title="Xuất Excel khách đã đến dự (theo bộ lọc)">📄 Excel</button>
           </div>
@@ -1160,18 +1160,18 @@ function dupInfo(name,tv){const n=norm(name);const same=n?S.guests.filter(g=>nor
   return{att:same.filter(g=>g.attended),reg:same.filter(g=>!g.attended&&g.registered),mine}}
 function exactReg(name,tv){const d=dupInfo(name,tv);return d.reg.find(d.mine)||(d.reg.length===1&&!tv?d.reg[0]:null)}
 function nameHint(){const h=$('#nameHint'),tv=curTvv();
-  if(!norm(F.name.value)){h.innerHTML=S.guests.some(g=>g.registered)?'Khách có trong danh sách: gõ tên rồi chọn gợi ý là xong, không cần chọn TVV. Khách mới: chọn TVV ở bước 1.':'Chọn TVV ở bước 1, rồi gõ tên khách và bấm Checkin — khách được tính là đến dự.';
+  if(!norm(F.name.value)){h.innerHTML=S.guests.some(g=>g.registered)?'Gõ vài chữ của tên, rồi bấm <b>Đến dự</b> ở danh sách khách. Khách mới: chọn TVV ở bước 1.':'Chọn TVV ở bước 1, gõ tên khách rồi bấm Checkin.';
     $('#goText').textContent='Checkin Khách Dự';return}
   if(!tv){const regs=dupInfo(F.name.value,null).reg;
     if(regs.length){h.innerHTML=`<span class="hok">✓ Có trong danh sách (TVV ${regs.map(g=>esc(g.tvvName)).join(', ')}) — bấm Checkin, không cần chọn TVV</span>`;$('#goText').textContent='Xác nhận đến dự';return}
     const att=dupInfo(F.name.value,null).att;if(att.length){h.innerHTML=`<span class="hw">⚠ “${esc(att[0].name)}” đã checkin lúc ${hm(att[0].at)}</span>`;$('#goText').textContent='Checkin Khách Dự';return}
-    {const qt=norm(F.name.value).split(' ').filter(Boolean),pm=S.guests.filter(g=>!g.attended&&qt.every(k=>(norm(g.name)+' '+norm(g.tvvName)).includes(k))).length;if(pm){h.innerHTML=`<span class="hok">👉 ${pm} khách chờ khớp — bấm <b>Đến dự</b> ở danh sách bên cạnh</span>`;$('#goText').textContent='Checkin Khách Dự';return}}
-    h.innerHTML='<span class="hw">Khách không có trong danh sách — chọn TVV mời khách ở bước 1 để thêm khách mới</span>';$('#goText').textContent='Chọn TVV trước';return}
+    {const qt=norm(F.name.value).split(' ').filter(Boolean),pm=S.guests.filter(g=>!g.attended&&qt.every(k=>(norm(g.name)+' '+norm(g.tvvName)).includes(k))).length;if(pm){h.innerHTML=`<span class="hok">${pm} khách khớp tên — bấm <b>Đến dự</b> ở danh sách khách</span>`;$('#goText').textContent='Checkin Khách Dự';return}}
+    h.innerHTML='<span class="hw">Không có trong danh sách. Khách mới: chọn TVV ở bước 1.</span>';$('#goText').textContent='Chọn TVV trước';return}
   const d=dupInfo(F.name.value,tv),L=[];let btn='Thêm khách mới · đến dự';
   d.att.forEach(g=>L.push(`<span class="hw">⚠ Trùng: “${esc(g.name)}” đã checkin lúc ${hm(g.at)} · TVV ${esc(g.tvvName)} ${tv?(d.mine(g)?'<b>(cùng TVV)</b>':'<b>(khác TVV)</b>'):''}</span>`));
   d.reg.forEach(g=>{if(d.mine(g)){L.push(`<span class="hok">✓ Có trong danh sách, đúng TVV ${esc(g.tvvName)} — bấm để xác nhận đến dự</span>`);btn='Xác nhận đến dự'}
     else{L.push(`<span class="hw">⚠ Trùng tên trong danh sách của TVV ${esc(g.tvvName)}${tv?` — <b>khác TVV đang chọn (${esc(tv.tvvName)})</b>`:''}</span>`);if(btn!=='Xác nhận đến dự')btn='Kiểm tra trùng'}});
-  if(!L.length)L.push('<span class="hnew">+ Khách mới, không có trong danh sách — sẽ được tính là đến dự</span>');
+  if(!L.length)L.push('<span class="hnew">Khách mới, sẽ được tính là đến dự</span>');
   h.innerHTML=L.join('<br>');$('#goText').textContent=btn}
 
 const TRASH='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>';
@@ -1205,7 +1205,7 @@ function renderRegList(){const card=$('#regCard');if(!card)return;
   ensureStt();list.sort((a,b)=>(mine(b)-mine(a))||(a.stt-b.stt));ciLastList=list;
   const n=list.filter(g=>g.attended).length;
   $('#regTitle').firstChild.textContent=regMode==='tvv'?'Khách TVV mời ':'Danh sách khách ';
-  $('#regCount').textContent=`· đã đến ${n}/${list.length}`;
+  $('#regCount').textContent=`· đã đến ${n}/${list.length}`;$('.regsub').hidden=list.length===S.guests.length;
   /* Thu gọn = ẩn toàn bộ danh sách; Hiện = hiện đủ tất cả khách */
   /* khách đã checkin không hiện nữa — chỉ còn khách chưa đến, có số thứ tự */
   /* tìm nhanh: ô tìm trong bảng + tên đang gõ ở ô Tên khách hàng */
@@ -1224,11 +1224,11 @@ function renderRegList(){const card=$('#regCard');if(!card)return;
     :`<div class="none">${qt.length&&waitAll?`Không có khách chờ nào khớp “<b>${esc(($('#regQ').value+' '+F.name.value).trim())}</b>”.<br>Khách mới: chọn TVV rồi bấm <b>Checkin</b> để thêm.`:list.length?'✓ Tất cả khách trong phần này đã checkin.':(ciF.tvv||ciF.info)?'Không có khách theo bộ lọc này.':regMode==='tvv'?'TVV này chưa có khách trong danh sách — nhập tên khách mới ở ô bên dưới.':'Chưa có khách.'}</div>`}
 $('#regGroup').onchange=e=>{regMode=e.target.value;renderRegList()};
 /* ===== thanh tiến độ lớn + bảng Chờ đến / Đã đến ===== */
-function progHTML(){const T=totals(),wait=Math.max(0,T.reg-T.regIn),nm=T.att.filter(g=>!g.registered).length,pct=T.reg?Math.min(100,Math.round(T.regIn/T.reg*100)):0;
+function progHTML(){const T=totals(),nm=T.att.filter(g=>!g.registered).length,pct=T.reg?Math.min(100,Math.round(T.regIn/T.reg*100)):0;
   const last=[...T.att].sort((a,b)=>(b.at||'').localeCompare(a.at||''))[0];
   return `<div class="pg-main"><small>Khách đã đến</small><b class="num">${T.n}${T.reg?`<em> / ${T.reg}</em>`:''}</b></div>
-  <div class="pg-bar">${T.reg?`<div class="pg-track"><i style="width:${pct}%"></i></div><span><b class="num">${pct}%</b> khách đăng ký đã đến</span>`:'<span>Chưa có danh sách đăng ký — khách gõ vào đều tính là đến dự</span>'}${last?`<span class="pg-last">Vừa đến: <b>${esc(last.name)}</b> · ${hm(last.at)}</span>`:''}</div>
-  <div class="pg-chips">${T.reg?`<span class="pg-c wait"><b class="num">${wait}</b><small>Chờ đến</small></span>`:''}<span class="pg-c"><b class="num">${nm}</b><small>Khách mới</small></span><span class="pg-c"><b class="num">${T.tvv}</b><small>TVV có khách</small></span>${T.fee?`<span class="pg-c"><b class="num">${fmt(T.fee)}</b><small>Phí ĐK</small></span>`:''}</div>`}
+  <div class="pg-bar">${T.reg?`<div class="pg-track"><i style="width:${pct}%"></i></div><span><b class="num">${pct}%</b> khách đăng ký đã đến</span>`:'<span>Chưa có danh sách đăng ký</span>'}${last?`<span class="pg-last">Vừa đến: <b>${esc(last.name)}</b> · ${hm(last.at)}</span>`:''}</div>
+  <div class="pg-chips"><span class="pg-c"><b class="num">${nm}</b><small>Khách mới</small></span><span class="pg-c"><b class="num">${T.tvv}</b><small>TVV có khách</small></span>${T.fee?`<span class="pg-c"><b class="num">${fmt(T.fee)}</b><small>Phí ĐK</small></span>`:''}</div>`}
 let ciTab='wait';
 function setCiTab(t){ciTab=t;$$('#ciBoard .btabs button').forEach(b=>{const on=b.dataset.bt===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
   $('#bpWait').hidden=t!=='wait';$('#bpDone').hidden=t!=='done';
