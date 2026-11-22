@@ -22,7 +22,7 @@
   --danger:#C8432F;--danger-soft:#FCE6E1;--info:#2B8AA8;--info-soft:#E3F5FA;
   --shadow:0 1px 2px rgba(120,70,40,.06),0 8px 24px rgba(160,90,50,.08);
   --r:18px;--paper:#fff;--paper-ink:#111;
-  --hdr:linear-gradient(115deg,#FFA883 0%,#FFBE9C 55%,#FDE3C8 100%);--hdr-ink:#3B2216;
+  --hdr:#FFBE9C;--hdr-ink:#3B2216;
   --hero:linear-gradient(135deg,#6FC7E1 0%,#A6DDEE 100%);--hero-ink:#0E3644;
   --font:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
 }
@@ -32,7 +32,7 @@
   --accent:#6FC7E1;--accent-soft:#3D2E17;--ok:#5FD3A0;--ok-soft:#173528;--warn:#F2B064;--warn-soft:#3D2E17;
   --danger:#FF8A78;--danger-soft:#43211B;--info:#8ED6EB;--info-soft:#16323B;
   --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
-  --hdr:linear-gradient(115deg,#5A3626 0%,#3E2A20 60%,#2C221C 100%);--hdr-ink:#FDE3C8;
+  --hdr:#3E2A20;--hdr-ink:#FDE3C8;
   --hero:linear-gradient(135deg,#2E7F98 0%,#1F5A6C 100%);--hero-ink:#E8F8FC;color-scheme:dark;
 }}
 :root[data-theme="dark"]{
@@ -41,19 +41,19 @@
   --accent:#6FC7E1;--accent-soft:#3D2E17;--ok:#5FD3A0;--ok-soft:#173528;--warn:#F2B064;--warn-soft:#3D2E17;
   --danger:#FF8A78;--danger-soft:#43211B;--info:#8ED6EB;--info-soft:#16323B;
   --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
-  --hdr:linear-gradient(115deg,#5A3626 0%,#3E2A20 60%,#2C221C 100%);--hdr-ink:#FDE3C8;
+  --hdr:#3E2A20;--hdr-ink:#FDE3C8;
   --hero:linear-gradient(135deg,#2E7F98 0%,#1F5A6C 100%);--hero-ink:#E8F8FC;color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased;background-image:radial-gradient(1200px 500px at 100% -10%,color-mix(in srgb,var(--cream-peach) 55%,transparent),transparent 60%),radial-gradient(900px 400px at -10% 110%,color-mix(in srgb,var(--sky) 14%,transparent),transparent 60%);background-attachment:fixed}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 [hidden]{display:none!important}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- top bar ---------- */
-.top{position:sticky;top:0;z-index:20;background:var(--hdr);color:var(--hdr-ink);box-shadow:0 2px 18px rgba(200,110,60,.18);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:14px}
+.top{position:sticky;top:0;z-index:20;background:var(--hdr);color:var(--hdr-ink);box-shadow:0 1px 0 rgba(0,0,0,.06);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:14px}
 .logo{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.55);color:var(--brand-2);display:grid;place-items:center;flex:none}
 .ev{min-width:0;flex:1}
 .ev b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -80,7 +80,7 @@ h2{font-size:20px;margin:0 0 4px}
 /* ---------- checkin ---------- */
 .ci{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
 .ci-form{padding:20px}
-.step{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.step{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted);margin:0 0 8px;display:flex;align-items:center;gap:8px}
 .step i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:11px}
 .field{position:relative;margin-bottom:16px}
 .inp{width:100%;border:1.5px solid var(--line);background:var(--surface-2);border-radius:11px;padding:11px 13px;outline:none;transition:border-color .15s,box-shadow .15s}
@@ -113,9 +113,9 @@ button.chip:hover{border-color:var(--brand);color:var(--brand)}
 .lbl{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:10px 16px;font-weight:600}
 .btn:hover{border-color:var(--brand);color:var(--brand)}
-.btn.primary{background:linear-gradient(135deg,var(--peach),var(--peach-2));border-color:transparent;color:var(--on-brand);box-shadow:0 4px 14px rgba(255,140,100,.32)}
-.btn.primary:hover{filter:brightness(1.04) saturate(1.05);color:var(--on-brand);transform:translateY(-1px)}
-.btn{transition:transform .12s,box-shadow .12s,filter .12s}
+.btn.primary{background:var(--peach);border-color:transparent;color:var(--on-brand);box-shadow:none}
+.btn.primary:hover{background:var(--peach-2);color:var(--on-brand)}.btn:active{transform:scale(.98)}
+.btn{transition:background-color .15s cubic-bezier(.22,1,.36,1),border-color .15s cubic-bezier(.22,1,.36,1),transform .12s cubic-bezier(.22,1,.36,1)}
 .btn.danger{color:var(--danger)}
 .btn.danger:hover{border-color:var(--danger)}
 .btn.sm{padding:6px 11px;font-size:13px;border-radius:9px}
@@ -237,9 +237,9 @@ td.up{color:var(--ok);font-weight:700}
 @media (prefers-reduced-motion:reduce){.dcol .b{transition:none}}
 .modebar{max-width:1280px;margin:14px auto 0;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modebar button{display:flex;flex-direction:row;align-items:center;gap:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:18px;padding:12px 18px;text-align:left;font-size:15px;box-shadow:var(--shadow);transition:transform .12s,border-color .12s}
-.modebar button b{display:block;font-size:17px;letter-spacing:.04em}.modebar button small{display:block}.modebar .mi{font-size:24px;line-height:1}.modebar button small{color:var(--muted);font-size:12.5px}
+.modebar button b{display:block;font-size:17px;letter-spacing:0;font-weight:600}.modebar button small{display:block}.modebar .mi{font-size:24px;line-height:1}.modebar button small{color:var(--muted);font-size:12.5px}
 .modebar button:hover{border-color:var(--peach)}
-.modebar button.on{background:linear-gradient(135deg,var(--peach),var(--peach-2));border-color:transparent;color:var(--on-brand)}.modebar button.on small{color:var(--on-brand);opacity:.8}
+.modebar button.on{background:var(--peach);border-color:transparent;color:var(--on-brand)}.modebar button.on small{color:var(--on-brand);opacity:.8}
 .modebar button[data-mode=dangky].on{background:var(--hero);color:var(--hero-ink)}.modebar button[data-mode=dangky].on small{color:var(--hero-ink)}
 @media (max-width:900px){.modebar{margin-top:10px;gap:8px}.modebar button{padding:9px 12px}.modebar button b{font-size:14.5px}.modebar button small{display:none}}
 .grid2>*{min-width:0}
@@ -346,7 +346,7 @@ body.ci-full header.top,body.ci-full #modebar,body.ci-full #bnav,body.ci-full .c
 body.ci-full #syncBox,body.ci-full #autoBar,body.ci-full #fileBar,body.ci-full #orgBox,body.ci-full #noStore,body.ci-full #noTvv{display:none!important}
 body.ci-full #v-checkin{display:block!important;position:fixed;inset:0;z-index:45;overflow:auto;background:var(--bg);padding:12px 18px calc(18px + env(safe-area-inset-bottom));animation:none}
 body.ci-full .cifull-bar{display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:sticky;top:-12px;z-index:5;margin:-12px -18px 14px;padding:12px 18px;
-  background:var(--hdr,linear-gradient(115deg,#FFB896,#F28A5E));color:var(--hdr-ink,#3B2216);box-shadow:0 6px 20px rgba(120,60,30,.18)}
+  background:var(--hdr,linear-gradient(115deg,#FFB896,#F28A5E));color:var(--hdr-ink,#3B2216);box-shadow:0 1px 0 rgba(0,0,0,.08)}
 .cfb-ev{flex:1 1 260px;min-width:0}.cfb-ev b{display:block;font-size:22px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cfb-ev small{opacity:.8;font-size:14px}
 .cfb-count{display:flex;gap:10px;flex-wrap:wrap}
 .cfb-count span{display:flex;flex-direction:column;align-items:center;min-width:96px;padding:6px 14px;border-radius:16px;background:rgba(255,255,255,.55)}
@@ -518,21 +518,34 @@ dialog .foot .sp{flex:1}
 }
 
 #v-checkin [hidden]{display:none!important}
+/* unslop (2026-11-23): biểu tượng nét mảnh, màu đặc cho thanh tiến độ */
+.ic{width:16px;height:16px;flex:none;vertical-align:-3px}
+.btn .ic{margin-right:-2px}
+.modebar .mi .ic{width:20px;height:20px}
+.modebar .mi{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--surface-2);color:var(--muted)}
+.modebar button.on .mi{background:rgba(255,255,255,.35);color:var(--on-brand)}
+#sySum .ic{margin-right:8px;color:var(--muted)}
+.pg-last .ic{width:14px;height:14px;margin-right:4px;vertical-align:-2px}
+.bt-ok{display:inline-flex;color:var(--ok)}
+.btabs button:not(.on) .bt-ok{color:var(--muted)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--prog:#1F5A6C}}
+:root[data-theme="dark"]{--prog:#1F5A6C}
+
 /* ===== Checkin gọn (2026-11-17): tiến độ lớn · thiết lập 1 hàng · bảng Chờ đến / Đã đến ===== */
 .ci-top{display:flex;gap:12px;align-items:stretch;margin:0 0 12px}
 .ci-top #ciFullBtn{flex:none;align-self:center}
-.ci-prog{flex:1;min-width:0;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--hero);color:var(--hero-ink);border-radius:var(--r);padding:12px 18px;box-shadow:0 8px 24px rgba(80,170,200,.22)}
+.ci-prog{flex:1;min-width:0;display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:var(--prog,#6FC7E1);color:var(--hero-ink);border-radius:16px;padding:12px 20px;box-shadow:none}
 .pg-main small{display:block;font-size:12.5px;font-weight:600;opacity:.85}
-.pg-main b{font-size:40px;line-height:1;letter-spacing:-.02em}.pg-main em{font-style:normal;font-size:20px;font-weight:600;opacity:.75}
-.pg-bar{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.pg-main b{font-weight:600;font-size:40px;line-height:1;letter-spacing:-.02em}.pg-main em{font-style:normal;font-size:20px;font-weight:600;opacity:.75}
+.pg-bar{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:4px;font-size:13px}
 .pg-track{height:12px;border-radius:9px;background:rgba(255,255,255,.35);overflow:hidden}
 .pg-track i{display:block;height:100%;background:#fff;border-radius:9px;transition:width .5s}
 .pg-last{opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pg-chips{display:flex;gap:8px;flex-wrap:wrap}
-.pg-c{display:flex;flex-direction:column;align-items:center;min-width:78px;padding:6px 10px;border-radius:14px;background:rgba(255,255,255,.4)}
-.pg-c b{font-size:24px;line-height:1.05}.pg-c small{font-size:11.5px;font-weight:600;opacity:.85;white-space:nowrap}
+.pg-c{display:flex;flex-direction:column;align-items:center;min-width:80px;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,.4)}
+.pg-c b{font-size:24px;line-height:1.05;font-weight:600}.pg-c small{font-size:11.5px;font-weight:600;opacity:.85;white-space:nowrap}
 .pg-c.wait{background:rgba(255,255,255,.75);color:#9A3B16}
-.ci-setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:14px}
+.ci-setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px}
 .ci-setup:not(:has(>:not([hidden]))){display:none}
 .ci-setup>*{margin:0!important;min-width:0}
 .ci-setup>.autobar,.ci-setup>.empty-note,.ci-setup>#syncBox[open],.ci-setup>#orgBox[open]{grid-column:1/-1}
@@ -541,8 +554,8 @@ dialog .foot .sp{flex:1}
 .ci-form .btn.go{width:100%}
 .board{overflow:hidden;display:flex;flex-direction:column}
 .btabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);background:var(--surface-2)}
-.btabs button{border:0;background:transparent;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 10px;font-weight:700;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
-.btabs button b{font-size:22px;line-height:1}
+.btabs button{border:0;background:transparent;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;font-weight:600;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.btabs button b{font-size:22px;line-height:1;font-weight:600}
 .btabs button.on{color:var(--ink);background:var(--surface);border-bottom-color:var(--peach)}
 .btabs button[data-bt="wait"].on b{color:var(--brand)}.btabs button[data-bt="done"].on b{color:var(--ok)}
 .bempty{padding:36px 18px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
@@ -551,15 +564,15 @@ dialog .foot .sp{flex:1}
 .board #regQ{flex:1;max-width:none;min-width:0}
 .board #regGroup{max-width:180px;flex:0 1 180px}
 #regMoreBtn{flex:none}#regMoreBtn.on{border-color:var(--peach);background:var(--cream-peach);color:var(--on-brand)}
-.regsub{display:flex;align-items:center;gap:8px;padding:6px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.regsub{display:flex;align-items:center;gap:8px;padding:4px 16px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line)}
 .regsub #regTitle{font-weight:600}
 .board .cifilters{padding:8px 12px;margin:0;border-bottom:1px solid var(--line);background:var(--surface-2)}
 .board #regRows,.board #recentRows{max-height:calc(100vh - 300px);min-height:260px;overflow:auto}
-.board .rr{grid-template-columns:30px minmax(0,1fr) auto;padding:11px 14px}
+.board .rr{grid-template-columns:32px minmax(0,1fr) auto;padding:12px 16px;min-height:64px}
 .board .rr .c2,.board .rr .c3,.board .rr.head{display:none}
-.board .rr .c1 b{font-size:16px}.board .rr .c1 small{display:block}
-.board .rr .cta{font-size:14px;padding:8px 14px}
-.board .bpane .list-h{padding:10px 12px}
+.board .rr .c1 b{font-size:16px;font-weight:500}.board .rr .c1 small{display:block}
+.board .rr .cta{font-size:14px;font-weight:600;padding:8px 16px;border-radius:8px}
+.board .bpane .list-h{padding:12px}
 .board #recentFilter{flex:1;max-width:none;min-width:0}
 body.ci-full .ci-top #ciFullBtn,body.ci-full .ci-setup,body.ci-full #cfbCount{display:none!important}
 body.ci-full .ci-top{margin-bottom:14px}
@@ -600,8 +613,8 @@ body.ci-full .board .rr .c1 b{font-size:18px}
 </header>
 
 <div class="modebar" id="modebar" role="tablist" aria-label="Chọn phần làm việc">
-  <button type="button" data-mode="checkin" class="on"><span class="mi" aria-hidden="true">🎫</span><span><b>CHECKIN</b><small>Đón khách tại hội nghị</small></span></button>
-  <button type="button" data-mode="dangky"><span class="mi" aria-hidden="true">📝</span><span><b>ĐĂNG KÝ</b><small>Thư ký theo dõi trước hội nghị</small></span></button>
+  <button type="button" data-mode="checkin" class="on"><span class="mi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></span><span><b>Checkin</b><small>Đón khách tại hội nghị</small></span></button>
+  <button type="button" data-mode="dangky"><span class="mi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span><span><b>Đăng ký</b><small>Thư ký theo dõi trước hội nghị</small></span></button>
 </div>
 <main>
 <!-- ================= CHECK-IN ================= -->
@@ -610,11 +623,11 @@ body.ci-full .board .rr .c1 b{font-size:18px}
     <div class="cfb-ev"><b id="cfbTitle">Checkin Khách Dự</b><small id="cfbSub"></small></div>
     <div class="cfb-count" id="cfbCount"></div>
     <div class="cfb-clock" id="cfbClock"></div>
-    <button type="button" class="btn" id="ciFullExit" title="Thu nhỏ (Esc)">✕ Thu nhỏ</button>
+    <button type="button" class="btn" id="ciFullExit" title="Thu nhỏ (Esc)">Thu nhỏ</button>
   </div>
   <div class="ci-top">
     <div class="ci-prog" id="ciProg"></div>
-    <button type="button" class="btn sm" id="ciFullBtn" title="Phóng to toàn màn hình khi đón khách (Esc để thu nhỏ)">⛶ Toàn màn hình</button>
+    <button type="button" class="btn sm" id="ciFullBtn" title="Phóng to toàn màn hình khi đón khách (Esc để thu nhỏ)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>Toàn màn hình</button>
   </div>
   <div class="ci-setup">
       <details class="orgbox" id="syncBox" hidden>
@@ -622,7 +635,7 @@ body.ci-full .board .rr .c1 b{font-size:18px}
         <div class="orgin" id="syBody"></div>
       </details>
       <div class="autobar" id="autoBar" hidden></div>
-      <div class="empty-note" id="noStore" hidden><b>⚠ Trình duyệt này không lưu được dữ liệu</b> — tải lại trang là mất danh sách checkin. Hãy mở file bằng Chrome hoặc Safari (không dùng chế độ ẩn danh / khung xem trước).</div>
+      <div class="empty-note" id="noStore" hidden><b>Trình duyệt này không lưu được dữ liệu</b> — tải lại trang là mất danh sách checkin. Hãy mở file bằng Chrome hoặc Safari (không dùng chế độ ẩn danh / khung xem trước).</div>
       <div class="empty-note" id="noTvv" hidden>Chưa có danh sách TVV. Vẫn checkin được bằng cách gõ tên TVV, hoặc <a href="#" data-goto="settings">nhập danh sách TVV</a>.</div>
       <label class="filebar" id="fileBar">
         <input type="file" accept=".xls,.xlsx,.csv" id="fileGuest2" hidden>
@@ -666,7 +679,7 @@ body.ci-full .board .rr .c1 b{font-size:18px}
         <div class="hint" id="nameHint"></div>
       </div>
       <details class="more" id="more">
-        <summary>Phí đăng ký · Quà tặng · Ghi chú <span class="count">(không bắt buộc)</span></summary>
+        <summary>Thêm phí, quà, ghi chú</summary>
         <div class="field" style="margin:10px 0">
           <label class="lbl" for="fFee">Phí đăng ký tại HNKH</label>
           <input class="inp num" id="fFee" inputmode="decimal" placeholder="VD: 21">
@@ -685,7 +698,7 @@ body.ci-full .board .rr .c1 b{font-size:18px}
       <div class="card board" id="ciBoard">
         <div class="btabs" role="tablist" aria-label="Danh sách khách">
           <button type="button" role="tab" data-bt="wait" class="on"><span>Chờ đến</span><b class="num" id="btWait">0</b></button>
-          <button type="button" role="tab" data-bt="done"><span>Đã đến</span><b class="num" id="btDone">0</b></button>
+          <button type="button" role="tab" data-bt="done"><span class="bt-ok"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span>Đã đến</span><b class="num" id="btDone">0</b></button>
         </div>
         <div class="bpane" id="bpWait">
           <div class="bempty" id="regEmpty">Chưa có danh sách khách đăng ký.<br>Chọn file Excel ở khung phía trên, hoặc gõ tên khách mới ở ô bên trái.</div>
@@ -693,7 +706,7 @@ body.ci-full .board .rr .c1 b{font-size:18px}
             <div class="list-h">
               <input class="inp" id="regQ" type="search" placeholder="Tìm tên khách hoặc TVV…" aria-label="Tìm trong danh sách chờ">
               <select class="inp" id="regGroup" aria-label="Phạm vi danh sách"></select>
-              <button type="button" class="btn sm" id="regMoreBtn" aria-expanded="false" title="Lọc theo phòng, TVV, thông tin khách · xuất ảnh / Excel">Lọc · Xuất</button>
+              <button type="button" class="btn sm" id="regMoreBtn" aria-expanded="false" title="Lọc theo phòng, TVV, thông tin khách · xuất ảnh / Excel"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>Lọc · Xuất</button>
             </div>
             <div class="regsub"><span id="regTitle">Danh sách khách <span class="gcount" id="regCount"></span></span><button type="button" class="btn sm" id="regToggle" hidden>Hiện đủ</button></div>
             <div class="cifilters" id="regFilters" hidden>
@@ -703,8 +716,8 @@ body.ci-full .board .rr .c1 b{font-size:18px}
           <select class="inp" id="regInfoF" aria-label="Lọc theo thông tin khách"><option value="">Thông tin KH: tất cả</option><option value="co">Có thông tin</option><option value="chua">Chưa có thông tin</option></select>
           <button type="button" class="btn sm" id="regClrF" hidden>✕ Xoá lọc</button>
           <span class="sp"></span>
-          <button type="button" class="btn sm" id="regImg" title="Xuất khách CHƯA checkin theo bộ lọc (khách đã đến xuất ở khung Vừa checkin)">🖼️ Xuất ảnh</button>
-          <button type="button" class="btn sm" id="regXlsx" title="Xuất Excel khách CHƯA checkin theo bộ lọc">📄 Xuất Excel</button>
+          <button type="button" class="btn sm" id="regImg" title="Xuất ảnh khách chưa checkin theo bộ lọc"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Ảnh</button>
+          <button type="button" class="btn sm" id="regXlsx" title="Xuất Excel khách chưa checkin theo bộ lọc"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>Excel</button>
         </div>
             <div id="regRows"></div>
           </div>
@@ -712,8 +725,8 @@ body.ci-full .board .rr .c1 b{font-size:18px}
         <div class="bpane" id="bpDone" hidden>
           <div class="list-h">
             <input class="inp" id="recentFilter" type="search" placeholder="Tìm khách đã đến…">
-            <button type="button" class="btn sm" id="rcImg" title="Xuất ảnh khách đã đến dự (theo bộ lọc Nhóm/TVV/Thông tin và ô lọc nhanh)">🖼️ Ảnh</button>
-            <button type="button" class="btn sm" id="rcXlsx" title="Xuất Excel khách đã đến dự (theo bộ lọc)">📄 Excel</button>
+            <button type="button" class="btn sm" id="rcImg" title="Xuất ảnh khách đã đến dự (theo bộ lọc Nhóm/TVV/Thông tin và ô lọc nhanh)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Ảnh</button>
+            <button type="button" class="btn sm" id="rcXlsx" title="Xuất Excel khách đã đến dự (theo bộ lọc)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>Excel</button>
           </div>
           <div class="rows" id="recentRows"></div>
         </div>
@@ -1023,7 +1036,7 @@ function renderOrg(){const e=S.event;
   $('#kvSel').innerHTML=e.phong?PHONG[e.phong].map(x=>`<button type="button" class="chip${e.khuVuc===x?' solid':''}" data-kv="${esc(x)}" aria-pressed="${e.khuVuc===x}">${e.khuVuc===x?'✓ ':''}${esc(x)}</button>`).join(''):'<span class="count">Chọn phòng trước</span>';
   $('#orgHint').innerHTML=e.phong?`Ghi trên báo cáo: <b>HNKH do Ban/nhóm/Phòng PTKD tổ chức: ${esc(orgText(e))}</b>`:'';
   const hn=String(e.tenHN||'').trim();if(document.activeElement!==$('#tenHN'))$('#tenHN').value=e.tenHN||'';
-  $('#orgSum').innerHTML=(hn?`📋 <b>${esc(hn)}</b> · `:'')+(e.phong?`🏢 <b>${esc(orgText(e))}</b>`:'<span style="color:var(--warn)">⚠ Nhập thông tin Hội Nghị</span>')+(e.khuVuc?` · 📍 ${esc(e.khuVuc)}`:'')}
+  $('#orgSum').innerHTML=(hn?`<b>${esc(hn)}</b> · `:'')+(e.phong?`${esc(orgText(e))}`:'<span style="color:var(--warn)">Chưa nhập thông tin hội nghị</span>')+(e.khuVuc?` · ${esc(e.khuVuc)}`:'')}
 $('#tenHN').addEventListener('input',e=>{S.event.tenHN=e.target.value;save();renderHeader();if(view==='report')renderReport()});
 document.addEventListener('click',ev=>{const p=ev.target.closest('#phongSeg [data-p]'),k=ev.target.closest('#kvSel [data-kv]');
   if(p){const v=p.dataset.p;if(S.event.phong!==v){S.event.phong=v;S.event.khuVuc=''}}else if(k){S.event.khuVuc=S.event.khuVuc===k.dataset.kv?'':k.dataset.kv}else return;
@@ -1163,14 +1176,14 @@ function nameHint(){const h=$('#nameHint'),tv=curTvv();
   if(!norm(F.name.value)){h.innerHTML=S.guests.some(g=>g.registered)?'Gõ vài chữ của tên, rồi bấm <b>Đến dự</b> ở danh sách khách. Khách mới: chọn TVV ở bước 1.':'Chọn TVV ở bước 1, gõ tên khách rồi bấm Checkin.';
     $('#goText').textContent='Checkin Khách Dự';return}
   if(!tv){const regs=dupInfo(F.name.value,null).reg;
-    if(regs.length){h.innerHTML=`<span class="hok">✓ Có trong danh sách (TVV ${regs.map(g=>esc(g.tvvName)).join(', ')}) — bấm Checkin, không cần chọn TVV</span>`;$('#goText').textContent='Xác nhận đến dự';return}
-    const att=dupInfo(F.name.value,null).att;if(att.length){h.innerHTML=`<span class="hw">⚠ “${esc(att[0].name)}” đã checkin lúc ${hm(att[0].at)}</span>`;$('#goText').textContent='Checkin Khách Dự';return}
-    {const qt=norm(F.name.value).split(' ').filter(Boolean),pm=S.guests.filter(g=>!g.attended&&qt.every(k=>(norm(g.name)+' '+norm(g.tvvName)).includes(k))).length;if(pm){h.innerHTML=`<span class="hok">${pm} khách khớp tên — bấm <b>Đến dự</b> ở danh sách khách</span>`;$('#goText').textContent='Checkin Khách Dự';return}}
+    if(regs.length){h.innerHTML=`<span class="hok">Có trong danh sách (TVV ${regs.map(g=>esc(g.tvvName)).join(', ')}) — bấm Checkin, không cần chọn TVV</span>`;$('#goText').textContent='Xác nhận đến dự';return}
+    const att=dupInfo(F.name.value,null).att;if(att.length){h.innerHTML=`<span class="hw">“${esc(att[0].name)}” đã checkin lúc ${hm(att[0].at)}</span>`;$('#goText').textContent='Checkin Khách Dự';return}
+    {const qt=norm(F.name.value).split(' ').filter(Boolean),pm=S.guests.filter(g=>!g.attended&&qt.every(k=>(norm(g.name)+' '+norm(g.tvvName)).includes(k))).length;if(pm){h.innerHTML=`<span class="hok">${pm} khách khớp — bấm <b>Đến dự</b> ở danh sách</span>`;$('#goText').textContent='Checkin Khách Dự';return}}
     h.innerHTML='<span class="hw">Không có trong danh sách. Khách mới: chọn TVV ở bước 1.</span>';$('#goText').textContent='Chọn TVV trước';return}
   const d=dupInfo(F.name.value,tv),L=[];let btn='Thêm khách mới · đến dự';
-  d.att.forEach(g=>L.push(`<span class="hw">⚠ Trùng: “${esc(g.name)}” đã checkin lúc ${hm(g.at)} · TVV ${esc(g.tvvName)} ${tv?(d.mine(g)?'<b>(cùng TVV)</b>':'<b>(khác TVV)</b>'):''}</span>`));
-  d.reg.forEach(g=>{if(d.mine(g)){L.push(`<span class="hok">✓ Có trong danh sách, đúng TVV ${esc(g.tvvName)} — bấm để xác nhận đến dự</span>`);btn='Xác nhận đến dự'}
-    else{L.push(`<span class="hw">⚠ Trùng tên trong danh sách của TVV ${esc(g.tvvName)}${tv?` — <b>khác TVV đang chọn (${esc(tv.tvvName)})</b>`:''}</span>`);if(btn!=='Xác nhận đến dự')btn='Kiểm tra trùng'}});
+  d.att.forEach(g=>L.push(`<span class="hw">Trùng: “${esc(g.name)}” đã checkin lúc ${hm(g.at)} · TVV ${esc(g.tvvName)} ${tv?(d.mine(g)?'<b>(cùng TVV)</b>':'<b>(khác TVV)</b>'):''}</span>`));
+  d.reg.forEach(g=>{if(d.mine(g)){L.push(`<span class="hok">Có trong danh sách, đúng TVV ${esc(g.tvvName)} — bấm để xác nhận đến dự</span>`);btn='Xác nhận đến dự'}
+    else{L.push(`<span class="hw">Trùng tên trong danh sách của TVV ${esc(g.tvvName)}${tv?` — <b>khác TVV đang chọn (${esc(tv.tvvName)})</b>`:''}</span>`);if(btn!=='Xác nhận đến dự')btn='Kiểm tra trùng'}});
   if(!L.length)L.push('<span class="hnew">Khách mới, sẽ được tính là đến dự</span>');
   h.innerHTML=L.join('<br>');$('#goText').textContent=btn}
 
@@ -1227,7 +1240,7 @@ $('#regGroup').onchange=e=>{regMode=e.target.value;renderRegList()};
 function progHTML(){const T=totals(),nm=T.att.filter(g=>!g.registered).length,pct=T.reg?Math.min(100,Math.round(T.regIn/T.reg*100)):0;
   const last=[...T.att].sort((a,b)=>(b.at||'').localeCompare(a.at||''))[0];
   return `<div class="pg-main"><small>Khách đã đến</small><b class="num">${T.n}${T.reg?`<em> / ${T.reg}</em>`:''}</b></div>
-  <div class="pg-bar">${T.reg?`<div class="pg-track"><i style="width:${pct}%"></i></div><span><b class="num">${pct}%</b> khách đăng ký đã đến</span>`:'<span>Chưa có danh sách đăng ký</span>'}${last?`<span class="pg-last">Vừa đến: <b>${esc(last.name)}</b> · ${hm(last.at)}</span>`:''}</div>
+  <div class="pg-bar">${T.reg?`<div class="pg-track"><i style="width:${pct}%"></i></div><span><b class="num">${pct}%</b> khách đăng ký đã đến</span>`:'<span>Chưa có danh sách đăng ký</span>'}${last?`<span class="pg-last"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Vừa đến: <b>${esc(last.name)}</b> · ${hm(last.at)}</span>`:''}</div>
   <div class="pg-chips"><span class="pg-c"><b class="num">${nm}</b><small>Khách mới</small></span><span class="pg-c"><b class="num">${T.tvv}</b><small>TVV có khách</small></span>${T.fee?`<span class="pg-c"><b class="num">${fmt(T.fee)}</b><small>Phí ĐK</small></span>`:''}</div>`}
 let ciTab='wait';
 function setCiTab(t){ciTab=t;$$('#ciBoard .btabs button').forEach(b=>{const on=b.dataset.bt===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
@@ -1896,8 +1909,8 @@ const newCode=(name)=>{const d=VN(),A='ABCDEFGHJKMNPQRSTUVWXYZ23456789',r=crypto
 function normCode(s){s=String(s||'').toUpperCase().replace(/\s+/g,'');if(/^\d{4}-[A-Z0-9]{6}$/.test(s))s='HNKH-'+s;return/^[A-Z0-9]{2,12}-\d{4}-[A-Z0-9]{4,6}$/.test(s)?s:''}
 function renderSync(){const box=$('#syncBox');if(!box)return;box.hidden=!SYNC_OK;if(!SYNC_OK)return;
   const n=Math.max(1,liveDevices().length),t=syState.last?hm(syState.last.toISOString()):'';
-  $('#sySum').innerHTML=!SY.on?'☁️ <b>Checkin cùng nhiều máy</b> — nhập file danh sách để tự tạo mã, hoặc bấm để nhập mã hội nghị':
-    `☁️ Mã hội nghị <b class="code">${esc(SY.event)}</b> · ${n} máy`+(syState.st==='err'?` · <span style="color:var(--warn)">⚠ ${esc(syState.msg)}</span>`:syState.st==='run'?' · đang kết nối…':t?' · '+t:'');
+  $('#sySum').innerHTML=!SY.on?'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg><b>Checkin cùng nhiều máy</b> — nhập file danh sách để tự tạo mã, hoặc bấm để nhập mã hội nghị':
+    `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>Mã hội nghị <b class="code">${esc(SY.event)}</b> · ${n} máy`+(syState.st==='err'?` · <span style="color:var(--warn)">${esc(syState.msg)}</span>`:syState.st==='run'?' · đang kết nối…':t?' · '+t:'');
   const b=$('#syBody');const ae=document.activeElement;if(box.open&&b.contains(ae)&&ae.tagName==='INPUT'&&ae.value)return;
   setTimeout(()=>['sy_name','sy_name2'].forEach(i=>{const el=document.getElementById(i);if(el&&!el.dataset.cap){el.dataset.cap=1;autoCap(el)}}),0);
   if(SY.on){b.innerHTML=`<div class="jcode"><div><small>Mã hội nghị — gửi cho lễ tân khác</small><b>${esc(SY.event)}</b></div><button type="button" class="btn primary" data-sy="copy">📋 Copy mã</button></div>
@@ -1937,7 +1950,7 @@ async function requestRejoin(code){
   const nm=SY.name||('Máy '+SY.device.slice(-3).toUpperCase());
   if(!await okAsk('Cần máy 1 đồng ý',`Máy này đã bị máy 1 xoá khỏi hội nghị <b>${esc(code)}</b>.<br>Gửi yêu cầu xin tham gia lại?`,'Gửi yêu cầu'))return false;
   await fbReq('PATCH','',{['requests/'+SY.device]:{name:nm,at:Date.now()}});SY.waiting=code;
-  $('#sySum').innerHTML=`⏳ Đang chờ máy 1 đồng ý cho <b>${esc(nm)}</b> tham gia lại…`;toast('Đã gửi yêu cầu — chờ máy 1 đồng ý');
+  $('#sySum').innerHTML=`Đang chờ máy 1 đồng ý cho <b>${esc(nm)}</b> tham gia lại…`;toast('Đã gửi yêu cầu — chờ máy 1 đồng ý');
   for(let i=0;i<200&&SY.waiting===code;i++){await new Promise(r=>setTimeout(r,3000));SY.event=code;
     try{const k=await fbReq('GET','/kicked/'+SY.device);if(!k){SY.waiting='';toast('Máy 1 đã đồng ý');return true}
       const q=await fbReq('GET','/requests/'+SY.device);if(q&&q.denied){SY.waiting='';await fbReq('PATCH','',{['requests/'+SY.device]:null}).catch(()=>{});
@@ -2547,7 +2560,7 @@ function tkRemember(){if(ROLE!=='tk'||!SY.on||!SY.event)return;const l=tkConfs()
   if(i===0&&o.ten===c.ten&&o.loai===c.loai&&o.ngay===c.ngay)return;if(i>=0)l.splice(i,1);if(i!==0)c.at=Date.now();l.unshift(c);lsSet(CONF_KEY,JSON.stringify(l.slice(0,40)))}
 function setRole(r){ROLE=r;if(r!=='tk')setUser('');try{r?sessionStorage.setItem('hnkh-role',r):sessionStorage.removeItem('hnkh-role')}catch(e){}applyRole()}
 function applyRole(){document.body.classList.toggle('role-ht',ROLE==='ht');document.body.classList.toggle('role-tk',ROLE==='tk');
-  const b=$('#roleBtn');b.hidden=!ROLE;b.innerHTML=ROLE==='tk'?(isAdmin()?'🛡️ '+esc(USER):'🗂️ Thư ký'):'🤝 Người hỗ trợ';document.body.classList.toggle('role-admin',isAdmin());if(ROLE==='ht')dkTabN='1';const ms=document.querySelector('#modebar [data-mode="dangky"] small');if(ms)ms.textContent=ROLE==='ht'?'Xem tổng hợp đăng ký':'Thư ký theo dõi trước hội nghị';updNav();if(view==='dangky')renderReg()}
+  const b=$('#roleBtn');b.hidden=!ROLE;b.innerHTML=ROLE==='tk'?(isAdmin()?esc(USER):'Thư ký'):'Người hỗ trợ';document.body.classList.toggle('role-admin',isAdmin());if(ROLE==='ht')dkTabN='1';const ms=document.querySelector('#modebar [data-mode="dangky"] small');if(ms)ms.textContent=ROLE==='ht'?'Xem tổng hợp đăng ký':'Thư ký theo dõi trước hội nghị';updNav();if(view==='dangky')renderReg()}
 function lgShow(step){$('#login').hidden=false;document.body.classList.add('lg-on');lgStep(step||'role')}
 function lgHide(){$('#login').hidden=true;document.body.classList.remove('lg-on');renderAll();renderSync()}
 function lgStep(st){const b=$('#lgBody'),back='<button type="button" class="lg-back" data-lg="role">← Chọn lại vai trò</button>';
